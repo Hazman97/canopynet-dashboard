@@ -5,10 +5,11 @@
     :style="{ height: 'calc(100vh - 64px)' }"
   >
     <SidebarItem icon="bx-home" label="Dashboard" :to="{ name: 'dashboard' }" />
-    <SidebarItem icon="bx-cart" label="Insight" :to="{ name: 'cart' }" />
-    <SidebarItem icon="bx-shopping-bag" label="Fleet" :to="{ name: 'dashboard' }" />
-    <SidebarItem icon="bx-heart" label="Teleoperation" :to="{ name: 'dashboard' }" />
-    <SidebarItem icon="bx-user" label="Setting" :to="{ name: 'dashboard' }" />
+    <SidebarItem icon="bx-chalkboard" label="Insight" :to="{ name: 'cart' }" />
+    <SidebarItem icon="bx-reflect-vertical" label="Fleet" :to="{ name: 'dashboard' }" />
+    <SidebarItem icon="bx-rocket" label="Teleoperation" :to="{ name: 'dashboard' }" />
+    <SidebarItem icon="bx-cog" label="Setting" :to="{ name: 'dashboard' }" />
+
   </aside>
 </template>
 

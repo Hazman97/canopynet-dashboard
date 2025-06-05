@@ -17,7 +17,7 @@
     </div>
 
     <!-- Right Section: Profile + Logout -->
-    <div class="flex items-center space-x-4 z-10 block sm:hidden md:block lg:block">  
+    <div class="flex items-center space-x-4 z-10 hidden sm:hidden md:block lg:block">  
       <button class="text-sm bg-dark px-3 py-2 rounded-lg text-primary font-semibold hover:text-[#abc0c0]">
         Log Out
       </button>
