@@ -9,12 +9,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
+      path: '/MainLayout',
       name: 'home',
       component: HomeView,
     },
      {
-    path: '/MainLayout',
+    path: '/',
     component: MainLayout,
     children: [
       { path: '', name: 'dashboard', component: HomeView },
