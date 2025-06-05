@@ -29,9 +29,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch  } from 'vue'
 import Navbar from '../components/Navbar.vue'
 import Sidebar from '../components/Sidebar.vue'
 
-const asideOpen = ref(true)
+
+
+// Load state from localStorage, default to true
+const asideOpen = ref(
+  localStorage.getItem('asideOpen') === 'false' ? false : true
+)
+
+// Save changes to localStorage
+watch(asideOpen, (newVal) => {
+  localStorage.setItem('asideOpen', newVal)
+})
 </script>

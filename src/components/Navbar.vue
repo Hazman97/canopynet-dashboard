@@ -21,11 +21,12 @@
       <button class="text-sm bg-dark px-3 py-2 rounded-lg text-primary font-semibold hover:text-[#abc0c0]">
         Log Out
       </button>
-      <img
-        src="https://plchldr.co/i/40x40?bg=111111"
-        alt="Profile"
-        class="h-10 w-10 rounded-full object-cover"
-      />
+     <!-- <img
+  src="https://via.placeholder.com/40/111111/FFFFFF?text=U"
+  alt="User profile picture"
+  class="h-10 w-10 rounded-full object-cover"
+/> -->
+
     </div>
   </header>
 </template>

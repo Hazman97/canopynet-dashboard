@@ -44,7 +44,7 @@
   <table class="min-w-full table-auto border border-gray-300 shadow rounded-lg divide-y divide-gray-200">
     <thead class="bg-gray-100 text-sm font-medium text-gray-700">
       <tr>
-        <th class="px-6 py-3 text-left">Name</th>
+        <th class="px-6 py-3 text-left">Node</th>
         <th class="px-6 py-3 text-left">Latitude</th>
         <th class="px-6 py-3 text-left">Longitude</th>
         <th class="px-6 py-3 text-left">pH</th>
