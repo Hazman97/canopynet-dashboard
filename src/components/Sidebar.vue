@@ -1,7 +1,8 @@
 <template>
   <aside
     v-show="show"
-    class="flex w-72 flex-col space-y-2 border-r-2 border-gray-200 bg-white p-2 h-screen"
+    class="flex w-72 flex-col space-y-2 border-r-2 border-primary bg-sidebar p-2 text-[#abc0c0] rounded-r-2xl"
+    :style="{ height: 'calc(100vh - 64px)' }"
   >
     <SidebarItem icon="bx-home" label="Dashboard" to="/MainLayout" />
     <SidebarItem icon="bx-cart" label="Cart" to="/MainLayout/cart" />
@@ -10,6 +11,7 @@
     <SidebarItem icon="bx-user" label="Profile" to="/MainLayout/profile" />
   </aside>
 </template>
+
 
 <script setup>
 import SidebarItem from './SidebarItem.vue'
