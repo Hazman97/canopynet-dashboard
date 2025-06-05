@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // Make sure this file exists at src/views/HomeView.vue
 import HomeView from '../views/Dashboard.vue'
-import MainLayout from '../components/MainLayout.vue'
+import MainLayout from '../components/Mainlayout.vue'
 import AboutView from '@/views/AboutView.vue'
 
 
