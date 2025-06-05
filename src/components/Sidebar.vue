@@ -7,7 +7,7 @@
     <SidebarItem icon="bx-home" label="Dashboard" :to="{ name: 'dashboard' }" />
     <SidebarItem icon="bx-chalkboard" label="Insight" :to="{ name: 'cart' }" />
     <SidebarItem icon="bx-reflect-vertical" label="Fleet" :to="{ name: 'dashboard' }" />
-    <SidebarItem icon="bx-rocket" label="Teleoperation" :to="{ name: 'dashboard' }" />
+    <SidebarItem icon="bx-rocket" label="Teleoperation" :to="{ name: 'teleoperation' }" />
     <SidebarItem icon="bx-cog" label="Setting" :to="{ name: 'dashboard' }" />
 
   </aside>

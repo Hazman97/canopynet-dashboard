@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/Dashboard.vue'
 import MainLayout from '../components/Mainlayout.vue'
 import AboutView from '@/views/AboutView.vue'
+import tele from '@/views/Teleoperation.vue'
 
 
 const router = createRouter({
@@ -19,6 +20,7 @@ const router = createRouter({
     children: [
       { path: '', name: 'dashboard', component: HomeView },
       { path: 'cart', name: 'cart', component: AboutView },
+       { path: 'teleoperation', name: 'teleoperation', component: tele },
     ]
   }
   
