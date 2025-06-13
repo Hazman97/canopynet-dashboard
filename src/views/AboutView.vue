@@ -89,9 +89,13 @@ function openLiveView(ugv) {
 onMounted(() => {
   map.value = L.map('map').setView([5.3535, 100.3055], 17)
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map.value)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution:
+    '&copy; OpenStreetMap contributors &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map.value)
+
 
   ugvs.forEach((ugv) => {
     ugv.path.push([...ugv.coords])
