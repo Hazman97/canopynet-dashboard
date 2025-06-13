@@ -1,13 +1,19 @@
 <template>
   <router-link
     :to="to"
-    class="flex items-center space-x-1 rounded-md px-2 py-3 hover:bg-primary hover:text-sidebar"
+    class="flex items-center gap-4 p-3 rounded hover:bg-primary transition-all duration-200"
+    :class="collapsed ? 'justify-center' : ''"
   >
-    <span class="text-2xl ml-2"><i :class="`bx ${icon}`"></i></span>
-    <span>{{ label }}</span>
+    <i :class="['bx', icon, 'text-xl']"></i>
+    <span v-if="!collapsed" class="whitespace-nowrap">{{ label }}</span>
   </router-link>
 </template>
 
 <script setup>
-defineProps(['icon', 'label', 'to'])
+defineProps({
+  icon: String,
+  label: String,
+  to: Object,
+  collapsed: Boolean
+})
 </script>

@@ -1,95 +1,80 @@
 <template>
-  <div class="p-4 mx-auto ml-5 flex flex-col gap-8">
-    <!-- Map container with fixed aspect ratio -->
-    <div class="w-full max-w-3xl mx-auto bg-secondary rounded-lg p-2" style="aspect-ratio: 16 / 9;">
-      <MapView
-        :locations="locations"
-        :latitude="2.9226"
-        :longitude="101.6491"
-        @location-selected="onSelect"
-        class="h-full w-full rounded shadow"
-      />
+  <div class="min-h-screen bg-gray-100 p-4 space-y-4">
+    <!-- Map Section (Top Full Width) -->
+    <div class="w-full h-[50vh] bg-white rounded-lg shadow overflow-hidden">
+    <MapView
+  :locations="locations"
+  :latitude="2.9226"
+  :longitude="101.6491"
+  @location-selected="onSelect"
+  @map-click="selected = null"
+  class="w-full h-full"
+/>
+
     </div>
 
-    <!-- Data card for selected location -->
-    <div v-if="selected" class="mt-1 text-center flex flex-col items-center">
-      <h2 class="text-2xl font-bold mb-8 text-sidebar">{{ selected.name }}</h2>
+    <!-- Dashboard Panels Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <!-- Silos Info -->
+      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
+        <h3 class="font-semibold mb-2 text-gray-800">Silos</h3>
+        <table class="text-sm w-full">
+          <thead>
+            <tr class="text-left text-gray-500 border-b">
+              <th>Name</th>
+              <th>Crop</th>
+              <th>Temp</th>
+              <th>Moist</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="loc in filteredLocations" :key="loc.name" class="border-b hover:bg-gray-50">
+              <td class="py-1.5">{{ loc.name }}</td>
+              <td>{{ loc.other }}%</td>
+              <td>{{ loc.temperature }}°C</td>
+              <td>{{ loc.ph }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-sidebar">
-        <div class="bg-secondary p-4 rounded shadow">
-          <h3 class="font-semibold mb-2">pH</h3>
-          <p>{{ selected.ph }}</p>
-        </div>
-        <div class="bg-white p-4 rounded shadow">
-          <h3 class="font-semibold mb-2">EC</h3>
-          <p>{{ selected.ec }}</p>
-        </div>
-        <div class="bg-white p-4 rounded shadow">
-          <h3 class="font-semibold mb-2">Temperature</h3>
-          <p>{{ selected.temperature ?? 'N/A' }}</p>
-        </div>
-        <div class="bg-white p-4 rounded shadow">
-          <h3 class="font-semibold mb-2">Other Data</h3>
-          <p>{{ selected.other ?? 'N/A' }}</p>
+      <!-- Silos Temperature Chart -->
+      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
+        <h3 class="font-semibold mb-2 text-gray-800">Silos Temperature</h3>
+        <div class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-400">
+          [Temperature Chart Here]
         </div>
       </div>
+
+      <!-- Crop Level Chart -->
+      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
+        <h3 class="font-semibold mb-2 text-gray-800">Crop Level</h3>
+        <div class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-400">
+          [Crop Level Chart Here]
+        </div>
+      </div>
+
+      <!-- Alarms -->
+      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
+        <h3 class="font-semibold mb-2 text-gray-800">Alarms</h3>
+        <ul class="text-sm space-y-2">
+          <li>
+            <span class="text-red-600 font-semibold">[High]</span> - Silo B temp delta<br />
+            <span class="text-xs text-gray-500">2024-07-16 11:53:46</span>
+          </li>
+          <li>
+            <span class="text-yellow-500 font-semibold">[Warning]</span> - pH spike in Putrajaya<br />
+            <span class="text-xs text-gray-500">2024-07-16 11:40:00</span>
+          </li>
+        </ul>
+      </div>
     </div>
-
-    <div v-else class="mt-6 text-center text-gray-500 flex justify-center">
-      Click a marker to see data
-    </div>
-
-    <!-- Table showing all location data -->
-   <div class="mt-12 overflow-x-auto">
-  <table class="min-w-full table-auto border border-gray-300 shadow rounded-lg divide-y divide-gray-200">
-    <thead class="bg-gray-100 text-sm font-medium text-gray-700">
-      <tr>
-        <th class="px-6 py-3 text-left">Node</th>
-        <th class="px-6 py-3 text-left">Latitude</th>
-        <th class="px-6 py-3 text-left">Longitude</th>
-        <th class="px-6 py-3 text-left">pH</th>
-        <th class="px-6 py-3 text-left">EC</th>
-        <th class="px-6 py-3 text-left">Temperature</th>
-        <th class="px-6 py-3 text-left">Other Data</th>
-        <th class="px-6 py-3 text-left">NPL Status</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100">
-      <tr
-        v-for="loc in locations"
-        :key="loc.name"
-        class="hover:bg-gray-50 cursor-pointer transition duration-200"
-        @click="onSelect(loc.name)"
-      >
-        <td class="px-6 py-4 whitespace-nowrap">{{ loc.name }}</td>
-        <td class="px-6 py-4 whitespace-nowrap">{{ loc.coords[0] }}</td>
-        <td class="px-6 py-4 whitespace-nowrap">{{ loc.coords[1] }}</td>
-        <td class="px-6 py-4 whitespace-nowrap">{{ loc.ph }}</td>
-        <td class="px-6 py-4 whitespace-nowrap">{{ loc.ec }}</td>
-        <td class="px-6 py-4 whitespace-nowrap">{{ loc.temperature ?? 'N/A' }}</td>
-        <td class="px-6 py-4 whitespace-nowrap">{{ loc.other ?? 'N/A' }}</td>
-        <td class="px-6 py-4 whitespace-nowrap">
-          <span
-            :class="{
-              'text-green-600 font-semibold': loc.nplStatus === 'OK',
-              'text-yellow-600 font-semibold': loc.nplStatus === 'Warning',
-              'text-red-600 font-semibold': loc.nplStatus === 'Critical'
-            }"
-          >
-            {{ loc.nplStatus ?? 'Unknown' }}
-          </span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
   </div>
 </template>
 
 <script setup>
 import MapView from '../components/MapView.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const locations = [
   {
@@ -151,6 +136,17 @@ const locations = [
 const selected = ref(null)
 
 const onSelect = (name) => {
-  selected.value = locations.find(loc => loc.name === name) || null
+  // Toggle selection: if same name clicked again, deselect
+  if (selected.value?.name === name) {
+    selected.value = null
+  } else {
+    selected.value = locations.find((loc) => loc.name === name) || null
+  }
 }
+
+// Computed list based on selected location
+const filteredLocations = computed(() =>
+  selected.value ? [selected.value] : locations
+)
+
 </script>

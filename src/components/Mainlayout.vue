@@ -5,15 +5,10 @@
       <Navbar @toggle-sidebar="asideOpen = !asideOpen" />
     </div>
 
-    <!-- Main layout wrapper -->
+    <!-- Layout -->
     <div class="flex h-[calc(100vh-64px)]">
-      <!-- Sidebar (conditionally hidden) -->
-      <div
-        v-if="asideOpen"
-        class="w-64 shrink-0 h-full transition-all duration-300"
-      >
-        <Sidebar :show="asideOpen" class="h-full" />
-      </div>
+      <!-- Sidebar with dynamic width -->
+      <Sidebar :collapsed="!asideOpen" class="transition-all duration-300" />
 
       <!-- Main content area -->
       <div
@@ -29,18 +24,14 @@
 </template>
 
 <script setup>
-import { ref, watch  } from 'vue'
+import { ref, watch } from 'vue'
 import Navbar from '../components/Navbar.vue'
 import Sidebar from '../components/Sidebar.vue'
 
-
-
-// Load state from localStorage, default to true
 const asideOpen = ref(
   localStorage.getItem('asideOpen') === 'false' ? false : true
 )
 
-// Save changes to localStorage
 watch(asideOpen, (newVal) => {
   localStorage.setItem('asideOpen', newVal)
 })

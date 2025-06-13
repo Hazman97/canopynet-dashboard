@@ -97,36 +97,45 @@
     </div>
 
     <!-- Movement controls (centered) -->
-    <div class="flex justify-center gap-4 text-light">
+    <div
+      class="flex justify-center gap-4 text-light"
+      tabindex="0"
+      @keydown.arrow-up.prevent="move('forward')"
+      @keydown.arrow-down.prevent="move('backward')"
+      @keydown.arrow-left.prevent="move('left')"
+      @keydown.arrow-right.prevent="move('right')"
+      @keydown.space.prevent="move('stop')"
+      ref="controlPanel"
+    >
       <button
-        @click="move('forward')"
-        class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
+      @click="move('forward')"
+      class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
       >
-        Forward
+      Forward
       </button>
       <button
-        @click="move('left')"
-        class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
+      @click="move('left')"
+      class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
       >
-        Left
+      Left
       </button>
       <button
-        @click="move('stop')"
-        class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 transition font-semibold shadow-md"
+      @click="move('stop')"
+      class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 transition font-semibold shadow-md"
       >
-        Stop
+      Stop
       </button>
       <button
-        @click="move('right')"
-        class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
+      @click="move('right')"
+      class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
       >
-        Right
+      Right
       </button>
       <button
-        @click="move('backward')"
-        class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
+      @click="move('backward')"
+      class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition font-semibold shadow-md"
       >
-        Backward
+      Backward
       </button>
     </div>
   </div>
