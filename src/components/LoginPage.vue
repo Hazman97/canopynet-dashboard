@@ -3,7 +3,7 @@
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
 
       <!-- Logo Section -->
-      <div class="text-center mb-0"> 
+      <div class="text-center mb-2">
         <img
           src="../assets/logo.png"
           alt="Company Logo"
@@ -109,6 +109,10 @@ async function handleLogin() {
       // If login is successful (status code 2xx)
       const data = await response.json();
       console.log('Login successful!', data);
+
+      // --- CRITICAL ADDITION: Store authentication status in localStorage ---
+      // This 'userToken' key is checked by the navigation guard in src/router/index.ts
+      localStorage.setItem('userToken', 'true'); // Store a dummy token
 
       // Navigate to '/dashboard' after successful login
       router.push('/dashboard');

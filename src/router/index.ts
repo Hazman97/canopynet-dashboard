@@ -1,73 +1,99 @@
 // src/router/index.ts
 
 import { createRouter, createWebHistory } from 'vue-router';
-// Make sure this file exists at src/views/HomeView.vue
-import HomeView from '../views/Dashboard.vue'; // Your Dashboard component
+// Import your components. Ensure these paths are correct relative to index.ts
+import HomeView from '../views/Dashboard.vue'; // Your Dashboard component (mapped to HomeView)
 import MainLayout from '../components/Mainlayout.vue';
-import AboutView from '@/views/AboutView.vue'; // Your AboutView component (aliased as 'cart')
+import AboutView from '@/views/AboutView.vue'; // Your AboutView component
 import tele from '@/views/Teleoperation.vue'; // Your Teleoperation component
 
-// Import the LoginPage component
-import LoginPage from '@/components/LoginPage.vue';
+// Import the LoginPage component.
+// Adjust this path if LoginPage.vue is not in src/components.
+import LoginPage from '@/components/LoginPage.vue'; // Corrected path assuming LoginPage.vue is in src/components
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      // --- NEW: Redirect root path '/' to '/login' ---
+      // Default route: Redirects root path '/' to '/login'
       path: '/',
-      redirect: '/login' // When user visits '/', they will be redirected to '/login'
+      redirect: '/login'
     },
     {
-      // The actual login page
+      // Login Page route: accessible without authentication
       path: '/login',
       name: 'login',
       component: LoginPage
     },
     {
-      // This route can be removed if you primarily want to use the nested structure
-      // or if '/MainLayout' is meant to be a direct access to the dashboard without MainLayout wrapper.
+      // 'Legacy Home' route: If you still use '/MainLayout' directly,
+      // it should also be protected.
       path: '/MainLayout',
-      name: 'home',
+      name: 'legacy-home',
       component: HomeView, // This is your Dashboard.vue
+      meta: { requiresAuth: true } // This route requires authentication
     },
     {
-      // Protected routes - these should ideally be guarded to require authentication
-      // For now, they are accessible after login.
+      // Main application layout and its protected child routes
       path: '/', // This is the base path for nested routes within MainLayout
       component: MainLayout,
       children: [
-        { path: 'dashboard', name: 'dashboard', component: HomeView }, // Accessible at /dashboard
-        { path: 'cart', name: 'cart', component: AboutView }, // Accessible at /cart
-        { path: 'teleoperation', name: 'teleoperation', component: tele }, // Accessible at /teleoperation
-        // Note: The empty path '' here would conflict with the root redirect above
-        // You generally don't want a direct path on '/' and also a child '' path for '/'.
-        // After login, you would typically redirect to '/dashboard' or some other specific path within MainLayout.
-        // I've changed the child path to 'dashboard' to be explicit.
+        {
+          path: 'dashboard', // Accessible at /dashboard
+          name: 'dashboard',
+          component: HomeView,
+          meta: { requiresAuth: true } // Requires authentication
+        },
+        {
+          path: 'cart', // Accessible at /cart
+          name: 'cart',
+          component: AboutView,
+          meta: { requiresAuth: true } // Requires authentication
+        },
+        {
+          path: 'teleoperation', // Accessible at /teleoperation
+          name: 'teleoperation',
+          component: tele,
+          meta: { requiresAuth: true } // Requires authentication
+        },
       ]
     }
   ]
-})
+});
 
-// Optional: A more robust approach for real applications would be using Navigation Guards
-// to protect routes that require authentication. For example:
-/*
+// Navigation Guard: This runs before every route navigation
 router.beforeEach((to, from, next) => {
-  // Check if user is authenticated (e.g., by checking a token in localStorage)
-  const isAuthenticated = localStorage.getItem('userToken'); // Placeholder for actual auth check
+  // Determine if the target route requires authentication
+  // `to.matched.some` checks if any of the matched route records (including parent routes)
+  // have a `meta.requiresAuth` property set to `true`.
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    // If route requires auth and user is not authenticated, redirect to login
+  // Check if the user is authenticated by looking for the dummy token in localStorage.
+  // In a real app, this would involve validating a JWT or session token.
+  const isAuthenticated = localStorage.getItem('userToken') === 'true';
+
+  if (requiresAuth && !isAuthenticated) {
+    // Scenario 1: Route requires authentication BUT user is NOT authenticated.
+    // Redirect them to the login page.
+    // This handles:
+    // - Direct URL access to protected routes when logged out.
+    // - Browser back/forward button attempts to protected routes when logged out.
+    console.log('Navigation Guard: Route requires auth but user is NOT authenticated. Redirecting to /login');
     next('/login');
-  } else if ((to.name === 'login' || to.path === '/') && isAuthenticated) {
-    // If user is authenticated and tries to go to login or root, redirect to dashboard
-    next('/dashboard'); // Or whatever your main authenticated page is
+  } else if (to.name === 'login' && isAuthenticated) {
+    // Scenario 2: User IS authenticated AND they are trying to go to the login page.
+    // Redirect them to the dashboard (or another main authenticated page).
+    // This prevents logged-in users from seeing the login form unnecessarily.
+    console.log('Navigation Guard: User IS authenticated and trying to access login. Redirecting to /dashboard');
+    next('/dashboard');
   } else {
-    // Otherwise, allow navigation
+    // Scenario 3: Otherwise (e.g., route doesn't require auth, or user is authenticated
+    // and navigating to a protected route).
+    // Allow the navigation to proceed.
+    console.log('Navigation Guard: Navigation allowed.');
     next();
   }
 });
-*/
 
-export default router
+export default router;
 
