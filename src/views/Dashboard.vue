@@ -47,12 +47,55 @@
       </div>
 
       <!-- Crop Level Chart -->
-      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
-        <h3 class="font-semibold mb-2 text-gray-800">Crop Level</h3>
-        <div class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-400">
-          [Crop Level Chart Here]
-        </div>
-      </div>
+<!-- Node Status Card (with buttons inside the box) -->
+<div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
+  <h3 class="font-semibold mb-2 text-gray-800">Node</h3>
+
+  <!-- Buttons inside the card -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <button
+      v-for="node in nodes"
+      :key="node.id"
+      class="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+      :class="{ 'bg-blue-800': selectedNode?.id === node.id }"
+      @click="selectedNode = node"
+    >
+      Node {{ node.id }}
+    </button>
+  </div>
+
+ <div v-if="selectedNode" class="bg-white p-5 rounded-xl shadow-md w-full max-w-xl text-gray-800 space-y-4">
+    <!-- <h2 class="text-lg font-semibold flex items-center gap-2">
+      <i class='bx bx-chip text-blue-500 text-xl'></i>
+      Node Details
+    </h2> -->
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      <NodeItem icon="bx-id-card" label="Node ID" :value="selectedNode.id" />
+      <NodeItem icon="bx-globe" label="IP Address" :value="selectedNode.ip" />
+      <NodeItem icon="bx-signal-5" label="RSSI" :value="`${selectedNode.rssi} dBm`" />
+      <NodeItem icon="bx-bar-chart-alt-2" label="LQI" :value="selectedNode.lqi" />
+      <NodeItem icon="bx-volume-low" label="Noise Floor" :value="`${selectedNode.noise} dBm`" />
+      <NodeItem icon="bx-magnet" label="Signal Margin" :value="selectedNode.margin" />
+      <NodeItem icon="bx-repeat" label="Retries" :value="selectedNode.retries" />
+      <NodeItem icon="bx-bolt-circle" label="TX Power" :value="selectedNode.txPower" />
+      <NodeItem icon="bx-upload" label="TX Packets" :value="selectedNode.txPackets" />
+      <NodeItem icon="bx-download" label="RX Packets" :value="selectedNode.rxPackets" />
+      <NodeItem icon="bx-stats" label="TX Success Rate" :value="`${selectedNode.txSuccess}%`" />
+      <NodeItem icon="bx-stats" label="RX Success Rate" :value="`${selectedNode.rxSuccess}%`" />
+      <NodeItem icon="bx-list-ul" label="Queue Size" :value="selectedNode.queue" />
+      <NodeItem icon="bx-battery" label="Voltage In" :value="selectedNode.voltageIn" />
+      <NodeItem icon="bx-battery-charging" label="Voltage Out" :value="selectedNode.voltageOut" />
+    </div>
+  </div>
+
+  <!-- Default prompt -->
+  <div v-else class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-sm">
+    Select a node to view status
+  </div>
+</div>
+
+
 
       <!-- Alarms -->
       <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
@@ -73,8 +116,118 @@
 </template>
 
 <script setup>
+import axios from 'axios' // ✅ Import axios
 import MapView from '../components/MapView.vue'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted  } from 'vue'
+ import { API_URL } from '../configapi'
+
+import { h } from 'vue'
+
+const NodeItem = (props) => {
+  return h('div', { class: 'flex items-start gap-2' }, [
+    h('i', { class: 'bx ' + props.icon + ' text-blue-400 text-lg mt-0.5' }),
+    h('div', [
+      h('div', { class: 'font-medium text-gray-700' }, props.label),
+      h('div', { class: 'text-gray-600' }, props.value)
+    ])
+  ])
+}
+NodeItem.props = {
+  icon: String,
+  label: String,
+  value: [String, Number]
+}
+/**
+ * @typedef {Object} NodeData
+ * @property {string} IP
+ * @property {string} RSSI
+ * @property {string} status
+ */
+
+const nodes = ref([])
+const selectedNode = ref(null)
+let pollInterval = null
+let isFetching = false // To prevent overlapping requests
+
+const fetchNodeData = async () => {
+  if (isFetching) return // Skip if already fetching
+  
+  isFetching = true
+  const url = `${API_URL}/api/send-at?cmd=AT^DRPR=2`
+
+  try {
+    const res = await fetch(url)
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`)
+    }
+    
+    const text = await res.text()
+    const lines = text.trim().split('\n').filter(line => line.startsWith('^DRPR:'))
+
+    const parsedNodes = lines.map(line => {
+      const parts = line.replace('^DRPR: ', '').split(',')
+
+      return {
+        id: parts[0],
+        ip: parts[3]?.replace(/"/g, ''),
+        rssi: parts[6]?.replace(/"/g, ''),
+        lqi: parts[7],
+        noise: parts[8]?.replace(/"/g, ''),
+        margin: parts[9]?.replace(/"/g, ''),
+        retries: parts[10],
+        txPower: parts[11]?.replace(/"/g, ''),
+        txPackets: parts[12],
+        rxPackets: parts[14],
+        txSuccess: parts[16],
+        rxSuccess: parts[18],
+        queue: parts[20],
+        voltageIn: parts[22]?.replace(/"/g, ''),
+        voltageOut: parts[23]?.replace(/"/g, ''),
+      }
+    })
+
+    nodes.value = parsedNodes
+    
+    // Maintain selection if the node still exists
+    if (selectedNode.value) {
+      const stillExists = parsedNodes.some(n => n.id === selectedNode.value.id)
+      if (!stillExists) {
+        selectedNode.value = parsedNodes[0] || null
+      }
+    } else {
+      selectedNode.value = parsedNodes[0] || null
+    }
+  } catch (err) {
+    console.error('❌ Failed to fetch mesh node data', err)
+    // You might want to implement retry logic here
+  } finally {
+    isFetching = false
+  }
+}
+
+// Start polling
+const startPolling = (interval = 5000) => {
+  stopPolling() // Clear any existing interval
+  fetchNodeData() // Immediate first fetch
+  pollInterval = setInterval(fetchNodeData, interval)
+}
+
+// Stop polling
+const stopPolling = () => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+}
+
+onMounted(() => {
+  startPolling()
+})
+
+onUnmounted(() => {
+  stopPolling()
+})
 
 const locations = [
   {
@@ -148,5 +301,7 @@ const onSelect = (name) => {
 const filteredLocations = computed(() =>
   selected.value ? [selected.value] : locations
 )
+
+
 
 </script>
