@@ -1,6 +1,17 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+
+      <!-- Logo Section -->
+      <div class="text-center mb-0"> 
+        <img
+          src="../assets/logo.png"
+          alt="Company Logo"
+          class="mx-auto h-40 object-contain"
+        />
+      </div>
+      <!-- End Logo Section -->
+
       <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Login</h2>
 
       <form @submit.prevent="handleLogin" class="space-y-6">
@@ -99,7 +110,7 @@ async function handleLogin() {
       const data = await response.json();
       console.log('Login successful!', data);
 
-      // --- UPDATED: Navigate to '/dashboard' after successful login ---
+      // Navigate to '/dashboard' after successful login
       router.push('/dashboard');
 
     } else {
