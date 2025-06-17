@@ -1,12 +1,16 @@
 <template>
   <main class="min-h-screen w-full overflow-y-hidden">
+    <!-- Navbar-->
     <div>
       <Navbar @toggle-sidebar="asideOpen = !asideOpen" />
     </div>
 
+    <!-- Layout -->
     <div class="flex h-[calc(100vh-64px)]">
+      <!-- Sidebar with dynamic width -->
       <Sidebar :collapsed="!asideOpen" class="transition-all duration-300" />
 
+      <!-- Main content area -->
       <div
         :class="[
           'transition-all duration-300 overflow-auto p-4 h-full',
