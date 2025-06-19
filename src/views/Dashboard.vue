@@ -2,20 +2,19 @@
   <div class="min-h-screen bg-gray-100 p-4 space-y-4">
     <!-- Map Section (Top Full Width) -->
     <div class="w-full h-[50vh] bg-white rounded-lg shadow overflow-hidden">
-    <MapView
-  :locations="locations"
-  :latitude="2.9226"
-  :longitude="101.6491"
-  @location-selected="onSelect"
-  @map-click="selected = null"
-  class="w-full h-full"
-/>
-
+      <MapView
+        :locations="locations"
+        :latitude="2.9226"
+        :longitude="101.6491"
+        @location-selected="onSelect"
+        @map-click="selected = null"
+        class="w-full h-full"
+      />
     </div>
 
     <!-- Dashboard Panels Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      <!-- Silos Info -->
+      <!-- Silos Info (remains unchanged) -->
       <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
         <h3 class="font-semibold mb-2 text-gray-800">Silos</h3>
         <table class="text-sm w-full">
@@ -38,66 +37,74 @@
         </table>
       </div>
 
-      <!-- Silos Temperature Chart -->
+      <!-- UGV Status Section - NOW LIVE -->
       <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
-        <h3 class="font-semibold mb-2 text-gray-800">Silos Temperature</h3>
-        <div class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-400">
-          [Temperature Chart Here]
+        <h3 class="font-semibold mb-2 text-gray-800">UGV Status</h3>
+        <table class="text-sm w-full">
+          <thead>
+            <tr class="text-left text-gray-500 border-b">
+              <th class="py-1.5">Name</th>
+              <th class="py-1.5">Batt</th>
+              <th class="py-1.5">Speed</th>
+              <th class="py-1.5">Lat</th>
+              <th class="py-1.5">Lon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="ugv in ugvs" :key="ugv.id" class="border-b hover:bg-gray-50">
+              <td class="py-1.5">{{ ugv.name }}</td>
+              <td class="py-1.5">{{ ugv.battery }}%</td>
+              <td class="py-1.5">{{ ugv.speed }}km/h</td>
+              <td class="py-1.5">{{ ugv.coords[0].toFixed(3) }}</td>
+              <td class="py-1.5">{{ ugv.coords[1].toFixed(3) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- End UGV Status Section -->
+
+      <!-- Node Status Card (remains unchanged) -->
+      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
+        <h3 class="font-semibold mb-2 text-gray-800">Node</h3>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button
+            v-for="node in nodes"
+            :key="node.id"
+            class="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+            :class="{ 'bg-blue-800': selectedNode?.id === node.id }"
+            @click="selectedNode = node"
+          >
+            Node {{ node.id }}
+          </button>
+        </div>
+
+        <div v-if="selectedNode" class="bg-white p-5 rounded-xl shadow-md w-full max-w-xl text-gray-800 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <NodeItem icon="bx-id-card" label="Node ID" :value="selectedNode.id" />
+            <NodeItem icon="bx-globe" label="IP Address" :value="selectedNode.ip" />
+            <NodeItem icon="bx-signal-5" label="RSSI" :value="`${selectedNode.rssi} dBm`" />
+            <NodeItem icon="bx-bar-chart-alt-2" label="LQI" :value="selectedNode.lqi" />
+            <NodeItem icon="bx-volume-low" label="Noise Floor" :value="`${selectedNode.noise} dBm`" />
+            <NodeItem icon="bx-magnet" label="Signal Margin" :value="selectedNode.margin" />
+            <NodeItem icon="bx-repeat" label="Retries" :value="selectedNode.retries" />
+            <NodeItem icon="bx-bolt-circle" label="TX Power" :value="selectedNode.txPower" />
+            <NodeItem icon="bx-upload" label="TX Packets" :value="selectedNode.txPackets" />
+            <NodeItem icon="bx-download" label="RX Packets" :value="selectedNode.rxPackets" />
+            <NodeItem icon="bx-stats" label="TX Success Rate" :value="`${selectedNode.txSuccess}%`" />
+            <NodeItem icon="bx-stats" label="RX Success Rate" :value="`${selectedNode.rxSuccess}%`" />
+            <NodeItem icon="bx-list-ul" label="Queue Size" :value="selectedNode.queue" />
+            <NodeItem icon="bx-battery" label="Voltage In" :value="selectedNode.voltageIn" />
+            <NodeItem icon="bx-battery-charging" label="Voltage Out" :value="selectedNode.voltageOut" />
+          </div>
+        </div>
+
+        <!-- Default prompt -->
+        <div v-else class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-sm">
+          Select a node to view status
         </div>
       </div>
 
-      <!-- Crop Level Chart -->
-<!-- Node Status Card (with buttons inside the box) -->
-<div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
-  <h3 class="font-semibold mb-2 text-gray-800">Node</h3>
-
-  <!-- Buttons inside the card -->
-  <div class="flex flex-wrap gap-2 mb-4">
-    <button
-      v-for="node in nodes"
-      :key="node.id"
-      class="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-      :class="{ 'bg-blue-800': selectedNode?.id === node.id }"
-      @click="selectedNode = node"
-    >
-      Node {{ node.id }}
-    </button>
-  </div>
-
- <div v-if="selectedNode" class="bg-white p-5 rounded-xl shadow-md w-full max-w-xl text-gray-800 space-y-4">
-    <!-- <h2 class="text-lg font-semibold flex items-center gap-2">
-      <i class='bx bx-chip text-blue-500 text-xl'></i>
-      Node Details
-    </h2> -->
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-      <NodeItem icon="bx-id-card" label="Node ID" :value="selectedNode.id" />
-      <NodeItem icon="bx-globe" label="IP Address" :value="selectedNode.ip" />
-      <NodeItem icon="bx-signal-5" label="RSSI" :value="`${selectedNode.rssi} dBm`" />
-      <NodeItem icon="bx-bar-chart-alt-2" label="LQI" :value="selectedNode.lqi" />
-      <NodeItem icon="bx-volume-low" label="Noise Floor" :value="`${selectedNode.noise} dBm`" />
-      <NodeItem icon="bx-magnet" label="Signal Margin" :value="selectedNode.margin" />
-      <NodeItem icon="bx-repeat" label="Retries" :value="selectedNode.retries" />
-      <NodeItem icon="bx-bolt-circle" label="TX Power" :value="selectedNode.txPower" />
-      <NodeItem icon="bx-upload" label="TX Packets" :value="selectedNode.txPackets" />
-      <NodeItem icon="bx-download" label="RX Packets" :value="selectedNode.rxPackets" />
-      <NodeItem icon="bx-stats" label="TX Success Rate" :value="`${selectedNode.txSuccess}%`" />
-      <NodeItem icon="bx-stats" label="RX Success Rate" :value="`${selectedNode.rxSuccess}%`" />
-      <NodeItem icon="bx-list-ul" label="Queue Size" :value="selectedNode.queue" />
-      <NodeItem icon="bx-battery" label="Voltage In" :value="selectedNode.voltageIn" />
-      <NodeItem icon="bx-battery-charging" label="Voltage Out" :value="selectedNode.voltageOut" />
-    </div>
-  </div>
-
-  <!-- Default prompt -->
-  <div v-else class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-sm">
-    Select a node to view status
-  </div>
-</div>
-
-
-
-      <!-- Alarms -->
+      <!-- Alarms (remains unchanged) -->
       <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
         <h3 class="font-semibold mb-2 text-gray-800">Alarms</h3>
         <ul class="text-sm space-y-2">
@@ -116,13 +123,13 @@
 </template>
 
 <script setup>
-import axios from 'axios' // ✅ Import axios
+import axios from 'axios'
 import MapView from '../components/MapView.vue'
-import { ref, computed, onMounted, onUnmounted  } from 'vue'
- import { API_URL } from '../configapi'
-
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
+import { API_URL } from '../configapi'
 import { h } from 'vue'
 
+// NodeItem component definition (remains unchanged)
 const NodeItem = (props) => {
   return h('div', { class: 'flex items-start gap-2' }, [
     h('i', { class: 'bx ' + props.icon + ' text-blue-400 text-lg mt-0.5' }),
@@ -137,59 +144,79 @@ NodeItem.props = {
   label: String,
   value: [String, Number]
 }
-/**
- * @typedef {Object} NodeData
- * @property {string} IP
- * @property {string} RSSI
- * @property {string} status
- */
 
+// UGV data (remains reactive)
+const ugvs = reactive([
+  { id: 1, name: 'UGV Alpha', coords: [5.353, 100.305], battery: 92, speed: 5, path: [] },
+  { id: 2, name: 'UGV Bravo', coords: [5.3535, 100.306], battery: 87, speed: 4, path: [] },
+  { id: 3, name: 'UGV Charlie', coords: [5.354, 100.304], battery: 78, speed: 6, path: [] },
+  { id: 4, name: 'UGV Delta', coords: [5.3545, 100.305], battery: 83, speed: 7, path: [] },
+  { id: 5, name: 'UGV Echo', coords: [5.355, 100.306], battery: 91, speed: 3, path: [] }
+]);
+
+// --- NEW: UGV Simulation Logic (copied and adapted from AboutView.vue) ---
+let ugvSimulationInterval = null;
+
+const startUGVSimulation = () => {
+  if (ugvSimulationInterval) {
+    clearInterval(ugvSimulationInterval); // Clear any existing interval
+  }
+
+  // Simulate live movement
+  ugvSimulationInterval = setInterval(() => {
+    ugvs.forEach((ugv) => {
+      const latOffset = (Math.random() - 0.5) * 0.0003;
+      const lngOffset = (Math.random() - 0.5) * 0.0003;
+      ugv.coords[0] += latOffset;
+      ugv.coords[1] += lngOffset;
+
+      // You can also simulate battery or speed changes here if desired
+      // ugv.battery = Math.max(0, ugv.battery - 0.1);
+      // ugv.speed = Math.floor(Math.random() * 10) + 1; // Speed between 1 and 10
+    });
+  }, 2000); // Update every 2 seconds
+};
+
+const stopUGVSimulation = () => {
+  if (ugvSimulationInterval) {
+    clearInterval(ugvSimulationInterval);
+    ugvSimulationInterval = null;
+  }
+};
+
+// --- END NEW UGV Simulation Logic ---
+
+
+// Existing Node data and fetching logic (remains unchanged)
 const nodes = ref([])
 const selectedNode = ref(null)
 let pollInterval = null
-let isFetching = false // To prevent overlapping requests
+let isFetching = false
 
 const fetchNodeData = async () => {
-  if (isFetching) return // Skip if already fetching
-  
+  if (isFetching) return
+
   isFetching = true
   const url = `${API_URL}/api/send-at?cmd=AT^DRPR=2`
 
   try {
     const res = await fetch(url)
-    
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`)
     }
-    
     const text = await res.text()
     const lines = text.trim().split('\n').filter(line => line.startsWith('^DRPR:'))
-
     const parsedNodes = lines.map(line => {
       const parts = line.replace('^DRPR: ', '').split(',')
-
       return {
-        id: parts[0],
-        ip: parts[3]?.replace(/"/g, ''),
-        rssi: parts[6]?.replace(/"/g, ''),
-        lqi: parts[7],
-        noise: parts[8]?.replace(/"/g, ''),
-        margin: parts[9]?.replace(/"/g, ''),
-        retries: parts[10],
-        txPower: parts[11]?.replace(/"/g, ''),
-        txPackets: parts[12],
-        rxPackets: parts[14],
-        txSuccess: parts[16],
-        rxSuccess: parts[18],
-        queue: parts[20],
-        voltageIn: parts[22]?.replace(/"/g, ''),
-        voltageOut: parts[23]?.replace(/"/g, ''),
+        id: parts[0], ip: parts[3]?.replace(/"/g, ''), rssi: parts[6]?.replace(/"/g, ''),
+        lqi: parts[7], noise: parts[8]?.replace(/"/g, ''), margin: parts[9]?.replace(/"/g, ''),
+        retries: parts[10], txPower: parts[11]?.replace(/"/g, ''), txPackets: parts[12],
+        rxPackets: parts[14], txSuccess: parts[16], rxSuccess: parts[18], queue: parts[20],
+        voltageIn: parts[22]?.replace(/"/g, ''), voltageOut: parts[23]?.replace(/"/g, ''),
       }
     })
-
     nodes.value = parsedNodes
-    
-    // Maintain selection if the node still exists
     if (selectedNode.value) {
       const stillExists = parsedNodes.some(n => n.id === selectedNode.value.id)
       if (!stillExists) {
@@ -200,20 +227,17 @@ const fetchNodeData = async () => {
     }
   } catch (err) {
     console.error('❌ Failed to fetch mesh node data', err)
-    // You might want to implement retry logic here
   } finally {
     isFetching = false
   }
 }
 
-// Start polling
 const startPolling = (interval = 5000) => {
-  stopPolling() // Clear any existing interval
-  fetchNodeData() // Immediate first fetch
+  stopPolling()
+  fetchNodeData()
   pollInterval = setInterval(fetchNodeData, interval)
 }
 
-// Stop polling
 const stopPolling = () => {
   if (pollInterval) {
     clearInterval(pollInterval)
@@ -222,74 +246,28 @@ const stopPolling = () => {
 }
 
 onMounted(() => {
-  startPolling()
-})
+  startPolling(); // Start node data polling
+  startUGVSimulation(); // Start UGV coordinate simulation
+});
 
 onUnmounted(() => {
-  stopPolling()
-})
+  stopPolling(); // Stop node data polling
+  stopUGVSimulation(); // Stop UGV coordinate simulation
+});
 
+// Existing locations data (remains unchanged)
 const locations = [
-  {
-    name: 'Cyberjaya Central',
-    coords: [2.9226, 101.6491],
-    ph: 6.8,
-    ec: 1.3,
-    temperature: 29,
-    other: 44,
-    nplStatus: 'OK',
-  },
-  {
-    name: 'Putrajaya',
-    coords: [2.9264, 101.6963],
-    ph: 7.0,
-    ec: 1.4,
-    temperature: 28,
-    other: 41,
-    nplStatus: 'Warning',
-  },
-  {
-    name: 'Sungai Merab',
-    coords: [2.8700, 101.6500],
-    ph: 6.5,
-    ec: 1.1,
-    temperature: 27,
-    other: 39,
-    nplStatus: 'OK',
-  },
-  {
-    name: 'Puchong',
-    coords: [3.0470, 101.6097],
-    ph: 7.2,
-    ec: 1.6,
-    temperature: 30,
-    other: 45,
-    nplStatus: 'Critical',
-  },
-  {
-    name: 'Kajang',
-    coords: [2.9915, 101.7901],
-    ph: 6.9,
-    ec: 1.5,
-    temperature: 31,
-    other: 46,
-    nplStatus: 'OK',
-  },
-  {
-    name: 'Serdang',
-    coords: [2.9853, 101.7083],
-    ph: 6.7,
-    ec: 1.2,
-    temperature: 28,
-    other: 43,
-    nplStatus: 'OK',
-  },
+  { name: 'Cyberjaya Central', coords: [2.9226, 101.6491], ph: 6.8, ec: 1.3, temperature: 29, other: 44, nplStatus: 'OK' },
+  { name: 'Putrajaya', coords: [2.9264, 101.6963], ph: 7.0, ec: 1.4, temperature: 28, other: 41, nplStatus: 'Warning' },
+  { name: 'Sungai Merab', coords: [2.8700, 101.6500], ph: 6.5, ec: 1.1, temperature: 27, other: 39, nplStatus: 'OK' },
+  { name: 'Puchong', coords: [3.0470, 101.6097], ph: 7.2, ec: 1.6, temperature: 30, other: 45, nplStatus: 'Critical' },
+  { name: 'Kajang', coords: [2.9915, 101.7901], ph: 6.9, ec: 1.5, temperature: 31, other: 46, nplStatus: 'OK' },
+  { name: 'Serdang', coords: [2.9853, 101.7083], ph: 6.7, ec: 1.2, temperature: 28, other: 43, nplStatus: 'OK' },
 ]
 
 const selected = ref(null)
 
 const onSelect = (name) => {
-  // Toggle selection: if same name clicked again, deselect
   if (selected.value?.name === name) {
     selected.value = null
   } else {
@@ -297,11 +275,7 @@ const onSelect = (name) => {
   }
 }
 
-// Computed list based on selected location
 const filteredLocations = computed(() =>
   selected.value ? [selected.value] : locations
 )
-
-
-
 </script>
