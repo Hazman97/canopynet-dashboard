@@ -6,10 +6,8 @@ import HomeView from '../views/Dashboard.vue'; // Your Dashboard component (mapp
 import MainLayout from '../components/Mainlayout.vue';
 import AboutView from '@/views/AboutView.vue'; // Your AboutView component
 import tele from '@/views/Teleoperation.vue'; // Your Teleoperation component
-
-// Import the LoginPage component.
-// This path assumes LoginPage.vue is in src/components.
-import LoginPage from '@/components/LoginPage.vue'; // This path was corrected in earlier steps
+import LoginPage from '@/components/LoginPage.vue'; // Import the LoginPage component.
+import Alarm from '@/views/Alarm.vue'; // Import Alarm.vue
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,12 +24,11 @@ const router = createRouter({
       component: LoginPage
     },
     {
-      // 'Legacy Home' route: If you still use '/MainLayout' directly,
-      // it should also be protected.
+      // 'Legacy Home' route: Protected
       path: '/MainLayout',
       name: 'legacy-home',
-      component: HomeView, // This is your Dashboard.vue
-      meta: { requiresAuth: true } // This route requires authentication
+      component: HomeView,
+      meta: { requiresAuth: true }
     },
     {
       // Main application layout and its protected child routes
@@ -42,18 +39,25 @@ const router = createRouter({
           path: 'dashboard', // Accessible at /dashboard
           name: 'dashboard',
           component: HomeView,
-          meta: { requiresAuth: true } // Requires authentication
+          meta: { requiresAuth: true }
         },
         {
           path: 'cart', // Accessible at /cart
           name: 'cart',
           component: AboutView,
-          meta: { requiresAuth: true } // Requires authentication
+          meta: { requiresAuth: true }
         },
         {
           path: 'teleoperation', // Accessible at /teleoperation
           name: 'teleoperation',
           component: tele,
+          meta: { requiresAuth: true }
+        },
+        {
+          // NEW: Alarm Route - Protected
+          path: 'alarm', // Accessible at /alarm
+          name: 'alarm',
+          component: Alarm, // Use the new Alarm component
           meta: { requiresAuth: true } // Requires authentication
         },
       ]
@@ -61,7 +65,7 @@ const router = createRouter({
   ]
 });
 
-// Navigation Guard: This runs before every route navigation
+// Navigation Guard: (Remains unchanged - checks isAuthenticated based on sessionStorage)
 router.beforeEach((to, from, next) => {
   // Determine if the target route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);

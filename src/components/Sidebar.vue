@@ -19,6 +19,7 @@
     <SidebarItem icon="bx-chalkboard" label="Insight" :to="{ name: 'cart' }" :collapsed="collapsed" />
     <SidebarItem icon="bx-reflect-vertical" label="Fleet" :to="{ name: 'dashboard' }" :collapsed="collapsed" />
     <SidebarItem icon="bx-rocket" label="Teleoperation" :to="{ name: 'teleoperation' }" :collapsed="collapsed" />
+    <SidebarItem icon="bx-error-alt" label="Alarm" :to="{ name: 'alarm' }" :collapsed="collapsed" />
     <SidebarItem icon="bx-cog" label="Setting" :to="{ name: 'dashboard' }" :collapsed="collapsed" />
   </aside>
 </template>
