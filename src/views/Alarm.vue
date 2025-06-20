@@ -71,7 +71,6 @@
                   <i :class="sortDirection === 'asc' ? 'bx bx-chevron-up' : 'bx bx-chevron-down'"></i>
                 </span>
               </th>
-              <!-- Removed Assignee and Details headers -->
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -89,9 +88,7 @@
                   >{{ alarm.severity }}</span
                 >
               </td>
-              <!-- Removed Assignee cell -->
               <td class="px-4 py-3 whitespace-nowrap">{{ alarm.status }}</td>
-              <!-- Removed Details cell -->
             </tr>
             <tr v-if="paginatedAlarms.length === 0">
               <td :colspan="columns.length" class="px-4 py-3 text-center text-gray-500">No alarms found.</td>
@@ -139,7 +136,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 
-// Mock Alarm Data - UPDATED to use 'location' instead of 'originator' and removed 'assignee'
+// Mock Alarm Data
 const alarms = ref([
   { id: 1, createdTime: '2025-06-20 15:14:28', location: 'Cyberjaya Central', type: 'High Temperature', severity: 'Critical', status: 'Active' },
   { id: 2, createdTime: '2025-06-20 15:14:28', location: 'Putrajaya', type: 'High CO2 level', severity: 'Major', status: 'Active' },
@@ -171,7 +168,6 @@ const filteredAlarms = computed(() => {
       alarm.type.toLowerCase().includes(lowerSearchTerm) ||
       alarm.severity.toLowerCase().includes(lowerSearchTerm) ||
       alarm.status.toLowerCase().includes(lowerSearchTerm)
-      // Removed assignee search
     );
   }
 
@@ -209,12 +205,11 @@ const sortBy = (columnKey) => {
 
 const columns = [
   { key: 'createdTime', label: 'Created time' },
-  { key: 'location', label: 'Location' }, // Changed label from 'Originator' to 'Location'
+  { key: 'location', label: 'Location' },
   { key: 'type', label: 'Type' },
   { key: 'severity', label: 'Severity' },
-  // Removed Assignee column
   { key: 'status', label: 'Status' },
-  // Removed Details column
+
 ];
 
 // Pagination
