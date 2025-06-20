@@ -35,22 +35,15 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'; // Import useRouter to access router instance
+import { useRouter } from 'vue-router'; // Import useRouter
 
-const router = useRouter(); // Get the router instance
+const router = useRouter();
 
-/**
- * Handles the user logout process.
- * Clears authentication token from localStorage and redirects to login page.
- */
 const logout = () => {
-  // 1. Clear the authentication status from localStorage.
-  // This is how we "log out" the user on the client-side.
-  localStorage.removeItem('userToken'); // Matches the key used in LoginPage.vue
+  // --- CRITICAL CHANGE: Clear authentication status from sessionStorage ---
+  sessionStorage.removeItem('userToken');
 
-  // 2. Redirect the user to the login page.
-  // The navigation guard in src/router/index.ts will ensure they cannot go back to protected routes.
+  // Redirect to the login page
   router.push('/login');
 };
 </script>
-

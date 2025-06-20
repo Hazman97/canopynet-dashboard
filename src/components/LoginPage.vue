@@ -110,9 +110,9 @@ async function handleLogin() {
       const data = await response.json();
       console.log('Login successful!', data);
 
-      // --- CRITICAL ADDITION: Store authentication status in localStorage ---
-      // This 'userToken' key is checked by the navigation guard in src/router/index.ts
-      localStorage.setItem('userToken', 'true'); // Store a dummy token
+      // --- CRITICAL CHANGE: Store authentication status in sessionStorage ---
+      // This token will be cleared when the browser tab/window is closed.
+      sessionStorage.setItem('userToken', 'true'); // Store a dummy token
 
       // Navigate to '/dashboard' after successful login
       router.push('/dashboard');

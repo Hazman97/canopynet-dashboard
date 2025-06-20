@@ -8,8 +8,8 @@ import AboutView from '@/views/AboutView.vue'; // Your AboutView component
 import tele from '@/views/Teleoperation.vue'; // Your Teleoperation component
 
 // Import the LoginPage component.
-// Adjust this path if LoginPage.vue is not in src/components.
-import LoginPage from '@/components/LoginPage.vue'; // Corrected path assuming LoginPage.vue is in src/components
+// This path assumes LoginPage.vue is in src/components.
+import LoginPage from '@/components/LoginPage.vue'; // This path was corrected in earlier steps
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -64,36 +64,24 @@ const router = createRouter({
 // Navigation Guard: This runs before every route navigation
 router.beforeEach((to, from, next) => {
   // Determine if the target route requires authentication
-  // `to.matched.some` checks if any of the matched route records (including parent routes)
-  // have a `meta.requiresAuth` property set to `true`.
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
-  // Check if the user is authenticated by looking for the dummy token in localStorage.
-  // In a real app, this would involve validating a JWT or session token.
-  const isAuthenticated = localStorage.getItem('userToken') === 'true';
+  // --- CRITICAL CHANGE: Check for the dummy token in sessionStorage ---
+  const isAuthenticated = sessionStorage.getItem('userToken') === 'true';
 
   if (requiresAuth && !isAuthenticated) {
     // Scenario 1: Route requires authentication BUT user is NOT authenticated.
-    // Redirect them to the login page.
-    // This handles:
-    // - Direct URL access to protected routes when logged out.
-    // - Browser back/forward button attempts to protected routes when logged out.
     console.log('Navigation Guard: Route requires auth but user is NOT authenticated. Redirecting to /login');
     next('/login');
   } else if (to.name === 'login' && isAuthenticated) {
     // Scenario 2: User IS authenticated AND they are trying to go to the login page.
-    // Redirect them to the dashboard (or another main authenticated page).
-    // This prevents logged-in users from seeing the login form unnecessarily.
     console.log('Navigation Guard: User IS authenticated and trying to access login. Redirecting to /dashboard');
     next('/dashboard');
   } else {
-    // Scenario 3: Otherwise (e.g., route doesn't require auth, or user is authenticated
-    // and navigating to a protected route).
-    // Allow the navigation to proceed.
+    // Scenario 3: Otherwise, allow navigation.
     console.log('Navigation Guard: Navigation allowed.');
     next();
   }
 });
 
 export default router;
-
