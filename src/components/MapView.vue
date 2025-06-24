@@ -103,8 +103,8 @@ const getCustomIcon = (iconClass) => {
 }
 
 .marker-circle {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   background-color: #10B981; /* Green color, adjust as needed */
   border: 2px solid #059669; /* Darker green border */
   border-radius: 50%;
@@ -112,7 +112,7 @@ const getCustomIcon = (iconClass) => {
   align-items: center;
   justify-content: center;
   color: white; /* Icon color */
-  font-size: 24px; /* Icon size */
+  font-size: 20px; /* Icon size */
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   position: relative;
   z-index: 1; /* Ensure circle is above pointer base */

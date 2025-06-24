@@ -291,8 +291,16 @@ const otherPointsOfInterest = [
   { name: 'Operation Centre', coords: [2.785000, 102.923889], icon: 'bxs-business', color: '#58d68d' }, // Green
   { name: 'Staff House', coords: [2.780278, 102.924445], icon: 'bx-building-house', color: '#58d68d' }, // Green
   { name: 'Fertilizer Store', coords: [2.777500, 102.920556], icon: 'bxs-factory', color: '#5dade2' }, // Blue
-  { name: 'Office Farm', coords: [2.7762339, 102.9192643], icon: 'bx-home-alt', color: '#5dade2' }, // Blue (Defaulted)
+  { name: 'Office Farm', coords: [2.7762339, 102.9192643], icon: 'bx-home-alt', color: '#5dade2' }, // Blue
   { name: 'Master Node', coords: [2.7762330, 102.9192424], icon: 'bx-sitemap', color: '#e74c3c' }, // Red
+  { name: 'Node 1', coords: [2.7761610, 102.9186266], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
+  { name: 'Node 2', coords: [2.7780436, 102.9183831], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
+  { name: 'Node 3', coords: [2.7790717, 102.9197222], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
+  { name: 'Node 4', coords: [2.7798398, 102.9212139], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
+  { name: 'Node 5', coords: [2.7773601, 102.9198678], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
+  { name: 'Node 6', coords: [2.7783504, 102.9214836], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
+  { name: 'Node 7', coords: [2.7765668, 102.9213325], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
+  { name: 'Node 8', coords: [2.7755845, 102.9199512], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
 ];
 
 // Computed property to combine all locations for the map
