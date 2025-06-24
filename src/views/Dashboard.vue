@@ -239,7 +239,7 @@ const stopPolling = () => {
     clearInterval(pollInterval)
     pollInterval = null
   }
-}
+};
 
 onMounted(() => {
   startPolling();
@@ -251,7 +251,7 @@ onUnmounted(() => {
   stopUGVSimulation();
 });
 
-// Original Silo locations
+// Original Silo locations (unchanged)
 const siloLocations = [
   {
     name: 'Cyberjaya Central',
@@ -283,19 +283,23 @@ const siloLocations = [
     coords: [2.9853, 101.7083],
     ph: 6.7, ec: 1.2, temperature: 28, other: 43, nplStatus: 'OK'
   },
-];
+]; 
 
-// NEW points of interest (converted from degrees, minutes, seconds)
+// Keratong locations with specified Boxicon classes and COLORS
 const otherPointsOfInterest = [
-  { name: 'Starlink (Water tank)', coords: [2.786111, 102.923888] },
-  { name: 'Operation Centre', coords: [2.785000, 102.923888] },
-  { name: 'Staff House', coords: [2.780277, 102.924444] },
-  { name: 'Centre', coords: [2.776111, 102.926666] },
-  { name: 'Master Node', coords: [2.776111, 102.919166] },
+  { name: 'Starlink (Water tank)', coords: [2.786111, 102.924167], icon: 'bx-water', color: '#5dade2' }, // Blue
+  { name: 'Operation Centre', coords: [2.785000, 102.923889], icon: 'bxs-business', color: '#58d68d' }, // Green
+  { name: 'Staff House', coords: [2.780278, 102.924445], icon: 'bx-building-house', color: '#58d68d' }, // Green
+  { name: 'Fertilizer Store', coords: [2.777500, 102.920556], icon: 'bxs-factory', color: '#5dade2' }, // Blue
+  { name: 'Office Farm', coords: [2.7762339, 102.9192643], icon: 'bx-home-alt', color: '#5dade2' }, // Blue (Defaulted)
+  { name: 'Master Node', coords: [2.7762330, 102.9192424], icon: 'bx-sitemap', color: '#e74c3c' }, // Red
 ];
 
 // Computed property to combine all locations for the map
 const allMapLocations = computed(() => {
+  // Merge siloLocations and otherPointsOfInterest.
+  // Note: Silo locations don't have an 'icon' property by default.
+  // If you want icons for silos, you'd need to add them here or to their data.
   return [...siloLocations, ...otherPointsOfInterest];
 });
 
@@ -311,7 +315,7 @@ const onSelect = (name) => {
 }
 
 const filteredLocations = computed(() =>
-  selected.value ? [selected.value] : siloLocations // Filter based on siloLocations
+  selected.value ? [selected.value] : siloLocations
 )
 
 const goToAlarms = () => {
