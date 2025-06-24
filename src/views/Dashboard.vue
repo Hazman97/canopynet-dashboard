@@ -3,7 +3,7 @@
     <!-- Map Section (Top Full Width) -->
     <div class="w-full h-[50vh] bg-white rounded-lg shadow overflow-hidden">
       <MapView
-        :locations="locations"
+        :locations="allMapLocations"
         :latitude="2.9226"
         :longitude="101.6491"
         @location-selected="onSelect"
@@ -27,6 +27,7 @@
             </tr>
           </thead>
           <tbody>
+            <!-- This table still displays only the silo locations -->
             <tr v-for="loc in filteredLocations" :key="loc.name" class="border-b hover:bg-gray-50">
               <td class="py-1.5">{{ loc.name }}</td>
               <td>{{ loc.other }}%</td>
@@ -131,9 +132,8 @@ import MapView from '../components/MapView.vue'
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
 import { API_URL } from '../configapi'
 import { h } from 'vue'
-import { useRouter } from 'vue-router'; // Import useRouter
+import { useRouter } from 'vue-router';
 
-// Initialize useRouter
 const router = useRouter();
 
 // NodeItem component definition
@@ -152,48 +152,13 @@ NodeItem.props = {
   value: [String, Number]
 }
 
-// UGV data
+// UGV data (remains reactive)
 const ugvs = reactive([
-  { 
-    id: 1, 
-    name: 'UGV Alpha', 
-    coords: [5.353, 100.305], 
-    battery: 92, 
-    speed: 5, 
-    path: [] 
-  },
-  { 
-    id: 2, 
-    name: 'UGV Bravo', 
-    coords: [5.3535, 100.306], 
-    battery: 87, 
-    speed: 4, 
-    path: [] 
-  },
-  { 
-    id: 3, 
-    name: 'UGV Charlie', 
-    coords: [5.354, 100.304], 
-    battery: 78, 
-    speed: 6, 
-    path: [] 
-  },
-  { 
-    id: 4, 
-    name: 'UGV Delta', 
-    coords: [5.3545, 100.305], 
-    battery: 83, 
-    speed: 7, 
-    path: [] 
-  },
-  { 
-    id: 5, 
-    name: 'UGV Echo', 
-    coords: [5.355, 100.306], 
-    battery: 91, 
-    speed: 3, 
-    path: [] 
-  }
+  { id: 1, name: 'UGV Alpha', coords: [5.353, 100.305], battery: 92, speed: 5, path: [] },
+  { id: 2, name: 'UGV Bravo', coords: [5.3535, 100.306], battery: 87, speed: 4, path: [] },
+  { id: 3, name: 'UGV Charlie', coords: [5.354, 100.304], battery: 78, speed: 6, path: [] },
+  { id: 4, name: 'UGV Delta', coords: [5.3545, 100.305], battery: 83, speed: 7, path: [] },
+  { id: 5, name: 'UGV Echo', coords: [5.355, 100.306], battery: 91, speed: 3, path: [] }
 ]);
 
 // UGV Simulation Logic
@@ -209,10 +174,6 @@ const startUGVSimulation = () => {
       const lngOffset = (Math.random() - 0.5) * 0.0003;
       ugv.coords[0] += latOffset;
       ugv.coords[1] += lngOffset;
-
-      // You can also simulate battery or speed changes here if desired
-      // ugv.battery = Math.max(0, ugv.battery - 0.1);
-      // ugv.speed = Math.floor(Math.random() * 10) + 1; // Speed between 1 and 10
     });
   }, 2000);
 };
@@ -232,10 +193,8 @@ let isFetching = false
 
 const fetchNodeData = async () => {
   if (isFetching) return
-
   isFetching = true
   const url = `${API_URL}/api/send-at?cmd=AT^DRPR=2`
-
   try {
     const res = await fetch(url)
     if (!res.ok) {
@@ -292,80 +251,70 @@ onUnmounted(() => {
   stopUGVSimulation();
 });
 
-// Existing locations data (remains unchanged)
-const locations = [
-  { 
-    name: 'Cyberjaya Central', 
-    coords: [2.9226, 101.6491], 
-    ph: 6.8, 
-    ec: 1.3, 
-    temperature: 29, 
-    other: 44, 
-    nplStatus: 'OK' 
+// Original Silo locations
+const siloLocations = [
+  {
+    name: 'Cyberjaya Central',
+    coords: [2.9226, 101.6491],
+    ph: 6.8, ec: 1.3, temperature: 29, other: 44, nplStatus: 'OK'
   },
-  { 
-    name: 'Putrajaya', 
-    coords: [2.9264, 101.6963], 
-    ph: 7.0, 
-    ec: 1.4, 
-    temperature: 28, 
-    other: 41, 
-    nplStatus: 'Warning'
-   },
-  { 
-    name: 'Sungai Merab', 
-    coords: [2.8700, 101.6500], 
-    ph: 6.5, 
-    ec: 1.1, 
-    temperature: 27, 
-    other: 39, 
-    nplStatus: 'OK' 
+  {
+    name: 'Putrajaya',
+    coords: [2.9264, 101.6963],
+    ph: 7.0, ec: 1.4, temperature: 28, other: 41, nplStatus: 'Warning'
   },
-  { 
-    name: 'Puchong', 
-    coords: [3.0470, 101.6097], 
-    ph: 7.2, 
-    ec: 1.6, 
-    temperature: 30, 
-    other: 45, 
-    nplStatus: 'Critical' 
+  {
+    name: 'Sungai Merab',
+    coords: [2.8700, 101.6500],
+    ph: 6.5, ec: 1.1, temperature: 27, other: 39, nplStatus: 'OK'
   },
-  { name: 'Kajang', 
-  coords: [2.9915, 101.7901], 
-  ph: 6.9, 
-  ec: 1.5, 
-  temperature: 31, 
-  other: 46, 
-  nplStatus: 'OK' 
+  {
+    name: 'Puchong',
+    coords: [3.0470, 101.6097],
+    ph: 7.2, ec: 1.6, temperature: 30, other: 45, nplStatus: 'Critical'
   },
-  { 
-    name: 'Serdang', 
-    coords: [2.9853, 101.7083], 
-    ph: 6.7, 
-    ec: 1.2, 
-    temperature: 28, 
-    other: 43, 
-    nplStatus: 'OK' 
+  {
+    name: 'Kajang',
+    coords: [2.9915, 101.7901],
+    ph: 6.9, ec: 1.5, temperature: 31, other: 46, nplStatus: 'OK'
   },
-]
+  {
+    name: 'Serdang',
+    coords: [2.9853, 101.7083],
+    ph: 6.7, ec: 1.2, temperature: 28, other: 43, nplStatus: 'OK'
+  },
+];
+
+// NEW points of interest (converted from degrees, minutes, seconds)
+const otherPointsOfInterest = [
+  { name: 'Starlink (Water tank)', coords: [2.786111, 102.923888] },
+  { name: 'Operation Centre', coords: [2.785000, 102.923888] },
+  { name: 'Staff House', coords: [2.780277, 102.924444] },
+  { name: 'Centre', coords: [2.776111, 102.926666] },
+  { name: 'Master Node', coords: [2.776111, 102.919166] },
+];
+
+// Computed property to combine all locations for the map
+const allMapLocations = computed(() => {
+  return [...siloLocations, ...otherPointsOfInterest];
+});
 
 const selected = ref(null)
 
 const onSelect = (name) => {
+  // Only select if it's a silo location (to affect the Silos table)
   if (selected.value?.name === name) {
     selected.value = null
   } else {
-    selected.value = locations.find((loc) => loc.name === name) || null
+    selected.value = siloLocations.find((loc) => loc.name === name) || null
   }
 }
 
 const filteredLocations = computed(() =>
-  selected.value ? [selected.value] : locations
+  selected.value ? [selected.value] : siloLocations // Filter based on siloLocations
 )
 
-// NEW: Function to navigate to the Alarm page
 const goToAlarms = () => {
-  router.push('/alarm'); // 'alarm' is the name of the route we defined in index.ts
+  router.push('/alarm');
 };
 </script>
-

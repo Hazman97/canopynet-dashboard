@@ -6,34 +6,9 @@
         Alarms
       </h1>
 
-      <!-- Filters and Actions Section -->
-      <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
-        <!-- Filters -->
-        <div class="flex flex-wrap gap-2">
-          <button
-            @click="activeFilter = 'active'"
-            :class="[
-              'px-4 py-2 rounded-lg text-sm font-semibold transition',
-              activeFilter === 'active'
-                ? 'bg-blue-600 text-white shadow'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300',
-            ]"
-          >
-            Filter: Active
-          </button>
-          <button
-            @click="timeFilter = 'all'"
-            :class="[
-              'px-4 py-2 rounded-lg text-sm font-semibold transition',
-              timeFilter === 'all'
-                ? 'bg-blue-600 text-white shadow'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300',
-            ]"
-          >
-            For all time
-          </button>
-        </div>
-
+      <!-- Filters and Actions Section - MODIFIED (Filters removed) -->
+      <div class="flex flex-col sm:flex-row justify-end items-center mb-4 gap-3">
+        <!-- Filters - REMOVED -->
         <!-- Right-aligned actions -->
         <div class="flex items-center gap-2 w-full sm:w-auto">
           <button
@@ -76,7 +51,7 @@
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="alarm in paginatedAlarms" :key="alarm.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 whitespace-nowrap">{{ alarm.createdTime }}</td>
-              <td class="px-4 py-3 whitespace-nowrap text-blue-600 cursor-pointer hover:underline">{{ alarm.location }}</td> <!-- Changed to alarm.location -->
+              <td class="px-4 py-3 whitespace-nowrap text-blue-600 cursor-pointer hover:underline">{{ alarm.location }}</td>
               <td class="px-4 py-3 whitespace-nowrap">{{ alarm.type }}</td>
               <td class="px-4 py-3 whitespace-nowrap">
                 <span
@@ -138,33 +113,91 @@ import { ref, computed } from 'vue';
 
 // Mock Alarm Data
 const alarms = ref([
-  { id: 1, createdTime: '2025-06-20 15:14:28', location: 'Cyberjaya Central', type: 'High Temperature', severity: 'Critical', status: 'Active' },
-  { id: 2, createdTime: '2025-06-20 15:14:28', location: 'Putrajaya', type: 'High CO2 level', severity: 'Major', status: 'Active' },
-  { id: 3, createdTime: '2025-06-20 15:14:27', location: 'Sungai Merab', type: 'Voltage Fluctuation', severity: 'Major', status: 'Active' },
-  { id: 4, createdTime: '2025-06-20 15:14:27', location: 'Puchong', type: 'Low Battery', severity: 'Warning', status: 'Active' },
-  { id: 5, createdTime: '2025-06-20 15:14:27', location: 'Kajang', type: 'High Humidity', severity: 'Major', status: 'Active' },
-  { id: 6, createdTime: '2025-06-20 15:14:27', location: 'Serdang', type: 'Offline', severity: 'Critical', status: 'Active' },
-  { id: 7, createdTime: '2025-06-20 15:14:27', location: 'Kajang', type: 'Overcharge', severity: 'Warning', status: 'Active' },
-  { id: 8, createdTime: '2025-06-19 10:00:00', location: 'Sungai Merab', type: 'Moisture Detected', severity: 'Critical', status: 'Acknowledged' },
-  { id: 9, createdTime: '2025-06-18 09:30:00', location: 'Putrajaya', type: 'Communication Loss', severity: 'Major', status: 'Active' },
+  {
+    id: 1,
+    createdTime: '2025-06-20 15:14:28',
+    location: 'Cyberjaya Central',
+    type: 'High Temperature',
+    severity: 'Critical',
+    status: 'Active'
+  },
+  {
+    id: 2,
+    createdTime: '2025-06-20 15:14:28',
+    location: 'Putrajaya',
+    type: 'High CO2 level',
+    severity: 'Major',
+    status: 'Active'
+  },
+  {
+    id: 3,
+    createdTime: '2025-06-20 15:14:27',
+    location: 'Sungai Merab',
+    type: 'Voltage Fluctuation',
+    severity: 'Major',
+    status: 'Active'
+  },
+  {
+    id: 4,
+    createdTime: '2025-06-20 15:14:27',
+    location: 'Puchong',
+    type: 'Low Battery',
+    severity: 'Warning',
+    status: 'Active'
+  },
+  {
+    id: 5,
+    createdTime: '2025-06-20 15:14:27',
+    location: 'Kajang',
+    type: 'High Humidity',
+    severity: 'Major',
+    status: 'Active'
+  },
+  {
+    id: 6,
+    createdTime: '2025-06-20 15:14:27',
+    location: 'Serdang',
+    type: 'Offline',
+    severity: 'Critical',
+    status: 'Active'
+  },
+  {
+    id: 7,
+    createdTime: '2025-06-20 15:14:27',
+    location: 'Kajang',
+    type: 'Overcharge',
+    severity: 'Warning',
+    status: 'Active'
+  },
+  {
+    id: 8,
+    createdTime: '2025-06-19 10:00:00',
+    location: 'Sungai Merab',
+    type: 'Moisture Detected',
+    severity: 'Critical',
+    status: 'Acknowledged'
+  },
+  {
+    id: 9,
+    createdTime: '2025-06-18 09:30:00',
+    location: 'Putrajaya',
+    type: 'Communication Loss',
+    severity: 'Major',
+    status: 'Active'
+  },
 ]);
 
-// Filtering
-const activeFilter = ref('active');
-const timeFilter = ref('all');
+// Filtering - MODIFIED (removed activeFilter and timeFilter)
 const searchTerm = ref('');
 
 const filteredAlarms = computed(() => {
   let filtered = alarms.value;
 
-  if (activeFilter.value === 'active') {
-    filtered = filtered.filter(alarm => alarm.status === 'Active');
-  }
-
+  // Only apply search term filter now
   if (searchTerm.value) {
     const lowerSearchTerm = searchTerm.value.toLowerCase();
     filtered = filtered.filter(alarm =>
-      alarm.location.toLowerCase().includes(lowerSearchTerm) || // Search by location
+      alarm.location.toLowerCase().includes(lowerSearchTerm) ||
       alarm.type.toLowerCase().includes(lowerSearchTerm) ||
       alarm.severity.toLowerCase().includes(lowerSearchTerm) ||
       alarm.status.toLowerCase().includes(lowerSearchTerm)
@@ -174,7 +207,7 @@ const filteredAlarms = computed(() => {
   return filtered;
 });
 
-// Sorting
+// Sorting (remains unchanged)
 const sortColumn = ref('createdTime');
 const sortDirection = ref('desc');
 
@@ -209,10 +242,9 @@ const columns = [
   { key: 'type', label: 'Type' },
   { key: 'severity', label: 'Severity' },
   { key: 'status', label: 'Status' },
-
 ];
 
-// Pagination
+// Pagination (remains unchanged)
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
@@ -222,12 +254,10 @@ const paginatedAlarms = computed(() => {
   return filteredAndSortedAlarms.value.slice(start, end);
 });
 
-// Calculate start and end index for "X - Y of Z" display
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
 const endIndex = computed(() => Math.min(startIndex.value + parseInt(itemsPerPage.value), filteredAndSortedAlarms.value.length));
 
-
-// Actions
+// Actions (remains unchanged)
 const refreshAlarms = () => {
   currentPage.value = 1;
   searchTerm.value = '';

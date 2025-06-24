@@ -5,9 +5,11 @@
       :center="[latitude, longitude]"
       style="height: 100%; width: 100%"
     >
-<l-tile-layer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution="&copy; OpenStreetMap contributors & CartoDB"
+      <l-tile-layer
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        attribution="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+        :min-zoom="0"
+        :max-zoom="19"
       />
 
       <l-marker
@@ -29,6 +31,7 @@ import L from 'leaflet'
 import { defineEmits, defineProps } from 'vue'
 
 // Fix missing marker icons (Leaflet default icon fix)
+// This is essential for markers to display correctly with Vite/Vue 3
 delete L.Icon.Default.prototype._getIconUrl
 
 L.Icon.Default.mergeOptions({
@@ -49,3 +52,8 @@ const select = (name) => {
   emit('location-selected', name)
 }
 </script>
+
+<style scoped>
+/* No specific scoped styles needed as Tailwind CSS is used extensively. */
+/* If you need to override Leaflet default styles or add custom map styles, you can do so here. */
+</style>
