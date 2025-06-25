@@ -1,12 +1,10 @@
 <template>
   <div class="min-h-screen bg-gray-100 p-4 space-y-4">
-    <!-- Map Section (Top Full Width) -->
-    <div class="w-full h-[50vh] bg-white rounded-lg shadow overflow-hidden">
+    <div class="w-full h-[65vh] bg-white rounded-lg shadow overflow-hidden">
       <MapView
         :locations="allMapLocations"
-        :latitude="2.9226"
-        :longitude="101.6491"
-        @location-selected="onSelect"
+        :center="mapCenter"
+        :zoom="mapZoom"  
         @map-click="selected = null"
         class="w-full h-full"
       />
@@ -14,31 +12,6 @@
 
     <!-- Dashboard Panels Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      <!-- Silos Info -->
-      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
-        <h3 class="font-semibold mb-2 text-gray-800">Silos</h3>
-        <table class="text-sm w-full">
-          <thead>
-            <tr class="text-left text-gray-500 border-b">
-              <th>Name</th>
-              <th>Crop</th>
-              <th>Temp</th>
-              <th>Moist</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- This table still displays only the silo locations -->
-            <tr v-for="loc in filteredLocations" :key="loc.name" class="border-b hover:bg-gray-50">
-              <td class="py-1.5">{{ loc.name }}</td>
-              <td>{{ loc.other }}%</td>
-              <td>{{ loc.temperature }}°C</td>
-              <td>{{ loc.ph }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- UGV Status Section -->
       <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
         <h3 class="font-semibold mb-2 text-gray-800">UGV Status</h3>
         <table class="text-sm w-full">
@@ -119,6 +92,26 @@
           <li>
             <span class="text-yellow-500 font-semibold">[Warning]</span> - pH spike in Putrajaya<br />
             <span class="text-xs text-gray-500">2024-07-16 11:40:00</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
+        <h3 class="font-semibold mb-2 text-gray-800">Map Legend</h3>
+        <ul class="text-sm space-y-2">
+          <li
+            v-for="point in otherPointsOfInterest"
+            :key="point.name"
+            class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded -mx-1"
+            @click="zoomToLocation(point.coords)"
+          >
+            <div
+              class="legend-icon-circle"
+              :style="{ backgroundColor: point.color || '#10B981', borderColor: point.color || '#059669' }"
+            >
+              <i :class="['bx', point.icon, 'legend-icon']"></i>
+            </div>
+            <span>{{ point.name }}</span>
           </li>
         </ul>
       </div>
@@ -251,47 +244,13 @@ onUnmounted(() => {
   stopUGVSimulation();
 });
 
-// Original Silo locations (unchanged)
-const siloLocations = [
-  {
-    name: 'Cyberjaya Central',
-    coords: [2.9226, 101.6491],
-    ph: 6.8, ec: 1.3, temperature: 29, other: 44, nplStatus: 'OK'
-  },
-  {
-    name: 'Putrajaya',
-    coords: [2.9264, 101.6963],
-    ph: 7.0, ec: 1.4, temperature: 28, other: 41, nplStatus: 'Warning'
-  },
-  {
-    name: 'Sungai Merab',
-    coords: [2.8700, 101.6500],
-    ph: 6.5, ec: 1.1, temperature: 27, other: 39, nplStatus: 'OK'
-  },
-  {
-    name: 'Puchong',
-    coords: [3.0470, 101.6097],
-    ph: 7.2, ec: 1.6, temperature: 30, other: 45, nplStatus: 'Critical'
-  },
-  {
-    name: 'Kajang',
-    coords: [2.9915, 101.7901],
-    ph: 6.9, ec: 1.5, temperature: 31, other: 46, nplStatus: 'OK'
-  },
-  {
-    name: 'Serdang',
-    coords: [2.9853, 101.7083],
-    ph: 6.7, ec: 1.2, temperature: 28, other: 43, nplStatus: 'OK'
-  },
-]; 
-
-// Keratong locations with specified Boxicon classes and COLORS
+// Keratong locations
 const otherPointsOfInterest = [
   { name: 'Starlink (Water tank)', coords: [2.786111, 102.924167], icon: 'bx-water', color: '#5dade2' }, // Blue
   { name: 'Operation Centre', coords: [2.785000, 102.923889], icon: 'bxs-business', color: '#58d68d' }, // Green
   { name: 'Staff House', coords: [2.780278, 102.924445], icon: 'bx-building-house', color: '#58d68d' }, // Green
   { name: 'Fertilizer Store', coords: [2.777500, 102.920556], icon: 'bxs-factory', color: '#5dade2' }, // Blue
-  { name: 'Office Farm', coords: [2.7762339, 102.9192643], icon: 'bx-home-alt', color: '#5dade2' }, // Blue
+  { name: 'Office Farm', coords: [2.7762165, 102.9193214], icon: 'bx-home-alt', color: '#5dade2' }, // Blue
   { name: 'Master Node', coords: [2.7762330, 102.9192424], icon: 'bx-sitemap', color: '#e74c3c' }, // Red
   { name: 'Node 1', coords: [2.7761610, 102.9186266], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
   { name: 'Node 2', coords: [2.7780436, 102.9183831], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
@@ -303,30 +262,58 @@ const otherPointsOfInterest = [
   { name: 'Node 8', coords: [2.7755845, 102.9199512], icon: 'bx-network-chart', color: '#f39c12' }, // Orange
 ];
 
-// Computed property to combine all locations for the map
+// Combine all map locations
 const allMapLocations = computed(() => {
-  // Merge siloLocations and otherPointsOfInterest.
-  // Note: Silo locations don't have an 'icon' property by default.
-  // If you want icons for silos, you'd need to add them here or to their data.
-  return [...siloLocations, ...otherPointsOfInterest];
+  return [...otherPointsOfInterest];
 });
 
-const selected = ref(null)
+// Map control state 
+const initialLatitude = 2.7763448; // Keratong Latitude
+const initialLongitude = 102.9267660; // Keratong Longitude
+const initialZoom = 16; // Adjust this initial zoom
 
+// Use a reactive object to hold center and zoom for the map
+const mapCenter = ref([initialLatitude, initialLongitude]);
+const mapZoom = ref(initialZoom);
+
+// Function to zoom to a specific location
+const zoomToLocation = (coords) => {
+  mapCenter.value = coords;
+  mapZoom.value = 18; // Zoom in closer when a legend item is clicked
+};
+
+
+const selected = ref(null)
 const onSelect = (name) => {
-  // Only select if it's a silo location (to affect the Silos table)
   if (selected.value?.name === name) {
     selected.value = null
   } else {
-    selected.value = siloLocations.find((loc) => loc.name === name) || null
+    selected.value = null;
   }
 }
-
-const filteredLocations = computed(() =>
-  selected.value ? [selected.value] : siloLocations
-)
 
 const goToAlarms = () => {
   router.push('/alarm');
 };
 </script>
+
+<style scoped>
+/* Scoped styles for the legend icons to mimic the map marker appearance */
+.legend-icon-circle {
+  width: 24px; /* Smaller size for legend */
+  height: 24px;
+  background-color: #10B981; /* Default green, will be overridden by point.color */
+  border: 1px solid #059669; /* Darker green border, will be overridden */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px; /* Smaller icon size for legend */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.legend-icon {
+  line-height: 1; /* Ensure icon is vertically centered */
+}
+</style>
