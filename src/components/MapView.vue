@@ -33,7 +33,7 @@
         <l-popup>{{ loc.name }}</l-popup>
       </l-marker>
 
-      <l-polygon :lat-lngs="perimeterCoordinates" :color="'#3498db'" :fillColor="'#3498db'" :fillOpacity="0.2">
+      <l-polygon :lat-lngs="perimeterCoordinates" :color="'#A0C878'" :fillColor="'#A0C878'" :fillOpacity="0.0">
         <l-popup>Phase 1 Perimeter</l-popup>
       </l-polygon>
     </l-map>
