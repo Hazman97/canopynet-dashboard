@@ -32,17 +32,21 @@
       >
         <l-popup>{{ loc.name }}</l-popup>
       </l-marker>
+
+      <l-polygon :lat-lngs="perimeterCoordinates" :color="'#3498db'" :fillColor="'#3498db'" :fillOpacity="0.2">
+        <l-popup>Phase 1 Perimeter</l-popup>
+      </l-polygon>
     </l-map>
   </div>
 </template>
 
 <script setup>
-import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
+import { LMap, LTileLayer, LMarker, LPopup, LPolygon } from '@vue-leaflet/vue-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { defineEmits, defineProps, ref, watch, onMounted } from 'vue' // Import onMounted
+import { defineEmits, defineProps, ref, watch, onMounted, computed } from 'vue' // Import computed
 
-// Fix missing marker icons -- Leaflet default icon fix
+// Fix missing marker icons 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).href,
@@ -56,7 +60,7 @@ const props = defineProps({
   locations: Array,
   center: {
     type: Array,
-    default: () => [2.7763448, 102.926766], 
+    default: () => [2.7763448, 102.926766],
   },
   zoom: {
     type: Number,
@@ -144,11 +148,21 @@ const getCustomIcon = (iconClass, iconColor) => {
     popupAnchor: [0, -40], // Point from which the popup should open relative to the iconAnchor
   })
 }
+
+// Perimeter coordinates for Phase 1
+const perimeterCoordinates = computed(() => {
+  const coordsString =
+    '102.9165450890077,2.772497192403033,0 102.9355133975941,2.771992497136516,0 102.9400255477051,2.779857061689484,0 102.9364739797056,2.779897401574271,0 102.9309327370254,2.779959421751386,0 102.9183844977419,2.780084843074441,0 102.9165375388878,2.775658007094284,0 102.9165450890077,2.772497192403033,0'
+  const coordsArray = coordsString.split(' ').map((coordStr) => {
+    const parts = coordStr.split(',')
+    // Leaflet expects [latitude, longitude]
+    return [parseFloat(parts[1]), parseFloat(parts[0])]
+  })
+  return coordsArray
+})
 </script>
 
 <style>
-/* Global styles for custom Leaflet markers (not scoped to MapView.vue) */
-/* This is important so Leaflet can apply them directly to the map container */
 
 .custom-leaflet-marker {
   display: flex;
