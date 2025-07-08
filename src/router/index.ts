@@ -8,6 +8,14 @@ import AboutView from '@/views/AboutView.vue'; // Your AboutView component
 import tele from '@/views/Teleoperation.vue'; // Your Teleoperation component
 import LoginPage from '@/components/LoginPage.vue'; // Import the LoginPage component.
 import Alarm from '@/views/Alarm.vue'; // Import Alarm.vue
+import LiveMapView from '@/views/LiveMapView.vue'; // Import LiveMapView.vue
+import TaskView from '@/views/TaskView.vue';       // Import TaskView.vue
+import WorkersView from '@/views/WorkersView.vue'; // Import WorkersView.vue
+import AreasView from '@/views/AreasView.vue';     // Import AreasView.vue
+import AssetsView from '@/views/AssetsView.vue';   // Import AssetsView.vue
+import UGVView from '@/views/UGVView.vue';         // Import UGVView.vue
+import MeshView from '@/views/MeshView.vue'; // Import MeshView.vue
+import AnalyticsView from '@/views/AnalyticsView.vue'; // Import AnalyticsView.vue
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,11 +62,58 @@ const router = createRouter({
           meta: { requiresAuth: true }
         },
         {
-          // NEW: Alarm Route - Protected
           path: 'alarm', // Accessible at /alarm
           name: 'alarm',
           component: Alarm, // Use the new Alarm component
           meta: { requiresAuth: true } // Requires authentication
+        },
+        {
+          path: 'livemap', // Path for /livemap
+          name: 'livemap',
+          component: LiveMapView, // Use the imported component
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'task', // Path for /task
+          name: 'task',
+          component: TaskView,
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'workers', // Path for /workers
+          name: 'workers',
+          component: WorkersView,
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'areas', // Path for /areas
+          name: 'areas',
+          component: AreasView,
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'assets', // Path for /assets
+          name: 'assets',
+          component: AssetsView,
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'ugv', // Path for /ugv
+          name: 'ugv',
+          component: UGVView,
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'mesh', // Path for /mesh
+          name: 'mesh',
+          component: MeshView,
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'analytics', // Path for /analytics
+          name: 'analytics',
+          component: AnalyticsView,
+          meta: { requiresAuth: true }
         },
       ]
     }
