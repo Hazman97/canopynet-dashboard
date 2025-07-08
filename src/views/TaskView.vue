@@ -65,17 +65,27 @@
           <option>Pending</option>
           <option>In Progress</option>
           <option>Completed</option>
+          <option>Paused</option>
+          <option>Cancelled</option>   
         </select>
         <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option>All Types</option>
           <option>Checking</option>
           <option>Transporting</option>
+          <option>Harvesting</option>
+          <option>Collecting</option>
+          <option>Manuring</option>
+          <option>Weeding</option>
+          <option>Pest Control</option>
+          <option>Mechanisation</option>
+          <option>Pruning</option>
         </select>
         <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option>All Priorities</option>
+          <option>Low</option>
+          <option>Medium</option>          
           <option>High</option>
           <option>Urgent</option>
-          <option>Normal</option>
         </select>
       </div>
 
