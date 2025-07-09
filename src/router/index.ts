@@ -10,7 +10,7 @@ import LoginPage from '@/components/LoginPage.vue'; // Import the LoginPage comp
 import Alarm from '@/views/Alarm.vue'; // Import Alarm.vue
 import LiveMapView from '@/views/LiveMapView.vue'; // Import LiveMapView.vue
 import TaskView from '@/views/TaskView.vue';       // Import TaskView.vue
-import WorkersView from '@/views/WorkersView.vue'; // Import WorkersView.vue
+import WorkersView from '@/views/WorkerManagementView.vue'; // Import WorkerManagementView.vue
 import AreasView from '@/views/AreasView.vue';     // Import AreasView.vue
 import AssetsView from '@/views/AssetsView.vue';   // Import AssetsView.vue
 import UGVView from '@/views/UGVView.vue';         // Import UGVView.vue
