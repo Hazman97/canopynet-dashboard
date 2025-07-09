@@ -1,69 +1,147 @@
 <template>
-  <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="$emit('close')">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all scale-100 opacity-100">
-      <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-        <h2 class="text-2xl font-semibold text-gray-800">Add New Worker</h2>
-        <button @click="$emit('close')" class="text-gray-500 hover:text-gray-700">
+  <div v-if="show" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden">
+      <div class="flex justify-between items-center p-5 border-b border-gray-200">
+        <h3 class="text-2xl font-semibold text-gray-800">
+          {{ isEditing ? 'Edit Worker' : 'Add New Worker' }}
+        </h3>
+        <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
           <i class="bx bx-x text-3xl"></i>
         </button>
       </div>
 
-      <div class="p-6">
-        <p class="text-gray-600 mb-6">Enter basic worker information. Performance data will be tracked automatically.</p>
+      <div class="p-6 overflow-y-auto max-h-[70vh]">
+        <h4 class="text-lg font-semibold text-gray-700 mb-4">Basic Information</h4>
 
-        <h3 class="text-lg font-medium text-gray-700 mb-4">Basic Information</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label for="workerName" class="block text-sm font-medium text-gray-700">Worker Name <span class="text-red-500">*</span></label>
-            <input type="text" id="workerName" v-model="newWorker.name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter full name">
+            <label for="workerName" class="block text-sm font-medium text-gray-700 mb-1">Worker Name <span class="text-red-500">*</span></label>
+            <input
+              type="text"
+              id="workerName"
+              v-model="workerForm.name"
+              placeholder="e.g. John Doe"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
           </div>
           <div>
-            <label for="workerCode" class="block text-sm font-medium text-gray-700">Worker Code <span class="text-red-500">*</span></label>
-            <input type="text" id="workerCode" v-model="newWorker.code" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., A001, M001">
+            <label for="workerCode" class="block text-sm font-medium text-gray-700 mb-1">Worker Code <span class="text-red-500">*</span></label>
+            <input
+              type="text"
+              id="workerCode"
+              v-model="workerForm.code"
+              placeholder="e.g. A001, M001"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
           </div>
           <div>
-            <label for="gangNumber" class="block text-sm font-medium text-gray-700">Gang Number <span class="text-red-500">*</span></label>
-            <input type="text" id="gangNumber" v-model="newWorker.gangNo" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 1">
+            <label for="gangNumber" class="block text-sm font-medium text-gray-700 mb-1">Gang Number <span class="text-red-500">*</span></label>
+            <input
+              type="text"
+              id="gangNumber"
+              v-model="workerForm.gangNo"
+              placeholder="e.g. 1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
           </div>
           <div>
-            <label for="blockNumber" class="block text-sm font-medium text-gray-700">Block Number</label>
-            <input type="text" id="blockNumber" v-model="newWorker.blockNo" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., A-12, B-8">
+            <label for="blockNumber" class="block text-sm font-medium text-gray-700 mb-1">Block Number</label>
+            <input
+              type="text"
+              id="blockNumber"
+              v-model="workerForm.blockNo"
+              placeholder="e.g. A-12, B-8"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
         </div>
 
-        <h3 class="text-lg font-medium text-gray-700 mb-4">Work Assignment</h3>
+        <h4 class="text-lg font-semibold text-gray-700 mb-4">Work Assignment</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label for="workDivision" class="block text-sm font-medium text-gray-700">Work Division <span class="text-red-500">*</span></label>
-            <select id="workDivision" v-model="newWorker.workDivision" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
-              <option value="">Select Work Division</option>
-              <option v-for="division in workDivisions" :key="division" :value="division">{{ division }}</option>
+            <label for="workDivision" class="block text-sm font-medium text-gray-700 mb-1">Work Division <span class="text-red-500">*</span></label>
+            <select
+              id="workDivision"
+              v-model="workerForm.workDivision"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="" disabled>Select Work Division</option>
+              <option v-for="division in workerDivisions" :key="division" :value="division">{{ division }}</option>
             </select>
           </div>
           <div>
-            <label for="workNature" class="block text-sm font-medium text-gray-700">Work Nature <span class="text-red-500">*</span></label>
-            <select id="workNature" v-model="newWorker.workNature" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
-              <option value="">Select Work Nature</option>
-              <option v-for="nature in workNatures" :key="nature" :value="nature">{{ nature }}</option>
+            <label for="workNature" class="block text-sm font-medium text-gray-700 mb-1">Work Nature <span class="text-red-500">*</span></label>
+            <select
+              id="workNature"
+              v-model="workerForm.workNature"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="" disabled>Select Work Nature</option>
+              <option v-for="nature in workerNatures" :key="nature" :value="nature">{{ nature }}</option>
+            </select>
+          </div>
+          <div>
+            <label for="totalHours" class="block text-sm font-medium text-gray-700 mb-1">Total Hours (Optional)</label>
+            <input
+              type="number"
+              id="totalHours"
+              v-model.number="workerForm.totalHours"
+              placeholder="e.g. 8"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label for="avgRating" class="block text-sm font-medium text-gray-700 mb-1">Average Rating (Optional)</label>
+            <input
+              type="number"
+              id="avgRating"
+              v-model.number="workerForm.avgRating"
+              step="0.1"
+              min="0"
+              max="5"
+              placeholder="e.g. 4.5"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status (Optional)</label>
+            <select
+              id="status"
+              v-model="workerForm.status"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="" disabled>Select Status</option>
+              <option v-for="status in workerStatuses" :key="status" :value="status">{{ status }}</option>
             </select>
           </div>
         </div>
 
-        <div class="p-4 bg-blue-50 rounded-lg text-blue-800 text-sm flex items-start">
-          <i class="bx bx-info-circle text-xl mr-3 mt-0.5"></i>
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 flex items-start">
+          <i class="bx bx-info-circle text-lg mr-2 mt-0.5"></i>
           <div>
             <p class="font-semibold">Performance Tracking</p>
-            <p>Status, attendance, work hours, productivity metrics, and location data will be automatically tracked and updated through the system. You can view detailed performance reports in the <span class="font-medium">Performance Report</span> tab.</p>
+            <p>Status, attendance, work hours, productivity metrics, and location data will be automatically tracked and updated through the system. You can view detailed performance reports in the Performance Report tab.</p>
           </div>
         </div>
       </div>
 
-      <div class="p-6 border-t border-gray-200 flex justify-end space-x-3 sticky bottom-0 bg-white z-10">
-        <button @click="$emit('close')" class="bg-gray-200 text-gray-800 px-5 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+      <div class="flex justify-end p-5 border-t border-gray-200 space-x-3">
+        <button
+          @click="closeModal"
+          class="px-5 py-2 rounded-lg text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors"
+        >
           Cancel
         </button>
-        <button @click="addWorker" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors">
-          Add Worker
+        <button
+          @click="submitForm"
+          class="px-5 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
+        >
+          {{ isEditing ? 'Update Worker' : 'Add Worker' }}
         </button>
       </div>
     </div>
@@ -71,31 +149,50 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
-  show: Boolean, // Controls modal visibility
+  show: Boolean,
+  workerData: { // New prop to pass existing worker data for editing
+    type: Object,
+    default: null
+  }
 });
 
-const emit = defineEmits(['close', 'add-worker']); // Emits 'add-worker' with the new worker data
+const emit = defineEmits(['close', 'add-worker', 'update-worker']);
 
-// Reactive object for new worker form data
-const newWorker = ref({
-  id: '', // Will be generated or unique ID from backend
+const defaultWorkerForm = {
+  id: null, // Will be used for editing
   name: '',
   code: '',
   gangNo: '',
-  blockNo: '',
+  blockNo: null, // Can be null
   workDivision: '',
   workNature: '',
-  status: 'Active', // Default status for new worker
-  avgRating: 0, // Default rating
-  presentToday: false, // Default attendance
+  status: 'Active', // Default status
+  avgRating: 0,
   totalHours: 0,
+};
+
+const workerForm = ref({ ...defaultWorkerForm });
+
+const isEditing = computed(() => props.workerData !== null);
+
+// Watch for changes in props.show to reset form when modal opens for adding,
+// or populate form when modal opens for editing
+watch(() => props.show, (newVal) => {
+  if (newVal) {
+    if (props.workerData) {
+      // Editing existing worker
+      workerForm.value = { ...props.workerData };
+    } else {
+      // Adding new worker
+      workerForm.value = { ...defaultWorkerForm };
+    }
+  }
 });
 
-// Dropdown options based on your provided list
-const workDivisions = [
+const workerDivisions = [
   'General workers',
   'Harvesting',
   'Manuring',
@@ -104,37 +201,43 @@ const workDivisions = [
   'Mechanisation fleet'
 ];
 
-const workNatures = [
-  'Security personnel',
-  'Gardeners/Line Sweepers',
-  'Mechanical Work',
-  'Electrical Work'
+const workerNatures = [
+  'Harvester',
+  'Loose Fruit Collection',
+  'Tractor A', // Example for Mechanisation fleet
+  'Security Personnel', // Example for General workers
+  'Spraying', // Example for Pest & Disease
+  'Fertilizer Spreader', // Example for Manuring
+  'Weeder', // Example for Weeding
+  'Pruner', // Example for Pruning (though not a division)
+  'Transporter', // Example for Transporting
+  'Checker', // Example for Checking
 ];
 
-const addWorker = () => {
-  // Basic validation
-  if (!newWorker.value.name || !newWorker.value.code || !newWorker.value.gangNo || !newWorker.value.workDivision || !newWorker.value.workNature) {
-    alert('Please fill in all required fields (marked with *).');
+const workerStatuses = [
+  'Active',
+  'Inactive',
+  'On break',
+  'Absent'
+];
+
+const closeModal = () => {
+  emit('close');
+};
+
+const submitForm = () => {
+  // Basic validation (can be expanded)
+  if (!workerForm.value.name || !workerForm.value.code || !workerForm.value.gangNo ||
+      !workerForm.value.workDivision || !workerForm.value.workNature) {
+    alert('Please fill in all required fields.');
     return;
   }
-  emit('add-worker', { ...newWorker.value });
-  // Reset form after submission (optional, depending on desired UX)
-  Object.assign(newWorker.value, {
-    id: '',
-    name: '',
-    code: '',
-    gangNo: '',
-    blockNo: '',
-    workDivision: '',
-    workNature: '',
-    status: 'Active',
-    avgRating: 0,
-    presentToday: false,
-    totalHours: 0,
-  });
+
+  if (isEditing.value) {
+    emit('update-worker', { ...workerForm.value }); // Emit updated worker data
+  } else {
+    emit('add-worker', { ...workerForm.value }); // Emit new worker data
+  }
+  closeModal();
 };
 </script>
-
-<style scoped>
-/* Any component-specific styles go here. Tailwind CSS handles most styling. */
-</style>

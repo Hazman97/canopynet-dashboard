@@ -7,7 +7,7 @@
         <p class="text-gray-600">Comprehensive workforce management and attendance tracking</p>
       </div>
       <button
-        @click="showAddWorkerModal = true"
+        @click="openAddWorkerModal"
         class="bg-green-600 text-white px-5 py-2 rounded-lg flex items-center shadow-md hover:bg-green-700 transition-colors"
       >
         <i class="bx bx-plus mr-2 text-xl"></i>
@@ -213,9 +213,9 @@
 
     <AddWorkerModal
       :show="showAddWorkerModal"
-      @close="closeAddWorkerModal"
+      :workerData="editingWorker" @close="closeAddWorkerModal"
       @add-worker="handleAddWorker"
-    />
+      @update-worker="handleUpdateWorker" />
   </div>
 </template>
 
@@ -225,6 +225,7 @@ import AddWorkerModal from '@/components/AddWorkerModal.vue';
 
 // Reactive state variables
 const showAddWorkerModal = ref(false);
+const editingWorker = ref(null); // Stores the worker object being edited, null if adding
 const activeTab = ref('workerCards');
 const searchQuery = ref('');
 const selectedStatus = ref('');
@@ -236,7 +237,7 @@ const selectedDate = ref(getCurrentDateForInput()); // Initialize with today's d
 // Structure: [{ workerId: 'w1', date: '2025-07-09', isPresent: true }, ...]
 const attendanceRecords = ref([]);
 
-// Dummy worker data (removed presentToday from worker object as it's now in attendanceRecords)
+// Dummy worker data
 const workers = ref([
   {
     id: 'w1',
@@ -288,7 +289,7 @@ const workers = ref([
   },
 ]);
 
-// Filter options from user input
+// Filter options
 const workerStatuses = [
   'Active',
   'Inactive',
@@ -372,13 +373,13 @@ const isWorkerPresent = (workerId, date) => {
 
 // Handle checkbox change for attendance
 const handleAttendanceChange = (workerId, date, isChecked) => {
-  const existingRecordIndex = attendanceRecords.value.findIndex(record =>
+  const existingRecordIndex = attendanceRecords.value.find(record =>
     record.workerId === workerId && record.date === date
   );
 
-  if (existingRecordIndex !== -1) {
+  if (existingRecordIndex) {
     // Update existing record
-    attendanceRecords.value[existingRecordIndex].isPresent = isChecked;
+    existingRecordIndex.isPresent = isChecked;
   } else {
     // Add new record
     attendanceRecords.value.push({ workerId, date, isPresent: isChecked });
@@ -387,7 +388,7 @@ const handleAttendanceChange = (workerId, date, isChecked) => {
   console.log(`Worker ${workerId} on ${date} set to ${isChecked ? 'Present' : 'Absent'}`);
 };
 
-// --- Initialization and Watchers ---
+// --- Initialization and Worker Modal Functions ---
 
 onMounted(() => {
   // Populate initial attendance for dummy workers for today and some past dates
@@ -404,24 +405,30 @@ onMounted(() => {
     });
 
     // Yesterday's attendance (example history)
-    if (['w1', 'w3'].includes(worker.id)) { // Ahmad and John present yesterday
-      attendanceRecords.value.push({ workerId: worker.id, date: yesterday, isPresent: true });
-    } else {
-        attendanceRecords.value.push({ workerId: worker.id, date: yesterday, isPresent: false });
-    }
+    // Make sure all workers have an attendance record for the date
+    attendanceRecords.value.push({ workerId: worker.id, date: yesterday, isPresent: ['w1', 'w3'].includes(worker.id) });
 
     // Two days ago attendance (example history)
-    if (['w2', 'w4'].includes(worker.id)) { // Siti and Maria present two days ago
-        attendanceRecords.value.push({ workerId: worker.id, date: twoDaysAgo, isPresent: true });
-    } else {
-        attendanceRecords.value.push({ workerId: worker.id, date: twoDaysAgo, isPresent: false });
-    }
+    attendanceRecords.value.push({ workerId: worker.id, date: twoDaysAgo, isPresent: ['w2', 'w4'].includes(worker.id) });
   });
 });
 
-// Modal control functions
+// Function to open modal for adding a new worker
+const openAddWorkerModal = () => {
+  editingWorker.value = null; // Ensure we're in 'add' mode
+  showAddWorkerModal.value = true;
+};
+
+// Function to open modal for editing an existing worker
+const editWorker = (worker) => {
+  editingWorker.value = { ...worker }; // Set the worker data to be edited
+  showAddWorkerModal.value = true;
+};
+
+// Close modal and reset editing state
 const closeAddWorkerModal = () => {
   showAddWorkerModal.value = false;
+  editingWorker.value = null; // Clear editing worker data
 };
 
 const handleAddWorker = (newWorkerData) => {
@@ -442,9 +449,14 @@ const handleAddWorker = (newWorkerData) => {
   closeAddWorkerModal();
 };
 
-// Worker card actions (placeholders for now)
-const editWorker = (worker) => {
-  alert(`Edit Worker: ${worker.name}. This would open an edit modal.`);
+// Handle updating an existing worker
+const handleUpdateWorker = (updatedWorkerData) => {
+  const index = workers.value.findIndex(w => w.id === updatedWorkerData.id);
+  if (index !== -1) {
+    // Merge updated data into the existing worker object
+    workers.value[index] = { ...workers.value[index], ...updatedWorkerData };
+  }
+  closeAddWorkerModal();
 };
 
 const deleteWorker = (id) => {
@@ -469,16 +481,6 @@ const getWorkerStatusColor = (status) => {
     case 'On break': return 'bg-yellow-100 text-yellow-700';
     case 'Absent': return 'bg-gray-100 text-gray-700';
     default: return 'bg-gray-100 text-gray-700';
-  }
-};
-
-// The attendance status color for the badge display (no longer used in table column directly)
-const getAttendanceStatusColor = (status) => {
-  switch (status) {
-    case 'present': return 'bg-green-500';
-    case 'absent': return 'bg-red-500';
-    case 'on break': return 'bg-yellow-500'; // If 'On break' status meant present
-    default: return 'bg-gray-400';
   }
 };
 </script>
