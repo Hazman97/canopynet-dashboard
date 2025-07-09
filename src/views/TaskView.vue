@@ -14,6 +14,7 @@
         <span>Create Task</span>
       </button>
     </div>
+
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div class="bg-white p-5 rounded-lg shadow-md flex items-center justify-between">
         <div>
@@ -47,6 +48,7 @@
         <i class="bx bx-check-circle text-4xl text-green-500"></i>
       </div>
     </div>
+
     <div class="bg-white p-6 rounded-lg shadow-md">
 
       <div class="flex border-b border-gray-200 mb-6">
@@ -61,6 +63,7 @@
           class="px-4 py-2 transition-colors"
         >Task Report</button>
       </div>
+
       <div class="flex flex-col md:flex-row gap-4 mb-6">
         <div class="relative flex-grow">
           <input
@@ -98,6 +101,7 @@
           <option value="Urgent">Urgent</option>
         </select>
       </div>
+
       <div v-if="activeTab === 'cards'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div
           v-for="task in filteredTasks"
@@ -173,7 +177,7 @@
             >
               <i class="bx bx-play mr-2"></i> Start
             </button>
-             <button
+              <button
               v-if="task.status === 'In Progress' || task.status === 'Paused'"
               @click="updateTaskStatus(task.id, 'Completed')"
               class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700 transition-colors"
@@ -185,13 +189,78 @@
           </div>
         </div>
       </div>
+
       <div v-else-if="activeTab === 'report'">
-        <p class="text-gray-600 text-center py-10">Task Report content will go here.</p>
+        <div class="flex justify-end gap-3 mb-4">
+          <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center shadow-md hover:bg-indigo-700 transition-colors">
+            <i class="bx bxs-download mr-2"></i> Download Report
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+            <thead>
+              <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-3 border-b-2 border-gray-200">No</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Task No</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Title</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Gang No</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Block No</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Workers</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Assets</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Area (Ha)</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Bunches</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Hours</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Status</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="filteredTasks.length === 0">
+                <td colspan="12" class="px-6 py-4 text-center text-gray-500">No tasks found matching your criteria.</td>
+              </tr>
+              <tr v-for="(task, index) in filteredTasks" :key="task.id" class="hover:bg-gray-50">
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ index + 1 }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ task.id }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                  <div class="font-medium">{{ task.title }}</div>
+                  <div class="text-gray-500 text-xs">{{ task.type }}</div>
+                </td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ task.gangNo || 'N/A' }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ task.blockNo || 'N/A' }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                  {{ task.assignedWorkers && task.assignedWorkers.length ? task.assignedWorkers.map(w => w.name).join(', ') : 'N/A' }}
+                </td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                  {{ task.assignedAssets && task.assignedAssets.length ? task.assignedAssets.map(a => a.name).join(', ') : 'N/A' }}
+                </td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ task.areaCovered || 'N/A' }} ha</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ task.bunchCount || 'N/A' }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ task.estimatedDuration ? task.estimatedDuration + 'h' : 'N/A' }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm">
+                  <span
+                    :class="getStatusColor(task.status)"
+                    class="text-white text-xs font-semibold px-2.5 py-0.5 rounded-full"
+                  >{{ task.status.toUpperCase() }}</span>
+                </td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm">
+                  <div class="w-24 bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-green-500 h-2.5 rounded-full" :style="{ width: task.progress + '%' }"></div>
+                  </div>
+                  <p class="text-xs text-gray-600 mt-1">{{ task.progress }}%</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div v-else-if="filteredTasks.length === 0" class="text-center py-10 text-gray-500">
+
+      <div v-else-if="filteredTasks.length === 0 && activeTab === 'cards'" class="text-center py-10 text-gray-500">
         No tasks found matching your criteria.
       </div>
-      </div>
+
+    </div>
+
     <CreateTaskModal
       :show="showCreateTaskModal"
       :areas="availableAreas"
@@ -200,20 +269,20 @@
       @close="showCreateTaskModal = false"
       @create-task="handleCreateTask"
     />
-    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import CreateTaskModal from '@/components/CreateTaskModal.vue'; // Import the new modal component
+import { ref, computed } from 'vue'; // Removed watch and onMounted as per your decision to defer persistence
+import CreateTaskModal from '@/components/CreateTaskModal.vue';
 
 // Reactive state variables
-const showCreateTaskModal = ref(false); // Controls the visibility of the create task modal
-const activeTab = ref('cards'); // Controls which tab is active ('cards' or 'report')
-const searchQuery = ref(''); // Stores the search input
-const selectedStatus = ref(''); // Stores the selected status filter
-const selectedType = ref(''); // Stores the selected type filter
-const selectedPriority = ref(''); // Stores the selected priority filter
+const showCreateTaskModal = ref(false);
+const activeTab = ref('cards');
+const searchQuery = ref('');
+const selectedStatus = ref('');
+const selectedType = ref('');
+const selectedPriority = ref('');
 
 // Dummy data for available areas, workers, and assets (replace with actual data fetching)
 const availableAreas = ref([
@@ -236,7 +305,7 @@ const availableAssets = ref([
 ]);
 
 
-// Initial dummy task data
+// Initial dummy task data (currently no persistence, so this resets on refresh)
 const tasks = ref([
   {
     id: '1001',
@@ -257,7 +326,8 @@ const tasks = ref([
     bunchCount: 45,
     assignedWorkers: [{ id: 'w1', name: 'Ahmad Rahman', code: 'A001', gangNo: 'Gang 3' }],
     requirements: ['Visual inspection skills', 'Knowledge of ripeness indications', 'Safety equipment'],
-    notes: ''
+    notes: '',
+    gumnyNo: ''
   },
   {
     id: '1002',
@@ -277,7 +347,8 @@ const tasks = ref([
     assignedWorkers: [{ id: 'w3', name: 'John Smith', code: 'M001', gangNo: 'Gang 1' }],
     assignedAssets: [{ id: 'a2', name: 'Transport Truck-01', code: 'T001', type: 'truck' }],
     requirements: ['Transport vehicle', 'Loading equipment', 'Documentation'],
-    notes: ''
+    notes: '',
+    gumnyNo: ''
   },
 ]);
 
@@ -322,7 +393,7 @@ const filteredTasks = computed(() => {
 // Function to handle the creation of a new task from the modal
 const handleCreateTask = (newTaskData) => {
   // Generate a simple unique ID for the new task
-  const newId = (parseInt(tasks.value[tasks.value.length - 1]?.id || '1000') + 1).toString();
+  const newId = newTaskData.id || (parseInt(tasks.value[tasks.value.length - 1]?.id || '1000') + 1).toString();
 
   tasks.value.push({
     id: newId,
