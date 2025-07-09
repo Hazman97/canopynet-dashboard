@@ -45,7 +45,7 @@
           <p class="text-sm text-gray-500">Avg Rating</p>
           <p class="text-3xl font-bold text-gray-800">{{ avgRating.toFixed(1) }}</p>
         </div>
-        <i class="bx bx-medal text-4xl text-yellow-500"></i>
+        <i class="bx bx-star text-4xl text-yellow-500"></i>
       </div>
     </div>
 
@@ -109,7 +109,7 @@
                     <span :class="getWorkerStatusColor(worker.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full">
                         {{ worker.status }}
                     </span>
-                    <span v-if="worker.presentToday" class="text-green-600 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100">
+                    <span v-if="isWorkerPresent(worker.id, getCurrentDateForInput())" class="text-green-600 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100">
                         present
                     </span>
                 </div>
@@ -135,8 +135,76 @@
       </div>
 
       <div v-else-if="activeTab === 'attendanceTable'">
-        <p class="text-gray-600">Attendance table will be displayed here.</p>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+          <div class="flex items-center gap-3">
+            <h3 class="text-xl font-semibold text-gray-800 whitespace-nowrap">Daily Attendance -</h3>
+            <div class="relative">
+                <input
+                    type="date"
+                    v-model="selectedDate"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div class="flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white cursor-pointer hover:border-blue-500 transition-colors">
+                    <i class="bx bx-calendar text-lg text-gray-500 mr-2"></i>
+                    <span class="text-gray-700 font-medium">{{ formatDisplayDate(selectedDate) }}</span>
+                </div>
+            </div>
+          </div>
+          <div class="flex gap-3 w-full md:w-auto">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center shadow-md hover:bg-blue-700 transition-colors w-1/2 md:w-auto justify-center">
+              <i class="bx bx-download mr-2"></i> Export
+            </button>
+            <button class="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center shadow-md hover:bg-green-700 transition-colors w-1/2 md:w-auto justify-center">
+              <i class="bx bx-upload mr-2"></i> Import
+            </button>
+          </div>
         </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+            <thead>
+              <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-3 border-b-2 border-gray-200">No</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Worker Name/Code</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Gang No</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Work Division</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200">Work Nature</th>
+                <th class="px-6 py-3 border-b-2 border-gray-200 text-center">Attendance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="filteredWorkers.length === 0">
+                <td colspan="6" class="px-6 py-4 text-center text-gray-500">No workers found matching your criteria.</td>
+              </tr>
+              <tr v-for="(worker, index) in filteredWorkers" :key="worker.id" class="hover:bg-gray-50">
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ index + 1 }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                  <div class="font-medium">{{ worker.name }}</div>
+                  <div class="text-gray-500 text-xs">{{ worker.code }}</div>
+                </td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ worker.gangNo || 'N/A' }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">
+                  <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                    {{ worker.workDivision }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ worker.workNature || 'N/A' }}</td>
+                <td class="px-6 py-4 border-b border-gray-200 text-sm text-center">
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="isWorkerPresent(worker.id, selectedDate)"
+                      @change="event => handleAttendanceChange(worker.id, selectedDate, event.target.checked)"
+                      class="form-checkbox h-5 w-5 text-green-600 rounded focus:ring-green-500"
+                    >
+                    <span class="ml-2 text-gray-700 select-none">{{ isWorkerPresent(worker.id, selectedDate) ? 'Present' : 'Absent' }}</span>
+                  </label>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div v-else-if="activeTab === 'performanceReport'">
         <p class="text-gray-600">Performance report will be displayed here.</p>
@@ -152,7 +220,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import AddWorkerModal from '@/components/AddWorkerModal.vue';
 
 // Reactive state variables
@@ -161,8 +229,14 @@ const activeTab = ref('workerCards');
 const searchQuery = ref('');
 const selectedStatus = ref('');
 const selectedDivision = ref('');
+const selectedDate = ref(getCurrentDateForInput()); // Initialize with today's date in YYYY-MM-DD format
 
-// Dummy worker data
+// --- Attendance Records Management ---
+// Stores attendance for all workers across different dates
+// Structure: [{ workerId: 'w1', date: '2025-07-09', isPresent: true }, ...]
+const attendanceRecords = ref([]);
+
+// Dummy worker data (removed presentToday from worker object as it's now in attendanceRecords)
 const workers = ref([
   {
     id: 'w1',
@@ -174,7 +248,6 @@ const workers = ref([
     workNature: 'Harvester',
     status: 'Active',
     avgRating: 4.8,
-    presentToday: true,
     totalHours: 6.5
   },
   {
@@ -187,7 +260,6 @@ const workers = ref([
     workNature: 'Loose Fruit Collection',
     status: 'Active',
     avgRating: 4.6,
-    presentToday: true,
     totalHours: 7.2
   },
   {
@@ -200,7 +272,6 @@ const workers = ref([
     workNature: 'Tractor A',
     status: 'On break',
     avgRating: 4.9,
-    presentToday: true,
     totalHours: 4
   },
   {
@@ -213,7 +284,6 @@ const workers = ref([
     workNature: 'Security Personnel',
     status: 'Active',
     avgRating: 4.7,
-    presentToday: true,
     totalHours: 8
   },
 ]);
@@ -239,14 +309,17 @@ const workerDivisions = [
 // Computed properties for summary cards
 const totalWorkers = computed(() => workers.value.length);
 const activeWorkers = computed(() => workers.value.filter(worker => worker.status === 'Active').length);
-const presentWorkersToday = computed(() => workers.value.filter(worker => worker.presentToday).length);
+const presentWorkersToday = computed(() => {
+  // Count workers present for today's date
+  return workers.value.filter(worker => isWorkerPresent(worker.id, getCurrentDateForInput())).length;
+});
 const avgRating = computed(() => {
   if (workers.value.length === 0) return 0;
   const total = workers.value.reduce((sum, worker) => sum + worker.avgRating, 0);
   return total / workers.value.length;
 });
 
-// Computed property for filtered workers
+// Computed property for filtered workers (remains mostly the same for general filtering)
 const filteredWorkers = computed(() => {
   let filtered = workers.value;
 
@@ -273,35 +346,112 @@ const filteredWorkers = computed(() => {
   return filtered;
 });
 
+// --- Date & Attendance Functions ---
+
+// Helper to get current date in YYYY-MM-DD format for input[type="date"]
+function getCurrentDateForInput() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Helper to format date for display (e.g., 7/9/2025)
+const formatDisplayDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString + 'T00:00:00'); // Add T00:00:00 to avoid timezone issues for simple date parsing
+  return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+};
+
+// Check if a worker is present on a specific date
+const isWorkerPresent = (workerId, date) => {
+  const record = attendanceRecords.value.find(rec => rec.workerId === workerId && rec.date === date);
+  return record ? record.isPresent : false; // Default to absent if no record exists
+};
+
+// Handle checkbox change for attendance
+const handleAttendanceChange = (workerId, date, isChecked) => {
+  const existingRecordIndex = attendanceRecords.value.findIndex(record =>
+    record.workerId === workerId && record.date === date
+  );
+
+  if (existingRecordIndex !== -1) {
+    // Update existing record
+    attendanceRecords.value[existingRecordIndex].isPresent = isChecked;
+  } else {
+    // Add new record
+    attendanceRecords.value.push({ workerId, date, isPresent: isChecked });
+  }
+  // In a real application, you would send this update to your backend database here.
+  console.log(`Worker ${workerId} on ${date} set to ${isChecked ? 'Present' : 'Absent'}`);
+};
+
+// --- Initialization and Watchers ---
+
+onMounted(() => {
+  // Populate initial attendance for dummy workers for today and some past dates
+  const today = getCurrentDateForInput();
+  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
+  const twoDaysAgo = new Date(new Date().setDate(new Date().getDate() - 2)).toISOString().split('T')[0];
+
+  workers.value.forEach(worker => {
+    // Today's attendance
+    attendanceRecords.value.push({
+      workerId: worker.id,
+      date: today,
+      isPresent: ['w1', 'w2', 'w4'].includes(worker.id) // Ahmad, Siti, Maria present today
+    });
+
+    // Yesterday's attendance (example history)
+    if (['w1', 'w3'].includes(worker.id)) { // Ahmad and John present yesterday
+      attendanceRecords.value.push({ workerId: worker.id, date: yesterday, isPresent: true });
+    } else {
+        attendanceRecords.value.push({ workerId: worker.id, date: yesterday, isPresent: false });
+    }
+
+    // Two days ago attendance (example history)
+    if (['w2', 'w4'].includes(worker.id)) { // Siti and Maria present two days ago
+        attendanceRecords.value.push({ workerId: worker.id, date: twoDaysAgo, isPresent: true });
+    } else {
+        attendanceRecords.value.push({ workerId: worker.id, date: twoDaysAgo, isPresent: false });
+    }
+  });
+});
+
 // Modal control functions
 const closeAddWorkerModal = () => {
   showAddWorkerModal.value = false;
 };
 
 const handleAddWorker = (newWorkerData) => {
-  // Generate a simple unique ID for the new worker
-  const newId = 'w' + (workers.value.length + 1);
+  const newId = 'w' + (workers.value.length + 1); // Simple ID generation
   workers.value.push({
     ...newWorkerData,
     id: newId,
-    // Ensure default values are set if not provided by the form
     status: newWorkerData.status || 'Active',
     avgRating: newWorkerData.avgRating || 0,
-    presentToday: newWorkerData.presentToday !== undefined ? newWorkerData.presentToday : false,
     totalHours: newWorkerData.totalHours || 0,
   });
-  closeAddWorkerModal(); // Close the modal after adding
+  // Also add them to today's attendance (defaulting to present)
+  attendanceRecords.value.push({
+    workerId: newId,
+    date: getCurrentDateForInput(),
+    isPresent: true
+  });
+  closeAddWorkerModal();
 };
 
 // Worker card actions (placeholders for now)
 const editWorker = (worker) => {
   alert(`Edit Worker: ${worker.name}. This would open an edit modal.`);
-  // Future: Implement an edit modal similar to CreateTaskModal for workers
 };
 
 const deleteWorker = (id) => {
   if (confirm('Are you sure you want to delete this worker?')) {
     workers.value = workers.value.filter(worker => worker.id !== id);
+    // Also remove attendance records for this worker
+    attendanceRecords.value = attendanceRecords.value.filter(record => record.workerId !== id);
   }
 };
 
@@ -321,8 +471,25 @@ const getWorkerStatusColor = (status) => {
     default: return 'bg-gray-100 text-gray-700';
   }
 };
+
+// The attendance status color for the badge display (no longer used in table column directly)
+const getAttendanceStatusColor = (status) => {
+  switch (status) {
+    case 'present': return 'bg-green-500';
+    case 'absent': return 'bg-red-500';
+    case 'on break': return 'bg-yellow-500'; // If 'On break' status meant present
+    default: return 'bg-gray-400';
+  }
+};
 </script>
 
 <style scoped>
 /* Any component-specific styles go here. Tailwind CSS handles most styling. */
+/* Hide default calendar icon on input type="date" in some browsers */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
 </style>
