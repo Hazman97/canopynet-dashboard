@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="$emit('close')">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all scale-100 opacity-100 md:scale-100 md:opacity-100 custom-scrollbar">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all scale-100 opacity-100 md:scale-100 md:opacity-100">
       <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
         <h2 class="text-2xl font-semibold text-gray-800">Create New Task</h2>
         <button @click="$emit('close')" class="text-gray-500 hover:text-gray-700">
