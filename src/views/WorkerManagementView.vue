@@ -45,7 +45,7 @@
           <p class="text-sm text-gray-500">Avg Rating</p>
           <p class="text-3xl font-bold text-gray-800">{{ avgRating.toFixed(1) }}</p>
         </div>
-        <i class="bx bx-star text-4xl text-yellow-500"></i>
+        <i class="bx bx-medal text-4xl text-yellow-500"></i>
       </div>
     </div>
 
