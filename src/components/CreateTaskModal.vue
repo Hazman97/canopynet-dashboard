@@ -2,7 +2,7 @@
   <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="$emit('close')">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all scale-100 opacity-100 md:scale-100 md:opacity-100">
       <div class="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-        <h2 class="text-2xl font-semibold text-gray-800">Create New Task</h2>
+        <h2 class="text-2xl font-semibold text-gray-800">{{ taskToEdit ? 'Edit Task' : 'Create New Task' }}</h2>
         <button @click="$emit('close')" class="text-gray-500 hover:text-gray-700">
           <i class="bx bx-x text-3xl"></i>
         </button>
@@ -124,11 +124,11 @@
               </div>
               <div>
                 <label for="areaCovered" class="block text-sm font-medium text-gray-700">Area Covered (Ha)</label>
-                <input type="number" id="areaCovered" v-model="newTask.areaCovered" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="number" id="areaCovered" v-model="newTask.areaCovered" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer">
               </div>
               <div>
                 <label for="tonnage" class="block text-sm font-medium text-gray-700">Tonnage (Tonne)</label>
-                <input type="number" id="tonnage" v-model="newTask.tonnage" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="number" id="tonnage" v-model="newTask.tonnage" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer">
               </div>
               <div>
                 <label for="bunchCount" class="block text-sm font-medium text-gray-700">Bunch Count</label>
@@ -145,16 +145,16 @@
         <div class="mt-8 border-t pt-6 border-gray-200">
             <label for="requirements" class="block text-sm font-medium text-gray-700 mb-2">Requirements</label>
             <div class="flex gap-2 mb-4">
-                <input type="text" v-model="currentRequirement" placeholder="Add requirement..." class="flex-grow border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
-                <button @click="addRequirement" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Add</button>
+              <input type="text" v-model="currentRequirement" placeholder="Add requirement..." class="flex-grow border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500">
+              <button @click="addRequirement" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Add</button>
             </div>
             <div class="flex flex-wrap gap-2">
-                <span v-for="(req, index) in newTask.requirements" :key="index" class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full flex items-center">
-                    {{ req }}
-                    <button @click="removeRequirement(index)" class="ml-2 text-red-500 hover:text-red-700">
-                        <i class="bx bx-x text-sm"></i>
-                    </button>
-                </span>
+              <span v-for="(req, index) in newTask.requirements" :key="index" class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full flex items-center">
+                {{ req }}
+                <button @click="removeRequirement(index)" class="ml-2 text-red-500 hover:text-red-700">
+                  <i class="bx bx-x text-sm"></i>
+                </button>
+              </span>
             </div>
         </div>
 
@@ -169,7 +169,7 @@
           Cancel
         </button>
         <button @click="submitTask" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors">
-          Create Task
+          {{ taskToEdit ? 'Update Task' : 'Create Task' }}
         </button>
       </div>
     </div>
@@ -184,9 +184,13 @@ const props = defineProps({
   areas: Array, // Prop for available areas
   workers: Array, // Prop for available workers
   assets: Array, // Prop for available assets
+  taskToEdit: { // New prop for editing
+    type: Object,
+    default: null
+  }
 });
 
-const emit = defineEmits(['close', 'create-task']);
+const emit = defineEmits(['close', 'save-task']); // Changed 'create-task' to 'save-task'
 
 // Initial state for a new task form
 const initialNewTaskState = {
@@ -209,8 +213,8 @@ const initialNewTaskState = {
   workDivision: '',
   workNature: '',
   assignedWorkers: [], // Array to hold selected worker objects
-  assignedAssets: [],  // Array to hold selected asset objects
-  requirements: [],    // Array to hold added requirements
+  assignedAssets: [], 	// Array to hold selected asset objects
+  requirements: [], 	// Array to hold added requirements
   notes: '',
   gumnyNo: '' // Added the gumnyNo field
 };
@@ -224,7 +228,7 @@ const taskTypes = ref([
   { name: 'Pruning', icon: 'bx bx-cut' },
   { name: 'Harvesting', icon: 'bx bx-spa' },
   { name: 'Collecting', icon: 'bx bx-cube' },
-  { name: 'Transporting', icon: 'bx bxs-truck' }, // Corrected icon class
+  { name: 'Transporting', icon: 'bx bxs-truck' },
   { name: 'Manuring', icon: 'bx bx-fork' },
   { name: 'Weeding', icon: 'bx bx-leaf' },
   { name: 'Pest Control', icon: 'bx bx-bug' },
@@ -232,14 +236,29 @@ const taskTypes = ref([
 ]);
 
 
-// Reset form when modal is opened/closed
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    // Reset form when modal opens
-    Object.assign(newTask.value, initialNewTaskState);
-    // Optionally auto-generate task ID here if needed, or leave blank for user input
+// Watch the show prop AND taskToEdit prop to reset/load form data
+watch(() => [props.show, props.taskToEdit], ([newShow, newTaskToEdit]) => {
+  if (newShow) {
+    if (newTaskToEdit) {
+      // Deep copy taskToEdit to newTask so changes in modal don't affect original task directly
+      // And also handle potential nulls for fields like assignedWorkers/Assets
+      const copiedTask = JSON.parse(JSON.stringify(newTaskToEdit));
+
+      // Ensure assignedWorkers and assignedAssets are arrays, even if null/undefined in source
+      copiedTask.assignedWorkers = copiedTask.assignedWorkers || [];
+      copiedTask.assignedAssets = copiedTask.assignedAssets || [];
+      copiedTask.requirements = copiedTask.requirements || [];
+
+      Object.assign(newTask.value, copiedTask);
+    } else {
+      // Reset form to initial state for new task creation
+      Object.assign(newTask.value, initialNewTaskState);
+      // Set default dates if creating a new task
+      newTask.value.startDate = new Date().toISOString().slice(0, 10);
+      newTask.value.endDate = new Date().toISOString().slice(0, 10);
+    }
   }
-});
+}, { immediate: true }); // immediate: true to run the watch on component mount
 
 const addRequirement = () => {
   if (currentRequirement.value.trim() !== '') {
@@ -254,14 +273,14 @@ const removeRequirement = (index) => {
 
 // Handle form submission
 const submitTask = () => {
-  // Basic validation (you'll want more robust validation in a real app)
+  // Basic validation
   if (!newTask.value.title || !newTask.value.type || !newTask.value.targetArea) {
     alert('Please fill in Task Title, Type, and Target Area.');
     return;
   }
 
-  // Emit the new task data to the parent component (TaskView.vue)
-  emit('create-task', { ...newTask.value });
+  // Emit the new/updated task data to the parent component (TaskView.vue)
+  emit('save-task', { ...newTask.value });
 };
 </script>
 

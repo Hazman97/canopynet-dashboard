@@ -7,7 +7,7 @@
         <p class="text-gray-600">Comprehensive task management for palm oil plantation operations</p>
       </div>
       <button
-        @click="showCreateTaskModal = true"
+        @click="openCreateTaskModalForNew"
         class="bg-green-600 text-white px-5 py-2 rounded-lg flex items-center shadow-md hover:bg-green-700 transition-colors"
       >
         <i class="bx bx-plus mr-2 text-xl"></i>
@@ -184,16 +184,22 @@
             >
               <i class="bx bx-check mr-2"></i> Complete
             </button>
-            <button @click="editTask(task)" class="text-gray-500 hover:text-gray-700"><i class="bx bx-edit text-xl"></i></button>
+            <button @click="openCreateTaskModalForEdit(task)" class="text-gray-500 hover:text-gray-700"><i class="bx bx-edit text-xl"></i></button>
             <button @click="deleteTask(task.id)" class="text-gray-500 hover:text-gray-700"><i class="bx bx-trash text-xl"></i></button>
           </div>
         </div>
       </div>
 
+      <div v-else-if="filteredTasks.length === 0 && activeTab === 'report'" class="text-center py-10 text-gray-500">
+          No tasks found matching your criteria.
+      </div>
       <div v-else-if="activeTab === 'report'">
         <div class="flex justify-end gap-3 mb-4">
+          <button class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center shadow-md hover:bg-blue-700 transition-colors">
+            <i class="bx bx-download mr-2"></i> Export
+          </button>
           <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center shadow-md hover:bg-indigo-700 transition-colors">
-            <i class="bx bxs-download mr-2"></i> Download Report
+            <i class="bx bx-chart mr-2"></i> Generate Report
           </button>
         </div>
 
@@ -216,9 +222,6 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="filteredTasks.length === 0">
-                <td colspan="12" class="px-6 py-4 text-center text-gray-500">No tasks found matching your criteria.</td>
-              </tr>
               <tr v-for="(task, index) in filteredTasks" :key="task.id" class="hover:bg-gray-50">
                 <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ index + 1 }}</td>
                 <td class="px-6 py-4 border-b border-gray-200 text-sm text-gray-900">{{ task.id }}</td>
@@ -266,14 +269,15 @@
       :areas="availableAreas"
       :workers="availableWorkers"
       :assets="availableAssets"
-      @close="showCreateTaskModal = false"
-      @create-task="handleCreateTask"
+      :taskToEdit="taskToEditData"
+      @close="closeCreateTaskModal"
+      @save-task="handleSaveTask"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'; // Removed watch and onMounted as per your decision to defer persistence
+import { ref, computed } from 'vue';
 import CreateTaskModal from '@/components/CreateTaskModal.vue';
 
 // Reactive state variables
@@ -283,6 +287,7 @@ const searchQuery = ref('');
 const selectedStatus = ref('');
 const selectedType = ref('');
 const selectedPriority = ref('');
+const taskToEditData = ref(null); // New reactive variable to hold the task being edited
 
 // Dummy data for available areas, workers, and assets (replace with actual data fetching)
 const availableAreas = ref([
@@ -308,7 +313,7 @@ const availableAssets = ref([
 // Initial dummy task data (currently no persistence, so this resets on refresh)
 const tasks = ref([
   {
-    id: '1001',
+    id: 'T001', // Changed to T001 to match screenshot
     type: 'Checking',
     priority: 'High',
     status: 'In Progress',
@@ -330,7 +335,7 @@ const tasks = ref([
     gumnyNo: ''
   },
   {
-    id: '1002',
+    id: 'T002', // Changed to T002 to match screenshot
     type: 'Transporting',
     priority: 'Urgent',
     status: 'Pending',
@@ -368,7 +373,7 @@ const filteredTasks = computed(() => {
     filtered = filtered.filter(task =>
       task.title.toLowerCase().includes(query) ||
       task.description.toLowerCase().includes(query) ||
-      task.id.includes(query)
+      task.id.toLowerCase().includes(query) // Also search by task ID
     );
   }
 
@@ -390,18 +395,46 @@ const filteredTasks = computed(() => {
   return filtered;
 });
 
-// Function to handle the creation of a new task from the modal
-const handleCreateTask = (newTaskData) => {
-  // Generate a simple unique ID for the new task
-  const newId = newTaskData.id || (parseInt(tasks.value[tasks.value.length - 1]?.id || '1000') + 1).toString();
-
-  tasks.value.push({
-    id: newId,
-    progress: 0, // New tasks start at 0% progress
-    ...newTaskData, // Spread all data received from the modal
-  });
-  showCreateTaskModal.value = false; // Close the modal
+// Function to open modal for creating a new task
+const openCreateTaskModalForNew = () => {
+  taskToEditData.value = null; // Ensure we're in "create" mode
+  showCreateTaskModal.value = true;
 };
+
+// Function to open modal for editing an existing task
+const openCreateTaskModalForEdit = (task) => {
+  // Pass a deep copy of the task to the modal to avoid direct mutation
+  taskToEditData.value = JSON.parse(JSON.stringify(task));
+  showCreateTaskModal.value = true;
+};
+
+// Function to close the modal and reset edit data
+const closeCreateTaskModal = () => {
+  showCreateTaskModal.value = false;
+  taskToEditData.value = null; // Reset taskToEditData when modal closes
+};
+
+// Function to handle saving a task (either new or updated)
+const handleSaveTask = (savedTaskData) => {
+  if (savedTaskData.id && tasks.value.some(t => t.id === savedTaskData.id)) {
+    // If taskData has an ID that already exists, it's an update
+    const index = tasks.value.findIndex(task => task.id === savedTaskData.id);
+    if (index !== -1) {
+      tasks.value[index] = savedTaskData; // Update the existing task
+    }
+  } else {
+    // Otherwise, it's a new task
+    // Generate a simple unique ID for the new task if not provided by the form
+    const newId = savedTaskData.id || `T${String(tasks.value.length + 1).padStart(3, '0')}`;
+    tasks.value.push({
+      ...savedTaskData,
+      id: newId,
+      progress: savedTaskData.progress || 0, // Ensure progress is set for new tasks
+    });
+  }
+  closeCreateTaskModal(); // Close the modal
+};
+
 
 // Function to delete a task
 const deleteTask = (idToDelete) => {
@@ -421,15 +454,6 @@ const updateTaskStatus = (id, newStatus) => {
     }
   }
 };
-
-// Function to handle editing (placeholder for now)
-const editTask = (task) => {
-  alert(`Edit Task: ${task.title}. This will open the modal with pre-filled data.`);
-  // In a real app, you'd populate the modal's form with `task` data
-  // showCreateTaskModal.value = true;
-  // modalFormData.value = { ...task }; // Or similar
-};
-
 
 // Helper functions for dynamic tag colors
 const getTaskTypeColor = (type) => {
