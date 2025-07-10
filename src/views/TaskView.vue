@@ -195,11 +195,12 @@
       </div>
       <div v-else-if="activeTab === 'report'">
         <div class="flex justify-end gap-3 mb-4">
+          <!--
           <button class="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center shadow-md hover:bg-blue-700 transition-colors">
             <i class="bx bx-download mr-2"></i> Export
-          </button>
+          </button> -->
           <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center shadow-md hover:bg-indigo-700 transition-colors">
-            <i class="bx bx-chart mr-2"></i> Generate Report
+            <i class="bx bx-bar-chart-alt-2 mr-2"></i> Generate Report
           </button>
         </div>
 
