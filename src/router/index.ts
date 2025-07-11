@@ -94,13 +94,13 @@ const router = createRouter({
           meta: { requiresAuth: true }
         },
         {
-          path: '/areas/:phaseId/blocks', // Route with a dynamic parameter for phase ID
-          name: 'Blocks',
-          component: BlocksView,
-          props: true // This allows route params to be passed as props to the component
+          // THIS IS THE MISSING/INCORRECT ROUTE CAUSING THE PROBLEM
+          path: '/phases/:phaseId/blocks',
+          name: 'blocks', // Use lowercase 'blocks' for consistency with named routes
+          component: BlocksView
         },
         {
-          path: '/phases/:phaseId/blocks/:blockId/trees', // Route with dynamic parameters for phase ID and block ID
+          path: '/phases/:phaseId/blocks/:blockId/trees',
           name: 'trees',
           component: TreeViews
         },
