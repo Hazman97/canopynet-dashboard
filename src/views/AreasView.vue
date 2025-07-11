@@ -45,7 +45,7 @@
           <p class="text-3xl font-bold text-gray-800">946.8 ha</p>
         </div>
         <div class="p-3 bg-orange-100 rounded-full text-orange-500">
-          <i class="bx bx-area text-2xl"></i>
+          <i class="bx bx-map-pin text-2xl"></i>
         </div>
       </div>
 
