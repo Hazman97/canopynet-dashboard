@@ -25,7 +25,7 @@
           <p class="text-3xl font-bold text-gray-800">2</p>
         </div>
         <div class="p-3 bg-green-100 rounded-full text-green-500">
-          <i class="bx bx-map text-2xl"></i>
+          <i class="bx bx-map-alt text-2xl"></i>
         </div>
       </div>
 
@@ -35,7 +35,7 @@
           <p class="text-3xl font-bold text-gray-800">2</p>
         </div>
         <div class="p-3 bg-purple-100 rounded-full text-purple-500">
-          <i class="bx bx-tree text-2xl"></i>
+          <i class="bx bxs-tree text-2xl"></i>
         </div>
       </div>
 
@@ -88,6 +88,7 @@
           <option>Active</option>
           <option>Development</option>
           <option>Maintenance</option>
+          <option>Inactive</option>
         </select>
       </div>
     </div>
@@ -97,7 +98,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold text-gray-800 flex items-center">
             <span class="inline-flex items-center justify-center w-8 h-8 mr-2 bg-green-500 text-white rounded-full text-sm font-bold">1</span>
-            Phase 1 - North
+            Phase 1 - North Section
           </h3>
           <span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">active</span>
         </div>
@@ -107,8 +108,9 @@
           <div><span class="font-medium">Established</span><p>2015-03-15</p></div>
           <div><span class="font-medium">Total Area</span><p>250.5 ha</p></div>
           <div><span class="font-medium">Avg Yield</span><p>21750.0 kg/ha</p></div>
-          <div><span class="font-medium">Blocks</span><p>5,277</p></div>
           <div><span class="font-medium">Trees/ha</span><p>21</p></div>
+          <div><span class="font-medium">Total Trees</span><p>5,277</p></div>
+          <div><span class="font-medium">Blocks</span><p>2</p></div>
         </div>
         <div class="flex justify-between items-center">
           <button class="text-blue-600 hover:underline">View Blocks</button>
@@ -123,7 +125,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold text-gray-800 flex items-center">
             <span class="inline-flex items-center justify-center w-8 h-8 mr-2 bg-green-500 text-white rounded-full text-sm font-bold">2</span>
-            Phase 2 - East
+            Phase 2 - East Section
           </h3>
           <span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">active</span>
         </div>
@@ -133,8 +135,9 @@
           <div><span class="font-medium">Established</span><p>2012-08-20</p></div>
           <div><span class="font-medium">Total Area</span><p>180.3 ha</p></div>
           <div><span class="font-medium">Avg Yield</span><p>0.0 kg/ha</p></div>
-          <div><span class="font-medium">Blocks</span><p>0</p></div>
           <div><span class="font-medium">Trees/ha</span><p>0</p></div>
+          <div><span class="font-medium">Total Trees</span><p>0</p></div>
+          <div><span class="font-medium">Blocks</span><p>0</p></div>
         </div>
         <div class="flex justify-between items-center">
           <button class="text-blue-600 hover:underline">View Blocks</button>
@@ -149,7 +152,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold text-gray-800 flex items-center">
             <span class="inline-flex items-center justify-center w-8 h-8 mr-2 bg-blue-500 text-white rounded-full text-sm font-bold">3</span>
-            Phase 3 - South
+            Phase 3 - South Section
           </h3>
           <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">development</span>
         </div>
@@ -159,8 +162,9 @@
           <div><span class="font-medium">Established</span><p>2020-01-10</p></div>
           <div><span class="font-medium">Total Area</span><p>320.8 ha</p></div>
           <div><span class="font-medium">Avg Yield</span><p>0.0 kg/ha</p></div>
-          <div><span class="font-medium">Blocks</span><p>0</p></div>
           <div><span class="font-medium">Trees/ha</span><p>0</p></div>
+          <div><span class="font-medium">Total Trees</span><p>0</p></div>
+          <div><span class="font-medium">Blocks</span><p>0</p></div>
         </div>
         <div class="flex justify-between items-center">
           <button class="text-blue-600 hover:underline">View Blocks</button>
@@ -175,7 +179,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-semibold text-gray-800 flex items-center">
             <span class="inline-flex items-center justify-center w-8 h-8 mr-2 bg-yellow-500 text-white rounded-full text-sm font-bold">4</span>
-            Phase 4 - West
+            Phase 4 - West Section
           </h3>
           <span class="bg-yellow-100 text-yellow-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">maintenance</span>
         </div>
@@ -185,8 +189,9 @@
           <div><span class="font-medium">Established</span><p>2018-06-05</p></div>
           <div><span class="font-medium">Total Area</span><p>195.2 ha</p></div>
           <div><span class="font-medium">Avg Yield</span><p>0.0 kg/ha</p></div>
-          <div><span class="font-medium">Blocks</span><p>0</p></div>
           <div><span class="font-medium">Trees/ha</span><p>0</p></div>
+          <div><span class="font-medium">Total Trees</span><p>0</p></div>
+          <div><span class="font-medium">Blocks</span><p>0</p></div>
         </div>
         <div class="flex justify-between items-center">
           <button class="text-blue-600 hover:underline">View Blocks</button>
