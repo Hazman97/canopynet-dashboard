@@ -13,6 +13,7 @@ import TaskView from '@/views/TaskView.vue';       // Import TaskView.vue
 import WorkersView from '@/views/WorkerManagementView.vue'; // Import WorkerManagementView.vue
 import AreasView from '@/views/AreasView.vue';     // Import AreasView.vue
 import BlocksView from '@/views/BlocksView.vue';
+import TreeViews from '../views/TreeViews.vue'; // Import the new TreeViews component
 import AssetsView from '@/views/AssetsView.vue';   // Import AssetsView.vue
 import UGVView from '@/views/UGVView.vue';         // Import UGVView.vue
 import MeshView from '@/views/MeshView.vue'; // Import MeshView.vue
@@ -97,6 +98,11 @@ const router = createRouter({
           name: 'Blocks',
           component: BlocksView,
           props: true // This allows route params to be passed as props to the component
+        },
+        {
+          path: '/phases/:phaseId/blocks/:blockId/trees', // Route with dynamic parameters for phase ID and block ID
+          name: 'trees',
+          component: TreeViews
         },
         {
           path: 'assets', // Path for /assets

@@ -130,12 +130,21 @@
           <div><span class="font-medium">Tree Health</span><p>{{ block.treeHealth }}%</p></div>
         </div>
         <div class="flex justify-between items-center">
-          <button class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-200 text-sm">
+          <router-link
+            :to="`/phases/${phaseId}/blocks/${block.id}/trees`"
+            class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-200 text-sm inline-block"
+          >
             View Trees ({{ block.totalTrees }})
-          </button>
+          </router-link>
           <div class="flex space-x-2">
-            <i class="bx bx-trash text-gray-400 hover:text-gray-600 cursor-pointer text-xl"></i>
-            <i class="bx bx-edit text-gray-400 hover:text-gray-600 cursor-pointer text-xl"></i>
+            <i
+              class="bx bx-trash text-gray-400 hover:text-gray-600 cursor-pointer text-xl"
+              @click="confirmDelete(block.id, block.name)"
+            ></i>
+            <i
+              class="bx bx-edit text-gray-400 hover:text-gray-600 cursor-pointer text-xl"
+              @click="openEditModal(block)"
+            ></i>
           </div>
         </div>
       </div>
@@ -152,24 +161,53 @@
       @close="showAddBlockModal = false"
       @add-block="addNewBlock"
     />
+
+    <ConfirmationModal
+      :isVisible="showDeleteModal"
+      title="Delete Block"
+      :message="`Are you sure you want to delete block '${blockToDeleteName}'? This action cannot be undone.`"
+      confirmButtonText="Delete"
+      cancelButtonText="Cancel"
+      @confirm="executeDelete"
+      @cancel="cancelDelete"
+    />
+
+    <EditBlockModal
+      :isVisible="showEditModal"
+      :blockData="currentBlockToEdit"
+      :phases="phasesData"
+      @close="showEditModal = false"
+      @update-block="updateBlock"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import AddBlockModal from '@/components/AddBlockModal.vue'; // Import the new modal component
+import AddBlockModal from '@/components/AddBlockModal.vue';
+import ConfirmationModal from '@/components/ConfirmationModal.vue'; // Import ConfirmationModal
+import EditBlockModal from '@/components/EditBlockModal.vue'; // Import EditBlockModal
 
 const route = useRoute();
-const phaseId = computed(() => parseInt(route.params.phaseId)); // Get phaseId from route params
+const phaseId = computed(() => parseInt(route.params.phaseId));
 
-const showAddBlockModal = ref(false); // Reactive state for modal visibility
+const showAddBlockModal = ref(false);
+
+// Reactive data for delete modal
+const showDeleteModal = ref(false);
+const blockToDeleteId = ref(null);
+const blockToDeleteName = ref('');
+
+// Reactive data for edit modal
+const showEditModal = ref(false);
+const currentBlockToEdit = ref(null);
 
 // Dummy data for blocks - you would fetch this from an API in a real application
 const allBlocks = ref([
   {
-    id: 'block-1-01', // Updated ID format
-    phaseId: 1, // Link to Phase 1
+    id: 'block-1-01',
+    phaseId: 1,
     name: 'A-01',
     status: 'harvesting',
     description: 'First block in the North section, currently undergoing harvesting.',
@@ -189,8 +227,8 @@ const allBlocks = ref([
     },
   },
   {
-    id: 'block-1-02', // Updated ID format
-    phaseId: 1, // Link to Phase 1
+    id: 'block-1-02',
+    phaseId: 1,
     name: 'A-02',
     status: 'active',
     description: 'Second block in the North section, actively producing.',
@@ -199,7 +237,7 @@ const allBlocks = ref([
     totalTrees: 2489,
     variety: 'Tenera',
     yield: 21500,
-    treeHealth: 70, // Changed from 0 for better example
+    treeHealth: 70,
     established: '2015-03-15',
     treesPerHa: 136,
     siteConditions: {
@@ -210,14 +248,14 @@ const allBlocks = ref([
     },
   },
   {
-    id: 'block-2-01', // Updated ID format
-    phaseId: 2, // Link to Phase 2
+    id: 'block-2-01',
+    phaseId: 2,
     name: 'B-01',
-    status: 'young_palm', // Example status
+    status: 'young_palm',
     description: 'Block 01 in the East section, with new planting.',
     palmAge: 2,
     totalArea: 30.0,
-    totalTrees: 4080, // Updated based on 30 * 136
+    totalTrees: 4080,
     variety: 'Dura',
     yield: 5000,
     treeHealth: 90,
@@ -231,10 +269,10 @@ const allBlocks = ref([
     },
   },
   {
-    id: 'block-3-01', // Updated ID format
-    phaseId: 3, // Link to Phase 3
+    id: 'block-3-01',
+    phaseId: 3,
     name: 'C-01',
-    status: 'maintenance', // Example status
+    status: 'maintenance',
     description: 'New development block in the South section.',
     palmAge: 0,
     totalArea: 50.0,
@@ -252,8 +290,8 @@ const allBlocks = ref([
     },
   },
   {
-    id: 'block-1-03', // Updated ID format
-    phaseId: 1, // Link to Phase 1
+    id: 'block-1-03',
+    phaseId: 1,
     name: 'A-03',
     status: 'replanting',
     description: 'Replanting efforts ongoing in this block.',
@@ -264,7 +302,7 @@ const allBlocks = ref([
     yield: 0,
     treeHealth: 70,
     established: '2024-03-01',
-    treesPerHa: 120, // Example different density
+    treesPerHa: 120,
     siteConditions: {
       soilType: 'Clay',
       drainage: 'Good',
@@ -291,19 +329,17 @@ const searchQuery = ref('');
 const filteredBlocks = computed(() => {
   let filtered = allBlocks.value.filter(block => block.phaseId === phaseId.value);
 
-  // Filter by status
   if (selectedStatus.value !== 'All Status') {
     filtered = filtered.filter(block => block.status === selectedStatus.value);
   }
 
-  // Filter by search query
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(
       block =>
         block.name.toLowerCase().includes(query) ||
         block.description.toLowerCase().includes(query) ||
-        `block ${block.name.toLowerCase()}`.includes(query) // Fix: Added for 'Block A' search
+        `block ${block.name.toLowerCase()}`.includes(query)
     );
   }
 
@@ -340,7 +376,6 @@ const nextBlockNumberForPhase = computed(() => {
   if (blocksInCurrentPhase.length === 0) {
     return 1;
   }
-  // Extract block numbers from 'A-01' format and find max
   const maxBlockNumber = Math.max(...blocksInCurrentPhase.map(block => parseInt(block.name.split('-')[1])));
   return maxBlockNumber + 1;
 });
@@ -348,15 +383,50 @@ const nextBlockNumberForPhase = computed(() => {
 
 // Method to add a new block
 const addNewBlock = (newBlockData) => {
-  // Ensure the new block has a unique ID, or handle potential duplicates if IDs are generated differently.
-  // For now, the modal generates a unique ID, but we should confirm it's not already in allBlocks
   const existingBlock = allBlocks.value.find(block => block.id === newBlockData.id);
   if (existingBlock) {
     console.warn(`Block with ID ${newBlockData.id} already exists. Skipping addition.`);
-    // Optionally, alert the user or re-generate ID
-    newBlockData.id = `${newBlockData.id}-${Date.now()}`; // Simple unique ID if collision
+    newBlockData.id = `${newBlockData.id}-${Date.now()}`;
   }
   allBlocks.value.push(newBlockData);
+};
+
+// Method to initiate delete confirmation
+const confirmDelete = (id, name) => {
+  blockToDeleteId.value = id;
+  blockToDeleteName.value = name;
+  showDeleteModal.value = true;
+};
+
+// Method to execute delete after confirmation
+const executeDelete = () => {
+  allBlocks.value = allBlocks.value.filter(block => block.id !== blockToDeleteId.value);
+  showDeleteModal.value = false;
+  blockToDeleteId.value = null;
+  blockToDeleteName.value = '';
+};
+
+// Method to cancel delete
+const cancelDelete = () => {
+  showDeleteModal.value = false;
+  blockToDeleteId.value = null;
+  blockToDeleteName.value = '';
+};
+
+// Method to open the edit modal with the selected block's data
+const openEditModal = (block) => {
+  currentBlockToEdit.value = { ...block }; // Create a copy to avoid direct mutation
+  showEditModal.value = true;
+};
+
+// Method to update an existing block
+const updateBlock = (updatedBlockData) => {
+  const index = allBlocks.value.findIndex(block => block.id === updatedBlockData.id);
+  if (index !== -1) {
+    allBlocks.value[index] = updatedBlockData;
+  }
+  showEditModal.value = false;
+  currentBlockToEdit.value = null;
 };
 
 
@@ -381,9 +451,9 @@ const getBorderColor = (status) => {
       return 'border-orange-500';
     case 'replanting':
       return 'border-purple-500';
-    case 'maintenance': // New status color
+    case 'maintenance':
       return 'border-yellow-500';
-    case 'young_palm': // New status color
+    case 'young_palm':
       return 'border-blue-500';
     default:
       return 'border-gray-300';
@@ -398,9 +468,9 @@ const getBgColor = (status) => {
       return 'bg-orange-500';
     case 'replanting':
       return 'bg-purple-500';
-    case 'maintenance': // New status color
+    case 'maintenance':
       return 'bg-yellow-500';
-    case 'young_palm': // New status color
+    case 'young_palm':
       return 'bg-blue-500';
     default:
       return 'bg-gray-400';
@@ -415,9 +485,9 @@ const getStatusBadgeColor = (status) => {
       return 'bg-orange-100 text-orange-700';
     case 'replanting':
       return 'bg-purple-100 text-purple-700';
-    case 'maintenance': // New status color
+    case 'maintenance':
       return 'bg-yellow-100 text-yellow-700';
-    case 'young_palm': // New status color
+    case 'young_palm':
       return 'bg-blue-100 text-blue-700';
     default:
       return 'bg-gray-100 text-gray-700';
