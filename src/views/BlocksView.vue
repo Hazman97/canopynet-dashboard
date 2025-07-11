@@ -2,7 +2,10 @@
   <div class="flex-grow p-6 bg-gray-100 min-h-screen">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-bold text-gray-800">MPOB Kratong Area Management</h1>
-      <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+      <button
+        @click="showAddBlockModal = true"
+        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center"
+      >
         <i class="bx bx-plus mr-2"></i> Add Block
       </button>
     </div>
@@ -12,7 +15,8 @@
       <div class="bg-white rounded-lg shadow-md p-5 flex items-center justify-between">
         <div>
           <p class="text-sm text-gray-500">Total Phases</p>
-          <p class="text-3xl font-bold text-gray-800">4</p> </div>
+          <p class="text-3xl font-bold text-gray-800">{{ phasesCount }}</p>
+        </div>
         <div class="p-3 bg-blue-100 rounded-full text-blue-500">
           <i class="bx bx-layer text-2xl"></i>
         </div>
@@ -90,10 +94,11 @@
           v-model="selectedStatus"
         >
           <option value="All Status">All Status</option>
+          <option value="young_palm">Young Palm</option>
           <option value="active">Active</option>
           <option value="harvesting">Harvesting</option>
+          <option value="maintenance">Maintenance</option>
           <option value="replanting">Replanting</option>
-          <option value="inactive">Inactive</option>
         </select>
       </div>
     </div>
@@ -112,7 +117,7 @@
           </h3>
           <span
             :class="['text-xs font-semibold px-2.5 py-0.5 rounded-full', getStatusBadgeColor(block.status)]"
-          >{{ block.status }}</span>
+          >{{ getDisplayStatus(block.status) }}</span>
         </div>
         <p class="text-gray-600 mb-4">{{ block.description }}</p>
         <div class="grid grid-cols-2 gap-2 text-sm text-gray-700 mb-4">
@@ -138,20 +143,32 @@
         No blocks found for this phase or with the selected criteria.
       </div>
     </div>
+
+    <AddBlockModal
+      :isVisible="showAddBlockModal"
+      :phaseId="phaseId"
+      :initialBlockNumber="nextBlockNumberForPhase"
+      :phases="phasesData"
+      @close="showAddBlockModal = false"
+      @add-block="addNewBlock"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { useRoute } from 'vue-router'; // To access route parameters
+import { useRoute } from 'vue-router';
+import AddBlockModal from '@/components/AddBlockModal.vue'; // Import the new modal component
 
 const route = useRoute();
 const phaseId = computed(() => parseInt(route.params.phaseId)); // Get phaseId from route params
 
+const showAddBlockModal = ref(false); // Reactive state for modal visibility
+
 // Dummy data for blocks - you would fetch this from an API in a real application
 const allBlocks = ref([
   {
-    id: 'block-1',
+    id: 'block-1-01', // Updated ID format
     phaseId: 1, // Link to Phase 1
     name: 'A-01',
     status: 'harvesting',
@@ -162,9 +179,17 @@ const allBlocks = ref([
     variety: 'Tenera',
     yield: 22000,
     treeHealth: 50,
+    established: '2015-03-15',
+    treesPerHa: 136,
+    siteConditions: {
+      soilType: 'Clay',
+      drainage: 'Good',
+      slope: 'Flat (0-3°)',
+      accessibility: 'Good',
+    },
   },
   {
-    id: 'block-2',
+    id: 'block-1-02', // Updated ID format
     phaseId: 1, // Link to Phase 1
     name: 'A-02',
     status: 'active',
@@ -174,26 +199,42 @@ const allBlocks = ref([
     totalTrees: 2489,
     variety: 'Tenera',
     yield: 21500,
-    treeHealth: 0, // Example of lower health
+    treeHealth: 70, // Changed from 0 for better example
+    established: '2015-03-15',
+    treesPerHa: 136,
+    siteConditions: {
+      soilType: 'Clay',
+      drainage: 'Good',
+      slope: 'Flat (0-3°)',
+      accessibility: 'Good',
+    },
   },
   {
-    id: 'block-3',
+    id: 'block-2-01', // Updated ID format
     phaseId: 2, // Link to Phase 2
     name: 'B-01',
-    status: 'active',
+    status: 'young_palm', // Example status
     description: 'Block 01 in the East section, with new planting.',
     palmAge: 2,
     totalArea: 30.0,
-    totalTrees: 4000,
+    totalTrees: 4080, // Updated based on 30 * 136
     variety: 'Dura',
     yield: 5000,
     treeHealth: 90,
+    established: '2023-01-01',
+    treesPerHa: 136,
+    siteConditions: {
+      soilType: 'Clay',
+      drainage: 'Good',
+      slope: 'Flat (0-3°)',
+      accessibility: 'Good',
+    },
   },
   {
-    id: 'block-4',
+    id: 'block-3-01', // Updated ID format
     phaseId: 3, // Link to Phase 3
     name: 'C-01',
-    status: 'development',
+    status: 'maintenance', // Example status
     description: 'New development block in the South section.',
     palmAge: 0,
     totalArea: 50.0,
@@ -201,9 +242,17 @@ const allBlocks = ref([
     variety: 'N/A',
     yield: 0,
     treeHealth: 0,
+    established: '2024-06-01',
+    treesPerHa: 0,
+    siteConditions: {
+      soilType: 'Clay',
+      drainage: 'Good',
+      slope: 'Flat (0-3°)',
+      accessibility: 'Good',
+    },
   },
   {
-    id: 'block-5',
+    id: 'block-1-03', // Updated ID format
     phaseId: 1, // Link to Phase 1
     name: 'A-03',
     status: 'replanting',
@@ -214,16 +263,24 @@ const allBlocks = ref([
     variety: 'Various',
     yield: 0,
     treeHealth: 70,
+    established: '2024-03-01',
+    treesPerHa: 120, // Example different density
+    siteConditions: {
+      soilType: 'Clay',
+      drainage: 'Good',
+      slope: 'Flat (0-3°)',
+      accessibility: 'Good',
+    },
   },
 ]);
 
-// Dummy data for phases (to get phaseTitle and phasesCount for the breadcrumb)
+// Dummy data for phases (to get phaseTitle and phasesCount for the breadcrumb and modal)
 const phasesData = ref([
-  { id: 1, title: 'North Section' },
-  { id: 2, title: 'East Section' },
-  { id: 3, title: 'South Section' },
-  { id: 4, title: 'West Section' },
-  { id: 5, title: 'Central Section' }
+  { id: 1, title: 'Phase 1 - North Section' },
+  { id: 2, title: 'Phase 2 - East Section' },
+  { id: 3, title: 'Phase 3 - South Section' },
+  { id: 4, title: 'Phase 4 - West Section' },
+  { id: 5, title: 'Phase 5 - Central Section' }
 ]);
 
 
@@ -234,16 +291,19 @@ const searchQuery = ref('');
 const filteredBlocks = computed(() => {
   let filtered = allBlocks.value.filter(block => block.phaseId === phaseId.value);
 
+  // Filter by status
   if (selectedStatus.value !== 'All Status') {
     filtered = filtered.filter(block => block.status === selectedStatus.value);
   }
 
+  // Filter by search query
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(
       block =>
         block.name.toLowerCase().includes(query) ||
-        block.description.toLowerCase().includes(query)
+        block.description.toLowerCase().includes(query) ||
+        `block ${block.name.toLowerCase()}`.includes(query) // Fix: Added for 'Block A' search
     );
   }
 
@@ -274,6 +334,43 @@ const phasesCount = computed(() => {
   return phasesData.value.length;
 });
 
+// Computed property to determine the next available block number for the current phase
+const nextBlockNumberForPhase = computed(() => {
+  const blocksInCurrentPhase = allBlocks.value.filter(block => block.phaseId === phaseId.value);
+  if (blocksInCurrentPhase.length === 0) {
+    return 1;
+  }
+  // Extract block numbers from 'A-01' format and find max
+  const maxBlockNumber = Math.max(...blocksInCurrentPhase.map(block => parseInt(block.name.split('-')[1])));
+  return maxBlockNumber + 1;
+});
+
+
+// Method to add a new block
+const addNewBlock = (newBlockData) => {
+  // Ensure the new block has a unique ID, or handle potential duplicates if IDs are generated differently.
+  // For now, the modal generates a unique ID, but we should confirm it's not already in allBlocks
+  const existingBlock = allBlocks.value.find(block => block.id === newBlockData.id);
+  if (existingBlock) {
+    console.warn(`Block with ID ${newBlockData.id} already exists. Skipping addition.`);
+    // Optionally, alert the user or re-generate ID
+    newBlockData.id = `${newBlockData.id}-${Date.now()}`; // Simple unique ID if collision
+  }
+  allBlocks.value.push(newBlockData);
+};
+
+
+// Helper function to get display string for status (e.g., 'young_palm' -> 'Young Palm')
+const getDisplayStatus = (status) => {
+  switch (status) {
+    case 'young_palm': return 'Young Palm';
+    case 'active': return 'Active';
+    case 'harvesting': return 'Harvesting';
+    case 'maintenance': return 'Maintenance';
+    case 'replanting': return 'Replanting';
+    default: return status;
+  }
+};
 
 // Helper functions for dynamic styling based on status (for blocks)
 const getBorderColor = (status) => {
@@ -284,10 +381,10 @@ const getBorderColor = (status) => {
       return 'border-orange-500';
     case 'replanting':
       return 'border-purple-500';
-    case 'development': // Added for consistency if 'development' status for blocks exists
+    case 'maintenance': // New status color
+      return 'border-yellow-500';
+    case 'young_palm': // New status color
       return 'border-blue-500';
-    case 'inactive':
-      return 'border-gray-500';
     default:
       return 'border-gray-300';
   }
@@ -301,10 +398,10 @@ const getBgColor = (status) => {
       return 'bg-orange-500';
     case 'replanting':
       return 'bg-purple-500';
-    case 'development':
+    case 'maintenance': // New status color
+      return 'bg-yellow-500';
+    case 'young_palm': // New status color
       return 'bg-blue-500';
-    case 'inactive':
-      return 'bg-gray-500';
     default:
       return 'bg-gray-400';
   }
@@ -318,10 +415,10 @@ const getStatusBadgeColor = (status) => {
       return 'bg-orange-100 text-orange-700';
     case 'replanting':
       return 'bg-purple-100 text-purple-700';
-    case 'development':
+    case 'maintenance': // New status color
+      return 'bg-yellow-100 text-yellow-700';
+    case 'young_palm': // New status color
       return 'bg-blue-100 text-blue-700';
-    case 'inactive':
-      return 'bg-gray-200 text-gray-700';
     default:
       return 'bg-gray-100 text-gray-700';
   }
