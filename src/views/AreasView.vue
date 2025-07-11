@@ -2,7 +2,10 @@
   <div class="flex-grow p-6 bg-gray-100 min-h-screen">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-bold text-gray-800">MPOB Keratong Area Management</h1>
-      <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+      <button
+        @click="showAddPhaseModal = true"
+        class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center"
+      >
         <i class="bx bx-plus mr-2"></i> Add Phase
       </button>
     </div>
@@ -123,13 +126,21 @@
           <div><span class="font-medium">Blocks</span><p>{{ phase.blocks }}</p></div>
         </div>
         <div class="flex justify-between items-center">
-          <button class="text-blue-600 hover:underline">View Blocks</button>
+          <button
+            @click="goToBlocksView(phase.id)"
+            class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200 text-sm"
+          >
+            View Blocks
+          </button>
           <div class="flex space-x-2">
             <i
               class="bx bx-trash text-gray-400 hover:text-gray-600 cursor-pointer text-xl"
               @click="confirmDelete(phase.id, phase.title)"
             ></i>
-            <i class="bx bx-edit text-gray-400 hover:text-gray-600 cursor-pointer text-xl"></i>
+            <i
+              class="bx bx-edit text-gray-400 hover:text-gray-600 cursor-pointer text-xl"
+              @click="openEditModal(phase)"
+            ></i>
           </div>
         </div>
       </div>
@@ -147,12 +158,31 @@
       @confirm="executeDelete"
       @cancel="cancelDelete"
     />
+
+    <AddPhaseModal
+      :isVisible="showAddPhaseModal"
+      :initialId="nextPhaseId"
+      @close="showAddPhaseModal = false"
+      @add-phase="addNewPhase"
+    />
+
+    <EditPhaseModal
+      :isVisible="showEditModal"
+      :phaseData="currentPhaseToEdit"
+      @close="showEditModal = false"
+      @update-phase="updatePhase"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
-import ConfirmationModal from '@/components/ConfirmationModal.vue'; // Import the new modal component
+import { useRouter } from 'vue-router'; // Import useRouter
+import ConfirmationModal from '@/components/ConfirmationModal.vue';
+import AddPhaseModal from '@/components/AddPhaseModal.vue';
+import EditPhaseModal from '@/components/EditPhaseModal.vue';
+
+const router = useRouter(); // Initialize router
 
 // Reactive data for phases
 const phases = ref([
@@ -228,10 +258,24 @@ const phases = ref([
 const selectedStatus = ref('All Status');
 const searchQuery = ref('');
 
-// Reactive data for modal
+// Reactive data for delete modal
 const showDeleteModal = ref(false);
 const phaseToDeleteId = ref(null);
 const phaseToDeleteName = ref('');
+
+// Reactive data for add phase modal
+const showAddPhaseModal = ref(false);
+
+// Reactive data for edit phase modal
+const showEditModal = ref(false);
+const currentPhaseToEdit = ref(null); // Will hold the phase object being edited
+
+// Computed property to determine the next available phase ID
+const nextPhaseId = computed(() => {
+  if (phases.value.length === 0) return 1;
+  const maxId = Math.max(...phases.value.map(p => p.id));
+  return maxId + 1;
+});
 
 // Computed properties for summary cards
 const totalBlocks = computed(() => {
@@ -295,6 +339,40 @@ const cancelDelete = () => {
   showDeleteModal.value = false; // Close the modal
   phaseToDeleteId.value = null; // Reset
   phaseToDeleteName.value = ''; // Reset
+};
+
+// Method to add a new phase
+const addNewPhase = (newPhaseData) => {
+  // Check if a phase with the same ID already exists
+  const existingPhase = phases.value.find(p => p.id === newPhaseData.id);
+  if (existingPhase) {
+    alert(`Phase with ID ${newPhaseData.id} already exists. Please choose a different ID.`);
+    return;
+  }
+  phases.value.push(newPhaseData);
+  // Sort phases by ID to maintain order (optional)
+  phases.value.sort((a, b) => a.id - b.id);
+};
+
+// Method to open the edit modal with the selected phase's data
+const openEditModal = (phase) => {
+  currentPhaseToEdit.value = { ...phase }; // Create a copy to avoid direct mutation
+  showEditModal.value = true;
+};
+
+// Method to update an existing phase
+const updatePhase = (updatedPhaseData) => {
+  const index = phases.value.findIndex(p => p.id === updatedPhaseData.id);
+  if (index !== -1) {
+    phases.value[index] = updatedPhaseData;
+  }
+  showEditModal.value = false; // Close the modal
+  currentPhaseToEdit.value = null; // Reset
+};
+
+// New method to navigate to BlocksView
+const goToBlocksView = (phaseId) => {
+  router.push({ name: 'Blocks', params: { phaseId: phaseId } });
 };
 
 

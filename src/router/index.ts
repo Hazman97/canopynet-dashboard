@@ -12,6 +12,7 @@ import LiveMapView from '@/views/LiveMapView.vue'; // Import LiveMapView.vue
 import TaskView from '@/views/TaskView.vue';       // Import TaskView.vue
 import WorkersView from '@/views/WorkerManagementView.vue'; // Import WorkerManagementView.vue
 import AreasView from '@/views/AreasView.vue';     // Import AreasView.vue
+import BlocksView from '@/views/BlocksView.vue';
 import AssetsView from '@/views/AssetsView.vue';   // Import AssetsView.vue
 import UGVView from '@/views/UGVView.vue';         // Import UGVView.vue
 import MeshView from '@/views/MeshView.vue'; // Import MeshView.vue
@@ -90,6 +91,12 @@ const router = createRouter({
           name: 'areas',
           component: AreasView,
           meta: { requiresAuth: true }
+        },
+        {
+          path: '/areas/:phaseId/blocks', // Route with a dynamic parameter for phase ID
+          name: 'Blocks',
+          component: BlocksView,
+          props: true // This allows route params to be passed as props to the component
         },
         {
           path: 'assets', // Path for /assets
