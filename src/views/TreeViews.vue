@@ -11,6 +11,7 @@
     </div>
     <p class="text-gray-600 mb-8">Comprehensive plantation management with phase structure and tree tracking</p>
 
+    <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
       <div class="bg-white rounded-lg shadow-md p-5 flex items-center justify-between">
         <div>
@@ -73,6 +74,7 @@
       </div>
     </div>
 
+    <!-- Breadcrumbs and Filters -->
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-semibold text-gray-800">
         <router-link to="/areas" class="text-blue-600 hover:underline">Phases ({{ phasesCount }})</router-link>
@@ -105,6 +107,7 @@
       </div>
     </div>
 
+    <!-- Tree Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div
         v-for="tree in filteredTrees"
@@ -138,7 +141,10 @@
           </div>
         </div>
         <div class="flex justify-between items-center">
-          <button class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-200 text-sm">
+          <button
+            @click="openTreeDetailsModal(tree)"
+            class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-200 text-sm"
+          >
             View Details
           </button>
           <div class="flex space-x-2">
@@ -158,6 +164,7 @@
       </div>
     </div>
 
+    <!-- Modals -->
     <AddTreeModal
       :isVisible="showAddTreeModal"
       :blockId="blockId"
@@ -183,15 +190,23 @@
       @close="showEditModal = false"
       @update-tree="updateTree"
     />
+
+    <!-- New Tree Detail Modal -->
+    <TreeDetailModal
+      :isVisible="showTreeDetailsModal"
+      :treeData="selectedTreeForDetails"
+      @close="showTreeDetailsModal = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import AddTreeModal from '@/components/AddTreeModal.vue'; // You'll need to create this
+import AddTreeModal from '@/components/AddTreeModal.vue';
 import ConfirmationModal from '@/components/ConfirmationModal.vue';
-import EditTreeModal from '@/components/EditTreeModal.vue'; // You'll need to create this
+import EditTreeModal from '@/components/EditTreeModal.vue';
+import TreeDetailModal from '@/components/TreeDetailModal.vue'; // Import the new detail modal
 
 const route = useRoute();
 const phaseId = computed(() => parseInt(route.params.phaseId));
@@ -203,6 +218,10 @@ const treeToDeleteId = ref(null);
 const treeToDeleteName = ref('');
 const showEditModal = ref(false);
 const currentTreeToEdit = ref(null);
+
+// New state for Tree Detail Modal
+const showTreeDetailsModal = ref(false);
+const selectedTreeForDetails = ref(null);
 
 // Dummy Data (replace with actual API calls)
 const allTrees = ref([
@@ -429,6 +448,12 @@ const updateTree = (updatedTreeData) => {
   }
   showEditModal.value = false;
   currentTreeToEdit.value = null;
+};
+
+// New method to open tree details modal
+const openTreeDetailsModal = (tree) => {
+  selectedTreeForDetails.value = { ...tree }; // Pass a copy of the tree data
+  showTreeDetailsModal.value = true;
 };
 
 // Helper functions for dynamic styling based on health status

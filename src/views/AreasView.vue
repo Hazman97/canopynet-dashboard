@@ -372,7 +372,7 @@ const updatePhase = (updatedPhaseData) => {
 
 // New method to navigate to BlocksView
 const goToBlocksView = (phaseId) => {
-  router.push({ name: 'Blocks', params: { phaseId: phaseId } });
+  router.push({ name: 'blocks', params: { phaseId: phaseId } });
 };
 
 
