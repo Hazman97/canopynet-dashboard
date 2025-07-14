@@ -1,472 +1,306 @@
 <template>
-  <div class="min-h-screen bg-gray-100 p-4 space-y-4">
-    <div class="w-full h-[65vh] bg-white rounded-lg shadow overflow-hidden">
-      <MapView
-        :locations="filteredMapLocations"
-        :center="mapCenter"
-        :zoom="mapZoom"
-        @map-click="clearSelectedLocation"
-        @location-selected="handleMapLocationSelected"
-        class="w-full h-full"
-      />
+  <div class="flex-grow p-6 bg-gray-100 min-h-screen">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+      <div class="flex items-center space-x-4 text-gray-600">
+        <span class="text-sm">Last Updated: July 14, 2025, 5:00 PM</span>
+        <button class="px-3 py-1 bg-white rounded-md border border-gray-300 hover:bg-gray-50 transition duration-150 ease-in-out flex items-center text-sm">
+          <i class="bx bx-refresh text-lg mr-1"></i> Refresh
+        </button>
+      </div>
+    </div>
+    <p class="text-gray-600 mb-8">Quick overview of key metrics and operations across the plantation.</p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow-md p-5 flex items-center justify-between border border-gray-200">
+        <div>
+          <p class="text-sm text-gray-500">Harvested Today (Kg)</p>
+          <p class="text-3xl font-bold text-gray-800">{{ dashboardData.harvestedToday.value }}</p>
+          <p class="text-xs" :class="dashboardData.harvestedToday.change.includes('+') ? 'text-green-500' : 'text-red-500'">
+            {{ dashboardData.harvestedToday.change }}
+          </p>
+        </div>
+        <div :class="[dashboardData.harvestedToday.iconBg, dashboardData.harvestedToday.iconColor]"
+             class="p-3 rounded-full">
+          <i :class="['bx', dashboardData.harvestedToday.icon]" class="text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-5 flex items-center justify-between border border-gray-200">
+        <div>
+          <p class="text-sm text-gray-500">Total Yield (Kg)</p>
+          <p class="text-3xl font-bold text-gray-800">{{ dashboardData.totalYield.value }}</p>
+          <p class="text-xs" :class="dashboardData.totalYield.change.includes('+') ? 'text-green-500' : 'text-red-500'">
+            {{ dashboardData.totalYield.change }}
+          </p>
+        </div>
+        <div :class="[dashboardData.totalYield.iconBg, dashboardData.totalYield.iconColor]"
+             class="p-3 rounded-full">
+          <i :class="['bx', dashboardData.totalYield.icon]" class="text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-5 flex items-center justify-between border border-gray-200">
+        <div>
+          <p class="text-sm text-gray-500">Active Workers</p>
+          <p class="text-3xl font-bold text-gray-800">{{ dashboardData.activeWorkers.value }}</p>
+          <p class="text-xs text-gray-500">{{ dashboardData.activeWorkers.change }}</p>
+        </div>
+        <div :class="[dashboardData.activeWorkers.iconBg, dashboardData.activeWorkers.iconColor]"
+             class="p-3 rounded-full">
+          <i :class="['bx', dashboardData.activeWorkers.icon]" class="text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-5 flex items-center justify-between border border-gray-200">
+        <div>
+          <p class="text-sm text-gray-500">Areas Covered</p>
+          <p class="text-3xl font-bold text-gray-800">{{ dashboardData.areasCovered.value }}</p>
+          <p class="text-xs text-gray-500">{{ dashboardData.areasCovered.change }}</p>
+        </div>
+        <div :class="[dashboardData.areasCovered.iconBg, dashboardData.areasCovered.iconColor]"
+             class="p-3 rounded-full">
+          <i :class="['bx', dashboardData.areasCovered.icon]" class="text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-5 flex items-center justify-between border border-gray-200">
+        <div>
+          <p class="text-sm text-gray-500">Assets Active</p>
+          <p class="text-3xl font-bold text-gray-800">{{ dashboardData.assetsActive.value }}</p>
+          <p class="text-xs text-gray-500">{{ dashboardData.assetsActive.change }}</p>
+        </div>
+        <div :class="[dashboardData.assetsActive.iconBg, dashboardData.assetsActive.iconColor]"
+             class="p-3 rounded-full">
+          <i :class="['bx', dashboardData.assetsActive.icon]" class="text-2xl"></i>
+        </div>
+      </div>
     </div>
 
-    <!-- Dashboard Panels Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
-        <h3 class="font-semibold mb-2 text-gray-800">UGV Status</h3>
-        <table class="text-sm w-full">
-          <thead>
-            <tr class="text-left text-gray-500 border-b">
-              <th class="py-1.5">Name</th>
-              <th class="py-1.5">Batt</th>
-              <th class="py-1.5">Speed</th>
-              <th class="py-1.5">Lat</th>
-              <th class="py-1.5">Lon</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="ugv in ugvs" :key="ugv.id" class="border-b hover:bg-gray-50">
-              <td class="py-1.5">{{ ugv.name }}</td>
-              <td class="py-1.5">{{ ugv.battery }}%</td>
-              <td class="py-1.5">{{ ugv.speed }}km/h</td>
-              <td class="py-1.5">{{ ugv.coords[0].toFixed(3) }}</td>
-              <td class="py-1.5">{{ ugv.coords[1].toFixed(3) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- End UGV Status Section -->
-
-      <!-- Node Status Card -->
-      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
-        <h3 class="font-semibold mb-2 text-gray-800">Node</h3>
-        <div class="flex flex-wrap gap-2 mb-4">
-          <button
-            v-for="node in nodes"
-            :key="node.id"
-            class="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-            :class="{ 'bg-blue-800': selectedNode?.id === node.id }"
-            @click="selectedNode = node"
-          >
-            Node {{ node.id }}
-          </button>
-        </div>
-
-        <div v-if="selectedNode" class="bg-white p-5 rounded-xl shadow-md w-full max-w-xl text-gray-800 space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <NodeItem icon="bx-id-card" label="Node ID" :value="selectedNode.id" />
-            <NodeItem icon="bx-globe" label="IP Address" :value="selectedNode.ip" />
-            <NodeItem icon="bx-signal-5" label="RSSI" :value="`${selectedNode.rssi} dBm`" />
-            <NodeItem icon="bx-bar-chart-alt-2" label="LQI" :value="selectedNode.lqi" />
-            <NodeItem icon="bx-volume-low" label="Noise Floor" :value="`${selectedNode.noise} dBm`" />
-            <NodeItem icon="bx-magnet" label="Signal Margin" :value="selectedNode.margin" />
-            <NodeItem icon="bx-repeat" label="Retries" :value="selectedNode.retries" />
-            <NodeItem icon="bx-bolt-circle" label="TX Power" :value="selectedNode.txPower" />
-            <NodeItem icon="bx-upload" label="TX Packets" :value="selectedNode.txPackets" />
-            <NodeItem icon="bx-download" label="RX Packets" :value="selectedNode.rxPackets" />
-            <NodeItem icon="bx-stats" label="TX Success Rate" :value="`${selectedNode.txSuccess}%`" />
-            <NodeItem icon="bx-stats" label="RX Success Rate" :value="`${selectedNode.rxSuccess}%`" />
-            <NodeItem icon="bx-list-ul" label="Queue Size" :value="selectedNode.queue" />
-            <NodeItem icon="bx-battery" label="Voltage In" :value="selectedNode.voltageIn" />
-            <NodeItem icon="bx-battery-charging" label="Voltage Out" :value="selectedNode.voltageOut" />
-          </div>
-        </div>
-
-        <!-- Default prompt -->
-        <div v-else class="h-40 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-sm">
-          Select a node to view status
-        </div>
-      </div>
-
-      <!-- Alarms -->
-      <div
-        class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1 cursor-pointer hover:shadow-lg transition-shadow duration-200"
-        @click="goToAlarms"
-      >
-        <h3 class="font-semibold mb-2 text-gray-800">Alarms</h3>
-        <ul class="text-sm space-y-2">
-          <li>
-            <span class="text-red-600 font-semibold">[High]</span> - Silo B temp delta<br />
-            <span class="text-xs text-gray-500">2024-07-16 11:53:46</span>
-          </li>
-          <li>
-            <span class="text-yellow-500 font-semibold">[Warning]</span> - pH spike in Putrajaya<br />
-            <span class="text-xs text-gray-500">2024-07-16 11:40:00</span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="bg-white rounded-lg shadow p-4 col-span-1 xl:col-span-1">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-gray-800">Map Legend</h3>
-          <button
-            v-if="selectedLocation"
-            @click="clearSelectedLocation"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
-            title="Clear filter"
-          >
-            <i class="bx bx-x text-lg"></i>
-          </button>
-        </div>
-
-        <div v-if="selectedLocation" class="mb-3 p-2 bg-blue-50 border border-blue-200 rounded">
-          <div class="flex items-center gap-2 text-sm text-blue-800">
-            <div
-              class="legend-icon-circle"
-              :style="{ backgroundColor: selectedLocation.color || '#10B981', borderColor: selectedLocation.color || '#059669' }"
-            >
-              <i :class="['bx', selectedLocation.icon, 'legend-icon']"></i>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Tree Health Overview</h2>
+        <div class="flex flex-col md:flex-row items-center md:justify-around space-y-4 md:space-y-0 md:space-x-8">
+          <div class="w-full md:w-1/2 h-64 flex items-center justify-center relative">
+            <div class="pie-chart-container w-48 h-48 rounded-full shadow-lg relative"
+                 :style="{ background: generatePieChartGradient }">
+                 <span class="absolute text-sm text-gray-700 font-semibold" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                   {{ treeHealthOverview.healthy + treeHealthOverview.diseased + treeHealthOverview.underObservation }}% Total
+                 </span>
             </div>
-            <span class="font-medium">{{ selectedLocation.name }}</span>
-            <span class="text-xs text-blue-600">(filtered)</span>
-          </div>
-          <div v-if="selectedLocation.type === 'node'" class="mt-2 text-xs text-gray-700">
-            <p>
-              Status:
-              <span
-                :class="{
-                  'text-green-600 font-semibold': selectedLocation.status === 'Online',
-                  'text-red-600 font-semibold': selectedLocation.status === 'Offline',
-                }"
-                >{{ selectedLocation.status }}</span
-              >
-            </p>
-            <p>Signal Strength: {{ selectedLocation.signalStrength }} dBm</p>
+            </div>
+          <div class="w-full md:w-1/2 p-4">
+            <p class="text-gray-600 mb-4">Distribution of tree health across the plantation:</p>
+            <ul class="space-y-2 text-lg">
+              <li class="flex items-center">
+                <span class="inline-block w-4 h-4 rounded-full bg-green-500 mr-2"></span>
+                Healthy: <span class="font-semibold ml-1">{{ treeHealthOverview.healthy }}%</span>
+              </li>
+              <li class="flex items-center">
+                <span class="inline-block w-4 h-4 rounded-full bg-red-500 mr-2"></span>
+                Diseased: <span class="font-semibold ml-1">{{ treeHealthOverview.diseased }}%</span>
+              </li>
+              <li class="flex items-center">
+                <span class="inline-block w-4 h-4 rounded-full bg-yellow-500 mr-2"></span>
+                Under Observation: <span class="font-semibold ml-1">{{ treeHealthOverview.underObservation }}%</span>
+              </li>
+            </ul>
           </div>
         </div>
+      </div>
 
-        <ul class="text-sm space-y-2">
-          <li
-            v-for="point in otherPointsOfInterest"
-            :key="point.name"
-            class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded -mx-1 transition-colors"
-            :class="{
-              'bg-blue-50 border border-blue-200': selectedLocation?.name === point.name,
-              'opacity-50': selectedLocation && selectedLocation.name !== point.name,
-            }"
-            @click="selectLocation(point)"
-          >
-            <div
-              class="legend-icon-circle"
-              :style="{ backgroundColor: point.color || '#10B981', borderColor: point.color || '#059669' }"
-            >
-              <i :class="['bx', point.icon, 'legend-icon']"></i>
-            </div>
-            <span>{{ point.name }}</span>
-          </li>
-        </ul>
+      <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Monthly Yield Trend</h2>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="monthlyYieldChart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6 border border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Live Activities</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="(activity, index) in liveActivities" :key="index">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.time }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <i :class="['bx', activity.icon, getIconColor(activity.status)]" class="mr-2"></i>
+                  {{ activity.description }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="getStatusBadgeColor(activity.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                    {{ getDisplayStatus(activity.status) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-4 text-sm text-gray-500 text-center">
+          <a href="#" class="text-blue-600 hover:underline">View all activities</a>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import axios from 'axios'
-import MapView from '../components/MapView.vue'
-import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
-import { API_URL } from '../configapi'
-import { h } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue';
+import Chart from 'chart.js/auto'; // Make sure Chart.js is installed (npm install chart.js)
 
-const router = useRouter()
+const dashboardData = ref({
+  // Harvested Today (Kg) Card - Now separate
+  harvestedToday: { value: '1,500 Kg', change: '+5.2% Today', icon: 'bxs-lemon', iconBg: 'bg-orange-100', iconColor: 'text-orange-500' },
+  // Total Yield (Kg) Card - New, separate from Harvested Today
+  totalYield: { value: '50,000 Kg', change: '+5% this month', icon: 'bxs-leaf', iconBg: 'bg-green-100', iconColor: 'text-green-500' },
 
-// NodeItem component definition
-const NodeItem = (props) => {
-  return h('div', { class: 'flex items-start gap-2' }, [
-    h('i', { class: 'bx ' + props.icon + ' text-blue-400 text-lg mt-0.5' }),
-    h('div', [
-      h('div', { class: 'font-medium text-gray-700' }, props.label),
-      h('div', { class: 'text-gray-600' }, props.value),
-    ]),
-  ])
-}
-NodeItem.props = {
-  icon: String,
-  label: String,
-  value: [String, Number],
-}
+  // Active Workers Card (retained)
+  activeWorkers: { value: '120', change: '+5 this week', icon: 'bxs-group', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-500' },
+  // Areas Covered Card (retained)
+  areasCovered: { value: '2,500 Acres', change: '85% of total', icon: 'bx-area', iconBg: 'bg-teal-100', iconColor: 'text-teal-500' },
+  // Assets Active Card (retained)
+  assetsActive: { value: '45', change: '90% operational', icon: 'bxs-truck', iconBg: 'bg-pink-100', iconColor: 'text-pink-500' },
 
-// UGV data (remains reactive)
-const ugvs = reactive([
-  { id: 1, name: 'UGV Alpha', coords: [5.353, 100.305], battery: 92, speed: 5, path: [] },
-  { id: 2, name: 'UGV Bravo', coords: [5.3535, 100.306], battery: 87, speed: 4, path: [] },
-  { id: 3, name: 'UGV Charlie', coords: [5.354, 100.304], battery: 78, speed: 6, path: [] },
-  { id: 4, name: 'UGV Delta', coords: [5.3545, 100.305], battery: 83, speed: 7, path: [] },
-  { id: 5, name: 'UGV Echo', coords: [5.355, 100.306], battery: 91, speed: 3, path: [] },
-])
+  // Existing Cards (retained)
+  totalTreesPlanted: { value: '12,450', change: '+1.2% this month', icon: 'bxs-tree', iconBg: 'bg-blue-100', iconColor: 'text-blue-500' },
+  totalHarvested: { value: '50,000', change: '+5% this month', icon: 'bxs-leaf', iconBg: 'bg-green-100', iconColor: 'text-green-500' }, // This is the overall total, kept separate.
+  treesHealthyRatio: { value: '85', target: '90%', icon: 'bxs-heart-circle', iconBg: 'bg-purple-100', iconColor: 'text-purple-500' },
+  diseasedTrees: { value: '1,200', change: '-10% last month', icon: 'bxs-virus', iconBg: 'bg-red-100', iconColor: 'text-red-500' },
+  treesUnderObservation: { value: '50', change: 'Stable', icon: 'bxs-low-vision', iconBg: 'bg-yellow-100', iconColor: 'text-yellow-500' },
+});
 
-// UGV Simulation Logic
-let ugvSimulationInterval = null
+// Data for the Tree Health Overview pie chart
+const treeHealthOverview = ref({
+  healthy: 85,
+  diseased: 10,
+  underObservation: 5,
+});
 
-const startUGVSimulation = () => {
-  if (ugvSimulationInterval) {
-    clearInterval(ugvSimulationInterval)
+// Computed property to generate the conic-gradient for the dummy pie chart
+const generatePieChartGradient = computed(() => {
+  const healthyEnd = treeHealthOverview.value.healthy;
+  const diseasedEnd = healthyEnd + treeHealthOverview.value.diseased;
+  const underObservationEnd = diseasedEnd + treeHealthOverview.value.underObservation;
+
+  return `conic-gradient(
+    #22C55E 0% ${healthyEnd}%, /* green-500 */
+    #EF4444 ${healthyEnd}% ${diseasedEnd}%, /* red-500 */
+    #F59E0B ${diseasedEnd}% ${underObservationEnd}% /* yellow-500 */
+  )`;
+});
+
+// Dummy data for Monthly Yield Trend Line Chart
+const monthlyYieldData = ref({
+  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  yields: [3000, 3200, 2800, 3500, 3800, 4200, 4000, 4500, 4300, 4700, 4900, 5000], // Example yield in Kg
+});
+
+// Dummy data for Live Activities
+const liveActivities = ref([
+  { time: '2 mins ago', description: 'UGV-003 completed Block A-1 scan.', status: 'completed', icon: 'bx-bot' },
+  { time: '15 mins ago', description: 'Tractor T-001 started harvesting in Block B-2.', status: 'in_progress', icon: 'bxs-truck' },
+  { time: '30 mins ago', description: 'Sensor L-005 detected low soil moisture in Sector C-3.', status: 'alert', icon: 'bx-water' },
+  { time: '1 hour ago', description: 'Worker ID-045 reported tree T-234 under observation.', status: 'reported', icon: 'bxs-user' },
+  { time: '2 hours ago', description: 'Daily yield data for July 13th uploaded.', status: 'completed', icon: 'bx-cloud-upload' },
+  { time: '4 hours ago', description: 'New tree seedlings planted in Block D-5.', status: 'completed', icon: 'bxs-tree' },
+]);
+
+// Helper functions for Live Activities styling
+const getStatusBadgeColor = (status) => {
+  switch (status) {
+    case 'completed': return 'bg-green-100 text-green-700';
+    case 'in_progress': return 'bg-blue-100 text-blue-700';
+    case 'alert': return 'bg-red-100 text-red-700';
+    case 'reported': return 'bg-yellow-100 text-yellow-700';
+    default: return 'bg-gray-100 text-gray-700';
   }
-  ugvSimulationInterval = setInterval(() => {
-    ugvs.forEach((ugv) => {
-      const latOffset = (Math.random() - 0.5) * 0.0003
-      const lngOffset = (Math.random() - 0.5) * 0.0003
-      ugv.coords[0] += latOffset
-      ugv.coords[1] += lngOffset
-    })
-  }, 2000)
-}
+};
 
-const stopUGVSimulation = () => {
-  if (ugvSimulationInterval) {
-    clearInterval(ugvSimulationInterval)
-    ugvSimulationInterval = null
+const getDisplayStatus = (status) => {
+  switch (status) {
+    case 'completed': return 'Completed';
+    case 'in_progress': return 'In Progress';
+    case 'alert': return 'Alert';
+    case 'reported': return 'Reported';
+    default: return status.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
   }
-}
+};
 
-// Existing Node data and fetching logic
-const nodes = ref([])
-const selectedNode = ref(null)
-let pollInterval = null
-let isFetching = false
-
-const fetchNodeData = async () => {
-  if (isFetching) return
-  isFetching = true
-  const url = `${API_URL}/api/send-at?cmd=AT^DRPR=2`
-  try {
-    const res = await fetch(url)
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`)
-    }
-    const text = await res.text()
-    const lines = text.trim().split('\n').filter((line) => line.startsWith('^DRPR:'))
-    const parsedNodes = lines.map((line) => {
-      const parts = line.replace('^DRPR: ', '').split(',')
-      return {
-        id: parts[0],
-        ip: parts[3]?.replace(/"/g, ''),
-        rssi: parts[6]?.replace(/"/g, ''),
-        lqi: parts[7],
-        noise: parts[8]?.replace(/"/g, ''),
-        margin: parts[9]?.replace(/"/g, ''),
-        retries: parts[10],
-        txPower: parts[11]?.replace(/"/g, ''),
-        txPackets: parts[12],
-        rxPackets: parts[14],
-        txSuccess: parts[16],
-        rxSuccess: parts[18],
-        queue: parts[20],
-        voltageIn: parts[22]?.replace(/"/g, ''),
-        voltageOut: parts[23]?.replace(/"/g, ''),
-      }
-    })
-    nodes.value = parsedNodes
-    if (selectedNode.value) {
-      const stillExists = parsedNodes.some((n) => n.id === selectedNode.value.id)
-      if (!stillExists) {
-        selectedNode.value = parsedNodes[0] || null
-      }
-    } else {
-      selectedNode.value = parsedNodes[0] || null
-    }
-  } catch (err) {
-    console.error('❌ Failed to fetch mesh node data', err)
-  } finally {
-    isFetching = false
+const getIconColor = (status) => {
+  switch (status) {
+    case 'completed': return 'text-green-500';
+    case 'in_progress': return 'text-blue-500';
+    case 'alert': return 'text-red-500';
+    case 'reported': return 'text-yellow-500';
+    default: return 'text-gray-500';
   }
-}
+};
 
-const startPolling = (interval = 5000) => {
-  stopPolling()
-  fetchNodeData()
-  pollInterval = setInterval(fetchNodeData, interval)
-}
 
-const stopPolling = () => {
-  if (pollInterval) {
-    clearInterval(pollInterval)
-    pollInterval = null
-  }
-}
-
+// Initialize charts using Chart.js on component mount
 onMounted(() => {
-  startPolling()
-  startUGVSimulation()
-})
-
-onUnmounted(() => {
-  stopPolling()
-  stopUGVSimulation()
-})
-
-// Keratong locations
-const otherPointsOfInterest = reactive([
-  { name: 'Starlink (Water tank)', coords: [2.786111, 102.924167], icon: 'bx-water', color: '#5dade2', type: 'poi' }, // Blue
-  { name: 'Operation Centre', coords: [2.785000, 102.923889], icon: 'bxs-business', color: '#58d68d', type: 'poi' }, // Green
-  { name: 'Staff House', coords: [2.780278, 102.924445], icon: 'bx-building-house', color: '#58d68d', type: 'poi' }, // Green
-  { name: 'Fertilizer Store', coords: [2.777500, 102.920556], icon: 'bxs-factory', color: '#5dade2', type: 'poi' }, // Blue
-  { name: 'Office Farm', coords: [2.7762165, 102.9193214], icon: 'bx-home-alt', color: '#5dade2', type: 'poi' }, // Blue
-  {
-    name: 'Master Node',
-    coords: [2.776233, 102.9192424],
-    icon: 'bx-sitemap',
-    color: '#e74c3c',
-    type: 'node',
-    status: 'Online',
-    signalStrength: -65,
-  }, // Red
-  {
-    name: 'Node 1',
-    coords: [2.776161, 102.9186266],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Online',
-    signalStrength: -72,
-  }, // Orange
-  {
-    name: 'Node 2',
-    coords: [2.7780436, 102.9183831],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Offline',
-    signalStrength: null,
-  }, // Orange
-  {
-    name: 'Node 3',
-    coords: [2.7790717, 102.9197222],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Online',
-    signalStrength: -80,
-  }, // Orange
-  {
-    name: 'Node 4',
-    coords: [2.7798398, 102.9212139],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Online',
-    signalStrength: -75,
-  }, // Orange
-  {
-    name: 'Node 5',
-    coords: [2.7773601, 102.9198678],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Online',
-    signalStrength: -68,
-  }, // Orange
-  {
-    name: 'Node 6',
-    coords: [2.7783504, 102.9214836],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Offline',
-    signalStrength: null,
-  }, // Orange
-  {
-    name: 'Node 7',
-    coords: [2.7765668, 102.9213325],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Online',
-    signalStrength: -70,
-  }, // Orange
-  {
-    name: 'Node 8',
-    coords: [2.7755845, 102.9199512],
-    icon: 'bx-network-chart',
-    color: '#f39c12',
-    type: 'node',
-    status: 'Online',
-    signalStrength: -78,
-  }, // Orange
-])
-
-// Selected location state for filtering
-const selectedLocation = ref(null)
-
-// Computed property to filter map locations
-const filteredMapLocations = computed(() => {
-  if (selectedLocation.value) {
-    return [selectedLocation.value]
+  // Monthly Yield Line Chart
+  const monthlyYieldCtx = document.getElementById('monthlyYieldChart');
+  if (monthlyYieldCtx) {
+    new Chart(monthlyYieldCtx, {
+      type: 'line',
+      data: {
+        labels: monthlyYieldData.value.labels,
+        datasets: [{
+          label: 'Yield (Kg)',
+          data: monthlyYieldData.value.yields,
+          borderColor: '#4F46E5', // indigo-600
+          backgroundColor: 'rgba(79, 70, 229, 0.2)', // Semi-transparent fill
+          tension: 0.4, // Makes the line curved
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Yield (Kg)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Month'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false, // Hide legend if only one dataset
+          },
+          title: {
+            display: false, // Title is already in H2 tag
+            text: 'Monthly Yield Trend'
+          }
+        }
+      }
+    });
   }
-  return otherPointsOfInterest
-})
-
-// Map control state
-const initialLatitude = 2.7763448 // Keratong Latitude
-const initialLongitude = 102.926766 // Keratong Longitude
-const initialZoom = 16 // Adjust this initial zoom
-
-// Use a reactive object to hold center and zoom for the map
-const mapCenter = ref([initialLatitude, initialLongitude])
-const mapZoom = ref(initialZoom)
-
-// Function to select a location (filter mode)
-const selectLocation = (point) => {
-  selectedLocation.value = point
-  // Zoom to the selected location
-  mapCenter.value = point.coords
-  mapZoom.value = 18
-}
-
-// Handler for when a location is selected from the MapView component
-const handleMapLocationSelected = (name) => {
-  const location = otherPointsOfInterest.find((p) => p.name === name)
-  if (location) {
-    selectLocation(location)
-  }
-}
-
-// Function to clear the selected location filter
-const clearSelectedLocation = () => {
-  selectedLocation.value = null
-  // Reset to initial view
-  mapCenter.value = [initialLatitude, initialLongitude]
-  mapZoom.value = initialZoom
-}
-
-// Function to zoom to a specific location 
-const zoomToLocation = (coords) => {
-  mapCenter.value = coords
-  mapZoom.value = 18 // Zoom in closer when a legend item is clicked
-}
-
-const selected = ref(null)
-const onSelect = (name) => {
-  if (selected.value?.name === name) {
-    selected.value = null
-  } else {
-    selected.value = null
-  }
-}
-
-const goToAlarms = () => {
-  router.push('/alarm')
-}
+});
 </script>
 
 <style scoped>
-/* Scoped styles for the legend icons to mimic the map marker appearance */
-.legend-icon-circle {
-  width: 24px; /* Smaller size for legend */
-  height: 24px;
-  background-color: #10b981; /* Default green, will be overridden by point.color */
-  border: 1px solid #059669; /* Darker green border, will be overridden */
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 14px; /* Smaller icon size for legend */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
+/* No additional scoped styles needed for Tailwind CSS classes */
 
-.legend-icon {
-  line-height: 1; /* Ensure icon is vertically centered */
+/* CSS for the dummy pie chart */
+.pie-chart-container {
+  /* This will be styled by the inline 'background' property with conic-gradient */
+  background: white; /* Fallback */
 }
 </style>
