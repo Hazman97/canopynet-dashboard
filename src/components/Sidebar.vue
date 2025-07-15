@@ -22,11 +22,12 @@
     <SidebarItem icon="bx-map-alt" label="Areas" :to="{ name: 'areas' }" :collapsed="collapsed" />
     <SidebarItem icon="bxs-truck" label="Assets" :to="{ name: 'assets' }" :collapsed="collapsed" />
     <SidebarItem icon="bx-bot" label="UGV" :to="{ name: 'ugv' }" :collapsed="collapsed" />
-    <SidebarItem icon="bx-joystick" label="Teleoperation" :to="{ name: 'teleoperation' }" :collapsed="collapsed" />
+    
     <SidebarItem icon="bx-bar-chart-alt-2" label="Analytics" :to="{ name: 'analytics' }" :collapsed="collapsed" />
     <SidebarItem icon="bxs-network-chart" label="Mesh Network" :to="{ name: 'mesh' }" :collapsed="collapsed" />
     <SidebarItem icon="bx-cog" label="Setting" :to="{ name: 'dashboard' }" :collapsed="collapsed" />
     <!-- <SidebarItem icon="bx-chalkboard" label="Insight" :to="{ name: 'cart' }" :collapsed="collapsed" />
+    <SidebarItem icon="bx-joystick" label="Teleoperation" :to="{ name: 'teleoperation' }" :collapsed="collapsed" />
     <SidebarItem icon="bx-reflect-vertical" label="Fleet" :to="{ name: 'dashboard' }" :collapsed="collapsed" /> 
     <SidebarItem icon="bx-error-alt" label="Alarm" :to="{ name: 'alarm' }" :collapsed="collapsed" /> -->
   </aside>

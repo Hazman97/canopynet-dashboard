@@ -60,40 +60,18 @@
     <!-- Main Content (Map) -->
     <div class="flex-1 relative">
       <div id="map" class="h-full w-full rounded-lg shadow-md"></div>
-
-      <!-- Map Layers Overlay - Z-index updated to z-20 -->
-      <div class="absolute top-6 right-6 bg-white rounded-lg shadow-lg p-4 z-20">
-        <h3 class="text-lg font-semibold text-gray-700 mb-3">Map Layers</h3>
-        <div class="space-y-2">
-          <label v-for="layer in mapLayers" :key="layer.name" class="flex items-center text-gray-700">
-            <input type="checkbox" v-model="layer.checked" class="form-checkbox h-4 w-4 text-blue-600 rounded" />
-            <i :class="layer.icon" class="ml-2 mr-2 text-lg" :style="{ color: layer.color }"></i>
-            <span>{{ layer.name }}</span>
-          </label>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script>
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
 export default {
   name: 'LiveMap',
   data() {
     return {
-      progress: 5.7, // Example progress value
-      mapLayers: [
-        { name: 'Workers', icon: 'bx bxs-user', color: '#3b82f6', checked: true },
-        { name: 'Assets', icon: 'bx bxs-truck', color: '#10b981', checked: true },
-        { name: 'UGVs', icon: 'bx bxs-car', color: '#f59e0b', checked: true },
-        { name: 'Mesh Nodes', icon: 'bx bxs-network-chart', color: '#ef4444', checked: true },
-        { name: 'Area Boundaries', icon: 'bx bxs-polygon', color: '#6b7280', checked: false },
-        { name: 'Covered Paths', icon: 'bx bx-check-square', color: '#22c55e', checked: true },
-        { name: 'Skip Areas', icon: 'bx bx-x-circle', color: '#dc2626', checked: false }
-      ],
+      progress: 5.7,
       map: null,
     };
   },
@@ -102,20 +80,22 @@ export default {
   },
   methods: {
     initMap() {
-      // Initialize the map
-      this.map = L.map('map').setView([2.7768, 102.9195], 13); // Centered around the example coordinates
+      if (typeof window.L === 'undefined') {
+        console.error("Leaflet (L) is not defined. Please ensure Leaflet is loaded globally (e.g., via a CDN).");
+        return;
+      }
 
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      this.map = window.L.map('map').setView([2.7768, 102.9195], 13);
+
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(this.map);
 
-      // Example markers (you would fetch real data here)
-      L.marker([2.7768, 102.9195]).addTo(this.map)
+      window.L.marker([2.7768, 102.9195]).addTo(this.map)
         .bindPopup('A Mesh Node')
         .openPopup();
 
-      L.marker([2.7800, 102.9250]).addTo(this.map)
+      window.L.marker([2.7800, 102.9250]).addTo(this.map)
         .bindPopup('Worker Location');
     }
   }
@@ -123,7 +103,6 @@ export default {
 </script>
 
 <style scoped>
-/* Ensure the map container takes full height */
 #map {
   height: 100%;
   width: 100%;
