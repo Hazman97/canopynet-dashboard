@@ -128,6 +128,17 @@ const router = createRouter({
           component: AnalyticsView,
           meta: { requiresAuth: true }
         },
+        {
+        path: '/mesh',
+        component: () => import('@/views/MeshView.vue'),
+        children: [
+          { path: '', redirect: 'overview' },
+          { path: 'overview', component: () => import('@/components/Overview.vue') },
+          { path: 'network-map', component: () => import('@/components/NetworkMap.vue') },
+          { path: 'node-management', component: () => import('@/components/NodeManagement.vue') },
+          { path: 'monitoring', component: () => import('@/components/Monitoring.vue') }
+          ]
+        }
       ]
     }
   ]
