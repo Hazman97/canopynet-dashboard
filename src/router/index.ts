@@ -18,6 +18,11 @@ import AssetsView from '@/views/AssetsView.vue';   // Import AssetsView.vue
 import UGVView from '@/views/UGVView.vue';         // Import UGVView.vue
 import MeshView from '@/views/MeshView.vue'; // Import MeshView.vue
 import AnalyticsView from '@/views/AnalyticsView.vue'; // Import AnalyticsView.vue
+import Overview from '@/components/Overview.vue'; // Import Overview.vue
+import NetworkMap from '@/components/NetworkMap.vue'; // Import NetworkMap.vue
+import NodeManagement from '@/components/NodeManagement.vue'; // Import NodeManagement.vue
+import Monitoring from '@/components/Monitoring.vue'; // Import Monitoring.vue
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -117,26 +122,23 @@ const router = createRouter({
           meta: { requiresAuth: true }
         },
         {
-          path: 'mesh', // Path for /mesh
-          name: 'mesh',
-          component: MeshView,
-          meta: { requiresAuth: true }
-        },
-        {
           path: 'analytics', // Path for /analytics
           name: 'analytics',
           component: AnalyticsView,
           meta: { requiresAuth: true }
         },
+        // Consolidated and corrected Mesh route
         {
-        path: '/mesh',
-        component: () => import('@/views/MeshView.vue'),
-        children: [
-          { path: '', redirect: 'overview' },
-          { path: 'overview', component: () => import('@/components/Overview.vue') },
-          { path: 'network-map', component: () => import('@/components/NetworkMap.vue') },
-          { path: 'node-management', component: () => import('@/components/NodeManagement.vue') },
-          { path: 'monitoring', component: () => import('@/components/Monitoring.vue') }
+          path: 'mesh', // Accessible at /mesh
+          name: 'mesh',
+          component: MeshView, // MeshView will act as the parent for nested routes
+          meta: { requiresAuth: true },
+          children: [
+            { path: '', redirect: 'overview' }, // Redirect /mesh to /mesh/overview
+            { path: 'overview', component: Overview }, // /mesh/overview
+            { path: 'network-map', component: NetworkMap }, // /mesh/network-map
+            { path: 'node-management', component: NodeManagement }, // /mesh/node-management
+            { path: 'monitoring', component: Monitoring } // /mesh/monitoring
           ]
         }
       ]

@@ -26,15 +26,66 @@
       </router-link>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Network Status</h2>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-gray-600">Total Nodes:</span>
+          <span class="font-bold text-blue-600">45</span>
+        </div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-gray-600">Online Nodes:</span>
+          <span class="font-bold text-green-600">42</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">Offline Nodes:</span>
+          <span class="font-bold text-red-600">3</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Data Traffic (Last 24h)</h2>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-gray-600">Total Data Sent:</span>
+          <span class="font-bold text-purple-600">1.2 GB</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-gray-600">Total Data Received:</span>
+          <span class="font-bold text-purple-600">980 MB</span>
+        </div>
+        <p class="text-sm text-gray-500 mt-2">Average latency: 25ms</p>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-6 col-span-1 md:col-span-2 lg:col-span-1">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Network Health</h2>
+        <div class="flex items-center mb-2">
+          <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+          <span class="text-gray-700 font-medium">Stable (95% uptime)</span>
+        </div>
+        <p class="text-sm text-gray-500">No major issues detected. Regular maintenance recommended.</p>
+      </div>
+    </div>
+    
     <router-view />
+
+    <AddNodePage 
+      v-if="showAddNodeModal" 
+      @close="closeAddNodeModal"
+      @node-added="handleNodeAdded"
+    />
   </div>
 </template>
 
 <script>
-import { useRoute } from 'vue-router'; // Import useRoute
+import { ref } from 'vue';
+import { useRoute } from 'vue-router';
+import AddNodePage from '../components/AddNodePage.vue'; // Import the AddNodePage component
 
 export default {
   name: 'MeshView',
+  components: {
+    AddNodePage // Register the component
+  },
   data() {
     return {
       tabs: [
@@ -46,20 +97,40 @@ export default {
     };
   },
   setup() {
-    const route = useRoute(); // Access the current route
+    const route = useRoute();
+    const showAddNodeModal = ref(false);
 
     const isActive = (path) => {
       return route.path.includes(`/mesh/${path}`);
     };
 
     const addNode = () => {
-      alert('Add Node functionality coming soon from MeshView!');
-      // Here you would typically open a modal or navigate to a creation page
+      showAddNodeModal.value = true;
+    };
+
+    const closeAddNodeModal = () => {
+      showAddNodeModal.value = false;
+    };
+
+    const handleNodeAdded = (nodeData) => {
+      // Handle the new node data here
+      console.log('New node added:', nodeData);
+      
+      // You can add logic here to:
+      // 1. Send data to your backend API
+      // 2. Update local state
+      // 3. Show success notification
+      // 4. Refresh node list
+      
+      closeAddNodeModal();
     };
 
     return {
       isActive,
-      addNode
+      addNode,
+      showAddNodeModal,
+      closeAddNodeModal,
+      handleNodeAdded
     };
   }
 };
