@@ -95,8 +95,8 @@
             <!-- Dummy control buttons -->
             <button class="col-start-2 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="bx bx-up-arrow-alt"></i></button>
             <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="bx bx-left-arrow-alt"></i></button>
-            <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="bx bx-down-arrow-alt"></i></button>
             <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="bx bx-right-arrow-alt"></i></button>
+            <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="bx bx-down-arrow-alt"></i></button>
             <button class="col-span-3 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors">Stop All</button>
           </div>
         </div>
