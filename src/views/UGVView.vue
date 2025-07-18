@@ -27,13 +27,6 @@
         >
           <i class="bx bx-grid-alt mr-2"></i>Overview
         </button>
-        <button
-          @click="activeTab = 'teleoperation'"
-          :class="{'bg-blue-600 text-white': activeTab === 'teleoperation', 'text-gray-700 hover:bg-gray-100': activeTab !== 'teleoperation'}"
-          class="px-5 py-2 rounded-md font-medium transition-colors duration-200"
-        >
-          <i class="bx bx-joystick mr-2"></i>Teleoperation
-        </button>
       </div>
 
       <!-- Main Content Area -->
