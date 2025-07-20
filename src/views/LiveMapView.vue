@@ -50,7 +50,6 @@
             <span class="font-bold text-gray-800">2.1 HA/day</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600">ETA Completion</span>
             <span class="font-bold text-gray-800">70 days</span>
           </div>
         </div>
@@ -85,8 +84,17 @@ export default {
         return;
       }
 
-      // Initialize map centered around the new nodes
-      this.map = window.L.map('map').setView([2.777139, 102.920252], 15); // Adjusted center and zoom level
+      // --- Define Perimeter Points ---
+      const perimeterPoints = [
+        [2.7800541, 102.9183970], // point 1
+        [2.7756339, 102.9165464], // point 2
+        [2.7724868, 102.9165470], // point 3
+        [2.7718940, 102.9355398], // point 4
+        [2.7797947, 102.9400275], // point 5
+      ];
+
+      // Initialize map and fit to the bounds of the new polygon
+      this.map = window.L.map('map').fitBounds(perimeterPoints);
 
       window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -180,6 +188,13 @@ export default {
         window.L.marker([ugv.lat, ugv.lng], { icon: ugvIcon }).addTo(this.map)
           .bindPopup(`<b>${ugv.name}</b>`);
       });
+
+      // --- Add Area Boundary (as a polygon) ---
+      window.L.polygon(perimeterPoints, {
+        color: 'green',
+        fillColor: 'green',
+        fillOpacity: 0.25, // 25% opacity
+      }).addTo(this.map).bindPopup(`<b>Defined Area Boundary</b>`);
     }
   }
 };
