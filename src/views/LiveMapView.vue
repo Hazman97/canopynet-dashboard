@@ -4,12 +4,14 @@
     <!-- Removed h-screen and added overflow-y-auto -->
     <div class="w-80 bg-white p-6 shadow-lg flex flex-col justify-between overflow-y-auto">
       <div>
+        <!--
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-bold text-gray-800">Log Buat Asahan</h2>
           <button class="text-gray-500 hover:text-gray-700">
             <i class="bx bx-refresh text-xl"></i>
           </button>
         </div>
+        -->
 
         <!-- Map Layers Control Box -->
         <div class="bg-white p-4 rounded-lg shadow-lg mb-6">
