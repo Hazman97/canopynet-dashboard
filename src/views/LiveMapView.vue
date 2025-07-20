@@ -85,18 +85,35 @@ export default {
         return;
       }
 
-      this.map = window.L.map('map').setView([2.7768, 102.9195], 13);
+      // Initialize map centered around the new nodes
+      this.map = window.L.map('map').setView([2.777139, 102.920252], 15); // Adjusted center and zoom level
 
       window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(this.map);
 
-      window.L.marker([2.7768, 102.9195]).addTo(this.map)
-        .bindPopup('A Mesh Node')
-        .openPopup();
+      // Define node data
+      const nodes = [
+        { lat: 2.7784855, lng: 102.9219589, name: 'Node 1' },
+        { lat: 2.7787562, lng: 102.9191988, name: 'Node 2' },
+        { lat: 2.7761805, lng: 102.9196005, name: 'Node 3' },
+      ];
 
-      window.L.marker([2.7800, 102.9250]).addTo(this.map)
-        .bindPopup('Worker Location');
+      // Add markers and circles for each node
+      nodes.forEach(node => {
+        // Add marker
+        window.L.marker([node.lat, node.lng]).addTo(this.map)
+          .bindPopup(`<b>${node.name}</b>`) // Removed location details from popup
+          .openPopup();
+
+        // Add circle with 200 meters radius
+        window.L.circle([node.lat, node.lng], {
+          color: 'blue',
+          fillColor: '#3080ff',
+          fillOpacity: 0.2,
+          radius: 200 // Radius in meters
+        }).addTo(this.map).bindPopup(`<b>${node.name}</b><br>Coverage Radius: 200m`);
+      });
     }
   }
 };
