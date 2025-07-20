@@ -158,6 +158,27 @@ export default {
         { lat: 2.7780000, lng: 102.9200000, name: 'UGV-001' }, // Randomly near nodes
       ];
 
+      // --- Define Skipped Area Points (adjusted to be near an asset) ---
+      // Using Tractor Alpha's location (2.7770000, 102.9205000) as a reference
+      const skippedAreaPoints = [
+        [2.7768000, 102.9207000],
+        [2.7772000, 102.9212000],
+        [2.7770000, 102.9215000],
+        [2.7766000, 102.9210000],
+        [2.7768000, 102.9207000] // Close the polygon
+      ];
+
+      // --- Define Covered Path Points (adjusted to be near the UGV) ---
+      // Using UGV-001's location (2.7780000, 102.9200000) as a reference
+      const coveredPathPoints = [
+        [2.7780000, 102.9198000],
+        [2.7778000, 102.9203000],
+        [2.7782000, 102.9208000],
+        [2.7780000, 102.9213000],
+        [2.7775000, 102.9210000],
+      ];
+
+
       // --- Add Markers and Circles for Nodes ---
       nodes.forEach(node => {
         window.L.marker([node.lat, node.lng], { icon: nodeIcon }).addTo(this.map)
@@ -195,6 +216,22 @@ export default {
         fillColor: 'green',
         fillOpacity: 0.25, // 25% opacity
       }).addTo(this.map).bindPopup(`<b>Defined Area Boundary</b>`);
+
+      // --- Add Skipped Area ---
+      window.L.polygon(skippedAreaPoints, {
+        color: 'red',
+        fillColor: 'red',
+        fillOpacity: 0.1, // Lighter fill for dotted area
+        dashArray: '5, 5', // Dotted line
+        weight: 2
+      }).addTo(this.map).bindPopup(`<b>Skipped Area</b>`);
+
+      // --- Add Covered Path ---
+      window.L.polyline(coveredPathPoints, {
+        color: '#667eea', // UGV blue/purple color
+        weight: 4,
+        opacity: 0.7
+      }).addTo(this.map).bindPopup(`<b>UGV Covered Path</b>`);
     }
   }
 };
