@@ -2,7 +2,6 @@
   <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
 
-      <!-- Logo Section -->
       <div class="text-center mb-2">
         <img
           src="../assets/logo.png"
@@ -10,8 +9,6 @@
           class="mx-auto h-40 object-contain"
         />
       </div>
-      <!-- End Logo Section -->
-
       <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Login</h2>
 
       <form @submit.prevent="handleLogin" class="space-y-6">
@@ -110,12 +107,16 @@ async function handleLogin() {
       const data = await response.json();
       console.log('Login successful!', data);
 
-      // --- CRITICAL CHANGE: Store authentication status in sessionStorage ---
-      // This token will be cleared when the browser tab/window is closed.
-      sessionStorage.setItem('userToken', 'true'); // Store a dummy token
+      // --- CRITICAL CHANGE: Store authentication status AND user role in sessionStorage ---
+      sessionStorage.setItem('userToken', 'true'); // Store a dummy token (or actual token if you implement JWT)
+      sessionStorage.setItem('userRole', data.role); // Store the user's role from the backend response
 
-      // Navigate to '/dashboard' after successful login
-      router.push('/dashboard');
+      // --- Conditional Redirection based on role ---
+      if (data.role === 'game') {
+        router.push('/game-platform'); // Redirect 'game' role users to the game page
+      } else {
+        router.push('/dashboard'); // Default redirect for 'normal' or other roles
+      }
 
     } else {
       // If login fails (e.g., 401 Unauthorized, 400 Bad Request)

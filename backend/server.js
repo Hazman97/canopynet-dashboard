@@ -2,116 +2,143 @@
 
 // Import necessary modules
 const express = require('express');
-const { Pool } = require('pg'); // PostgreSQL client library
-const bcrypt = require('bcryptjs'); // For hashing and comparing passwords
-const cors = require('cors'); // To allow cross-origin requests from your Vue.js frontend
-require('dotenv').config(); // Load environment variables from .env file
+const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
+const cors = require('cors');
+require('dotenv').config();
 
 // Initialize the Express application
 const app = express();
-const port = 3000; // The port your backend server will listen on
+const port = 3000;
 
 // Middleware
-app.use(express.json()); // Enable Express to parse JSON request bodies
-app.use(cors()); // Enable CORS for all routes (adjust as needed for production)
+app.use(express.json());
+app.use(cors());
 
 // --- PostgreSQL Database Configuration ---
-// Use environment variables for sensitive database credentials
 const pool = new Pool({
-  user: process.env.DB_USER || 'canopynet_user', // Your PostgreSQL username
-  host: process.env.DB_HOST || 'localhost',      // Your PostgreSQL host
-  database: process.env.DB_NAME || 'canopynet_db', // Your PostgreSQL database name
-  password: process.env.DB_PASSWORD || '30884990', // Your PostgreSQL password
-  port: process.env.DB_PORT || 5432,             // Default PostgreSQL port
+  user: process.env.DB_USER || 'canopynet_user',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'canopynet_db',
+  password: process.env.DB_PASSWORD || '30884990',
+  port: process.env.DB_PORT || 5432,
 });
 
 // --- Database Connection Test and Initialization ---
 pool.connect()
   .then(client => {
     console.log('Connected to the PostgreSQL database.');
-    // Create 'users' table if it doesn't exist.
-    // This serves as a safety check and also runs on first connection for new deployments.
-    // In your case, it should already exist from the manual psql steps.
     return client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL
+        password TEXT NOT NULL, -- Changed to TEXT for potentially longer hashes
+        role VARCHAR(50) DEFAULT 'normal' -- ADDED: Role column
       )
     `)
     .then(() => {
       console.log('Users table created or already exists.');
       // Check if a default user exists. If not, insert one for testing.
-      // THIS IS FOR TESTING ONLY. In a real app, users would register.
       return client.query(`SELECT * FROM users WHERE username = $1`, ['testuser']);
     })
     .then(async (result) => {
       if (result.rows.length === 0) {
-        // Default user "testuser" not found, insert it
-        const hashedPassword = await bcrypt.hash('password123', 10); // 10 is the salt rounds
-        return client.query(`INSERT INTO users (username, password) VALUES ($1, $2)`, ['testuser', hashedPassword])
+        const hashedPassword = await bcrypt.hash('password123', 10);
+        return client.query(`INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`, ['testuser', hashedPassword, 'normal']) // MODIFIED: Added role
           .then(() => {
             console.log('Default user "testuser" with password "password123" added.');
           });
       } else {
         console.log('Default user "testuser" already exists.');
+        // Ensure testuser has a 'normal' role if it was created before the column existed
+        // This is a one-time adjustment if you didn't run the ALTER TABLE UPDATE earlier
+        if (!result.rows[0].role) {
+            return client.query(`UPDATE users SET role = $1 WHERE username = $2`, ['normal', 'testuser'])
+                .then(() => console.log('Updated testuser role to normal.'));
+        }
       }
     })
     .catch(err => {
       console.error('Error with database initialization:', err.message);
     })
     .finally(() => {
-      client.release(); // Release the client back to the pool
+      client.release();
     });
   })
   .catch(err => {
     console.error('Error connecting to PostgreSQL database:', err.message);
-    // Exit the process if we can't connect to the database to prevent further errors
     process.exit(1);
   });
 
-// --- Login API Endpoint ---
+// --- NEW: Registration API Endpoint ---
+app.post('/api/register', async (req, res) => {
+    const { username, password, role } = req.body; // 'role' is optional, defaults to 'normal'
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required.' });
+    }
+
+    let client;
+    try {
+        client = await pool.connect();
+
+        // Check if username already exists
+        const existingUser = await client.query(`SELECT id FROM users WHERE username = $1`, [username]);
+        if (existingUser.rows.length > 0) {
+            return res.status(409).json({ message: 'Username already exists.' });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10); // 10 salt rounds
+
+        // Insert new user with specified role (or default 'normal')
+        const userRole = role || 'normal'; // Use provided role or default to 'normal'
+        await client.query(`INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`, [username, hashedPassword, userRole]);
+
+        res.status(201).json({ message: 'User registered successfully!', username, role: userRole });
+    } catch (err) {
+        console.error('Database error during registration:', err.message);
+        res.status(500).json({ message: 'Internal server error.' });
+    } finally {
+        if (client) {
+            client.release();
+        }
+    }
+});
+
+
+// --- Login API Endpoint (MODIFIED to return role) ---
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // Basic validation
   if (!username || !password) {
     return res.status(400).json({ message: 'Username and password are required.' });
   }
 
-  let client; // Declare client variable outside try-catch for finally block
+  let client;
   try {
-    client = await pool.connect(); // Get a client from the connection pool
+    client = await pool.connect();
 
-    // Find the user in the database
-    // Using $1 for parameterized query in pg to prevent SQL injection
-    const result = await client.query(`SELECT * FROM users WHERE username = $1`, [username]);
-    const user = result.rows[0]; // Access the first row from the result
+    // Select the user and their role
+    const result = await client.query(`SELECT id, username, password, role FROM users WHERE username = $1`, [username]); // MODIFIED: Added role to SELECT
+    const user = result.rows[0];
 
     if (!user) {
-      // User not found
       return res.status(401).json({ message: 'Invalid username or password.' });
     }
 
-    // Compare the provided password with the hashed password from the database
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
-      // Passwords match - login successful
-      // In a real application, you would generate a JWT (JSON Web Token) here
-      // and send it back to the client for subsequent authenticated requests.
-      // For this example, we'll just send a success message.
-      return res.status(200).json({ message: 'Login successful!', username: user.username });
+      // Login successful - return the user's role
+      return res.status(200).json({ message: 'Login successful!', username: user.username, role: user.role }); // MODIFIED: Added role to response
     } else {
-      // Passwords do not match
       return res.status(401).json({ message: 'Invalid username or password.' });
     }
   } catch (err) {
     console.error('Database error during login:', err.message);
-    // Send a generic error message to the client for security
     return res.status(500).json({ message: 'Internal server error.' });
   } finally {
-    // Always release the client back to the pool, even if an error occurred
     if (client) {
       client.release();
     }
@@ -124,16 +151,15 @@ app.listen(port, () => {
 });
 
 // --- Graceful shutdown ---
-// This ensures that the database connection pool is properly closed when the server stops
 process.on('SIGINT', () => {
   console.log('Received SIGINT signal. Closing PostgreSQL connection pool...');
-  pool.end() // Close the connection pool
+  pool.end()
     .then(() => {
       console.log('PostgreSQL connection pool closed successfully.');
-      process.exit(0); // Exit the process cleanly
+      process.exit(0);
     })
     .catch(err => {
       console.error('Error closing PostgreSQL connection pool:', err.message);
-      process.exit(1); // Exit with an error code
+      process.exit(1);
     });
 });
