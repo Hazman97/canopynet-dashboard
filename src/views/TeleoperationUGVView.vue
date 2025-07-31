@@ -109,6 +109,7 @@
             <p>Battery Voltage: <span class="font-medium">{{ dbw.battery_voltage.toFixed(2) }} V</span></p>
             <p>Battery Current: <span class="font-medium">{{ dbw.battery_current.toFixed(2) }} A</span></p>
             <p>Joystick Status: <span class="font-medium" :class="joystick.connection === 'Connected' ? 'text-green-400' : 'text-red-400'">{{ joystick.connection }} ({{ joystick.mode }})</span></p>
+            <p v-if="latencyMs !== null">Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span></p>
           </div>
         </div>
 
@@ -205,31 +206,14 @@
             <p><span class="font-medium">Last Communication:</span> Live (via ROS)</p>
           </div>
         </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <button class="bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition-colors flex items-center justify-center">
-              <i class="bx bx-home mr-2"></i> Return to Base
-            </button>
-            <button class="bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center">
-              <i class="bx bx-bell mr-2"></i> Sound Alarm
-            </button>
-            <button class="bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition-colors flex items-center justify-center">
-              <i class="bx bx-camera mr-2"></i> Take Photo
-            </button>
-            <button class="bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center">
-              <i class="bx bx-reset mr-2"></i> Reboot System
-            </button>
-          </div>
         </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import ROSLIB from 'roslib'; //
-import { ref, watch, defineProps, defineEmits, onMounted, onUnmounted } from 'vue'; //
+import ROSLIB from 'roslib';
+import { ref, watch, defineProps, defineEmits, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   ugvId: String,
@@ -240,26 +224,27 @@ const props = defineProps({
 const emit = defineEmits(['back-to-overview']);
 
 // UGV Teleoperation Specific
-const manualModeEnabled = ref(false); //
+const manualModeEnabled = ref(false);
 
 // Camera configuration (from App.vue)
-const cameraUrl = ref('http://192.168.100.5:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color'); //
+const cameraUrl = ref('http://192.168.100.226:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color');
+const latencyMs = ref(null);
 
 // Connection status (from App.vue)
-const connectionStatus = ref('Disconnected'); //
+const connectionStatus = ref('Disconnected');
 
 // Auto-refresh functionality (from App.vue)
-const autoRefreshEnabled = ref(true); //
-const autoRefreshDelay = ref(5); //
-const refreshCountdown = ref(0); //
-let refreshTimeout = null; //
-let countdownInterval = null; //
+const autoRefreshEnabled = ref(true);
+const autoRefreshDelay = ref(5);
+const refreshCountdown = ref(0);
+let refreshTimeout = null;
+let countdownInterval = null;
 
 // Movement control variables (from App.vue)
-const isMoving = ref(false); //
-const currentLinear = ref(0); //
-const currentAngular = ref(0); //
-let movementInterval = null; //
+const isMoving = ref(false);
+const currentLinear = ref(0);
+const currentAngular = ref(0);
+let movementInterval = null;
 
 // Status data (from App.vue)
 const dbw = ref({
@@ -269,7 +254,7 @@ const dbw = ref({
   estop_trigger: false,
   front_md_fault: 'Unknown',
   rear_md_fault: 'Unknown'
-}); //
+});
 
 const motion = ref({
   left_encoder_ticks: 0,
@@ -279,21 +264,21 @@ const motion = ref({
   speed: 0,
   left_wheel_speed_mps: 0,
   right_wheel_speed_mps: 0
-}); //
+});
 
 const joystick = ref({
   connection: 'Unknown',
   mode: 'Unknown'
-}); //
+});
 
 // Adjustable parameters (from App.vue)
-const commandRate = ref(50); // milliseconds (20Hz) //
-const accelerationStep = ref(0.1); //
-const maxLinearSpeed = ref(1.0); //
-const maxAngularSpeed = ref(1.0); //
+const commandRate = ref(50); // milliseconds (20Hz)
+const accelerationStep = ref(0.1);
+const maxLinearSpeed = ref(1.0);
+const maxAngularSpeed = ref(1.0);
 
 // ROS connection setup (from App.vue)
-const ROBOT_IP = '192.168.100.5'; // Replace with your robot's IP //
+const ROBOT_IP = '192.168.100.226'; // Replace with your robot's IP
 let ros = null;
 let cmdVel = null;
 
@@ -303,25 +288,25 @@ const initializeRos = () => {
   }
   ros = new ROSLIB.Ros({
     url: `ws://${ROBOT_IP}:9090`
-  }); //
+  });
 
   // ROS connection event handlers (from App.vue)
   ros.on('connection', () => {
-    console.log('✅ Connected to ROS'); //
-    connectionStatus.value = 'Connected'; //
-    cancelAutoRefresh(); // Cancel any pending refresh //
+    console.log('✅ Connected to ROS');
+    connectionStatus.value = 'Connected';
+    cancelAutoRefresh(); // Cancel any pending refresh
   });
 
   ros.on('error', (error) => {
-    console.error('❌ Error connecting to ROS:', error); //
-    connectionStatus.value = 'Error'; //
-    startAutoRefresh(); // Start auto-refresh on error //
+    console.error('❌ Error connecting to ROS:', error);
+    connectionStatus.value = 'Error';
+    startAutoRefresh(); // Start auto-refresh on error
   });
 
   ros.on('close', () => {
-    console.log('🔌 Connection to ROS closed'); //
-    connectionStatus.value = 'Disconnected'; //
-    startAutoRefresh(); // Start auto-refresh on disconnect //
+    console.log('🔌 Connection to ROS closed');
+    connectionStatus.value = 'Disconnected';
+    startAutoRefresh(); // Start auto-refresh on disconnect
   });
 
   // Define the /cmd_vel publisher (from App.vue)
@@ -329,7 +314,7 @@ const initializeRos = () => {
     ros,
     name: '/cmd_vel',
     messageType: 'geometry_msgs/Twist'
-  }); //
+  });
 
   // Setup ROS subscribers for status data (from App.vue)
   // Drive-by-wire topic
@@ -337,15 +322,15 @@ const initializeRos = () => {
     ros: ros,
     name: '/piu_dbw_feedback',
     messageType: 'rdc_dbw_interface/msg/DriveByWireStatus'
-  }); //
+  });
 
   dbwTopic.subscribe((msg) => {
-    dbw.value.piu_state = msg.piu_state; //
-    dbw.value.battery_voltage = msg.battery_voltage; //
-    dbw.value.battery_current = msg.battery_current; //
-    dbw.value.estop_trigger = msg.estop_trigger; //
-    dbw.value.front_md_fault = msg.front_md_fault; //
-    dbw.value.rear_md_fault = msg.rear_md_fault; //
+    dbw.value.piu_state = msg.piu_state;
+    dbw.value.battery_voltage = msg.battery_voltage;
+    dbw.value.battery_current = msg.battery_current;
+    dbw.value.estop_trigger = msg.estop_trigger;
+    dbw.value.front_md_fault = msg.front_md_fault;
+    dbw.value.rear_md_fault = msg.rear_md_fault;
   });
 
   // Motion topic
@@ -353,16 +338,16 @@ const initializeRos = () => {
     ros: ros,
     name: '/piu_motion_feedback',
     messageType: 'rdc_dbw_interface/msg/Encoder'
-  }); //
+  });
 
   motionTopic.subscribe((msg) => {
-    motion.value.left_encoder_ticks = msg.left_encoder_ticks; //
-    motion.value.right_encoder_ticks = msg.right_encoder_ticks; //
-    motion.value.front_left_rpm = msg.front_left_rpm; //
-    motion.value.rear_right_rpm = msg.rear_right_rpm; //
-    motion.value.speed = msg.speed; //
-    motion.value.left_wheel_speed_mps = msg.left_wheel_speed_mps; //
-    motion.value.right_wheel_speed_mps = msg.right_wheel_speed_mps; //
+    motion.value.left_encoder_ticks = msg.left_encoder_ticks;
+    motion.value.right_encoder_ticks = msg.right_encoder_ticks;
+    motion.value.front_left_rpm = msg.front_left_rpm;
+    motion.value.rear_right_rpm = msg.rear_right_rpm;
+    motion.value.speed = msg.speed;
+    motion.value.left_wheel_speed_mps = msg.left_wheel_speed_mps;
+    motion.value.right_wheel_speed_mps = msg.right_wheel_speed_mps;
   });
 
   // Joystick connection topic
@@ -370,10 +355,10 @@ const initializeRos = () => {
     ros: ros,
     name: '/joystick_conn',
     messageType: 'std_msgs/msg/Bool'
-  }); //
+  });
 
   joystickConnTopic.subscribe((msg) => {
-    joystick.value.connection = msg.data ? 'Connected' : 'Disconnected'; //
+    joystick.value.connection = msg.data ? 'Connected' : 'Disconnected';
   });
 
   // Joystick mode topic
@@ -381,57 +366,81 @@ const initializeRos = () => {
     ros: ros,
     name: '/joystick/mode',
     messageType: 'std_msgs/msg/String'
-  }); //
+  });
 
   joystickModeTopic.subscribe((msg) => {
-    joystick.value.mode = msg.data; //
+    joystick.value.mode = msg.data;
+  });
+
+  // Create a subscriber for the compressed image topic
+  const imageListener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/zed2i/zed_node/rgb/image_rect_color/compressed',
+    messageType : 'sensor_msgs/CompressedImage'
+  });
+
+  imageListener.subscribe(function(message) {
+    // 1. Get the ROS capture timestamp
+    const robotCaptureTimeSec = message.header.stamp.sec;
+    const robotCaptureTimeNanosec = message.header.stamp.nanosec;
+    const robotCaptureTimeMs = (robotCaptureTimeSec * 1000) + (robotCaptureTimeNanosec / 1000000);
+
+    // 2. Get the current client-side time (when the message is received/about to be displayed)
+    const clientReceiveTimeMs = Date.now(); // Current time in milliseconds since epoch
+
+    // Calculate the latency
+    latencyMs.value = clientReceiveTimeMs - robotCaptureTimeMs;
+
+    // Now, render the image data
+    const imageData = 'data:image/jpeg;base64,' + btoa(String.fromCharCode.apply(null, message.data));
+    cameraUrl.value = imageData;
   });
 };
 
 // Auto-refresh functions (from App.vue)
 function startAutoRefresh() {
-  if (!autoRefreshEnabled.value) return; //
+  if (!autoRefreshEnabled.value) return;
 
-  console.log(`🔄 Starting auto-refresh countdown (${autoRefreshDelay.value}s)`); //
-  refreshCountdown.value = autoRefreshDelay.value; //
+  console.log(`🔄 Starting auto-refresh countdown (${autoRefreshDelay.value}s)`);
+  refreshCountdown.value = autoRefreshDelay.value;
 
   countdownInterval = setInterval(() => {
-    refreshCountdown.value--; //
+    refreshCountdown.value--;
     if (refreshCountdown.value <= 0) {
-      clearInterval(countdownInterval); //
-      refreshPage(); //
+      clearInterval(countdownInterval);
+      refreshPage();
     }
-  }, 1000); //
+  }, 1000);
 }
 
 function cancelAutoRefresh() {
   if (refreshTimeout) {
-    clearTimeout(refreshTimeout); //
-    refreshTimeout = null; //
+    clearTimeout(refreshTimeout);
+    refreshTimeout = null;
   }
   if (countdownInterval) {
-    clearInterval(countdownInterval); //
-    countdownInterval = null; //
+    clearInterval(countdownInterval);
+    countdownInterval = null;
   }
-  refreshCountdown.value = 0; //
-  console.log('❌ Auto-refresh cancelled'); //
+  refreshCountdown.value = 0;
+  console.log('❌ Auto-refresh cancelled');
 }
 
 function refreshPage() {
-  console.log('🔄 Auto-refreshing page...'); //
-  window.location.reload(); //
+  console.log('🔄 Auto-refreshing page...');
+  window.location.reload();
 }
 
 function toggleAutoRefresh() {
-  autoRefreshEnabled.value = !autoRefreshEnabled.value; //
+  autoRefreshEnabled.value = !autoRefreshEnabled.value;
   if (!autoRefreshEnabled.value) {
-    cancelAutoRefresh(); //
+    cancelAutoRefresh();
   }
-  console.log(`Auto-refresh ${autoRefreshEnabled.value ? 'enabled' : 'disabled'}`); //
+  console.log(`Auto-refresh ${autoRefreshEnabled.value ? 'enabled' : 'disabled'}`);
 }
 
 function updateAutoRefreshDelay(delay) {
-  autoRefreshDelay.value = parseInt(delay); //
+  autoRefreshDelay.value = parseInt(delay);
 }
 
 // Send Twist command (from App.vue)
@@ -440,14 +449,14 @@ function sendCmd(linear, angular) {
     console.warn('ROS not connected or cmdVel topic not initialized.');
     return;
   }
-  linear = Math.max(-maxLinearSpeed.value, Math.min(maxLinearSpeed.value, linear)); //
-  angular = Math.max(-maxAngularSpeed.value, Math.min(maxAngularSpeed.value, angular)); //
+  linear = Math.max(-maxLinearSpeed.value, Math.min(maxLinearSpeed.value, linear));
+  angular = Math.max(-maxAngularSpeed.value, Math.min(maxAngularSpeed.value, angular));
 
   const twist = new ROSLIB.Message({
     linear: { x: linear, y: 0, z: 0 },
     angular: { x: 0, y: 0, z: angular }
-  }); //
-  cmdVel.publish(twist); //
+  });
+  cmdVel.publish(twist);
 }
 
 // Start continuous movement (from App.vue)
@@ -455,72 +464,72 @@ function startMovement(targetLinear, targetAngular) {
   if (!manualModeEnabled.value || connectionStatus.value !== 'Connected') return;
 
   if (movementInterval) {
-    clearInterval(movementInterval); //
+    clearInterval(movementInterval);
   }
 
-  isMoving.value = true; //
-  let currentLinearSpeed = currentLinear.value; //
-  let currentAngularSpeed = currentAngular.value; //
+  isMoving.value = true;
+  let currentLinearSpeed = currentLinear.value;
+  let currentAngularSpeed = currentAngular.value;
 
-  sendCmd(currentLinearSpeed, currentAngularSpeed); //
+  sendCmd(currentLinearSpeed, currentAngularSpeed);
 
   movementInterval = setInterval(() => {
     if (isMoving.value) {
       if (Math.abs(currentLinearSpeed - targetLinear) > accelerationStep.value) {
-        currentLinearSpeed += (targetLinear > currentLinearSpeed) ? accelerationStep.value : -accelerationStep.value; //
+        currentLinearSpeed += (targetLinear > currentLinearSpeed) ? accelerationStep.value : -accelerationStep.value;
       } else {
-        currentLinearSpeed = targetLinear; //
+        currentLinearSpeed = targetLinear;
       }
 
       if (Math.abs(currentAngularSpeed - targetAngular) > accelerationStep.value) {
-        currentAngularSpeed += (targetAngular > currentAngularSpeed) ? accelerationStep.value : -accelerationStep.value; //
+        currentAngularSpeed += (targetAngular > currentAngularSpeed) ? accelerationStep.value : -accelerationStep.value;
       } else {
-        currentAngularSpeed = targetAngular; //
+        currentAngularSpeed = targetAngular;
       }
 
-      currentLinear.value = currentLinearSpeed; //
-      currentAngular.value = currentAngularSpeed; //
-      sendCmd(currentLinearSpeed, currentAngularSpeed); //
+      currentLinear.value = currentLinearSpeed;
+      currentAngular.value = currentAngularSpeed;
+      sendCmd(currentLinearSpeed, currentAngularSpeed);
     }
-  }, commandRate.value); //
+  }, commandRate.value);
 }
 
 // Stop movement (from App.vue)
 function stopMovement() {
   if (!manualModeEnabled.value || connectionStatus.value !== 'Connected') return;
 
-  isMoving.value = false; //
+  isMoving.value = false;
 
   if (movementInterval) {
-    clearInterval(movementInterval); //
-    movementInterval = null; //
+    clearInterval(movementInterval);
+    movementInterval = null;
   }
 
-  let currentLinearSpeed = currentLinear.value; //
-  let currentAngularSpeed = currentAngular.value; //
+  let currentLinearSpeed = currentLinear.value;
+  let currentAngularSpeed = currentAngular.value;
 
   const decelerationInterval = setInterval(() => {
     if (Math.abs(currentLinearSpeed) > accelerationStep.value) {
-      currentLinearSpeed *= 0.7; //
+      currentLinearSpeed *= 0.7;
     } else {
-      currentLinearSpeed = 0; //
+      currentLinearSpeed = 0;
     }
 
     if (Math.abs(currentAngularSpeed) > accelerationStep.value) {
-      currentAngularSpeed *= 0.7; //
+      currentAngularSpeed *= 0.7;
     } else {
-      currentAngularSpeed = 0; //
+      currentAngularSpeed = 0;
     }
 
-    sendCmd(currentLinearSpeed, currentAngularSpeed); //
+    sendCmd(currentLinearSpeed, currentAngularSpeed);
 
     if (Math.abs(currentLinearSpeed) < 0.01 && Math.abs(currentAngularSpeed) < 0.01) {
-      clearInterval(decelerationInterval); //
-      currentLinear.value = 0; //
-      currentAngular.value = 0; //
-      sendCmd(0, 0); //
+      clearInterval(decelerationInterval);
+      currentLinear.value = 0;
+      currentAngular.value = 0;
+      sendCmd(0, 0);
     }
-  }, commandRate.value); //
+  }, commandRate.value);
 }
 
 // Keyboard controls (from App.vue)
@@ -532,26 +541,26 @@ function handleKeyDown(event) {
     case 'ArrowUp':
     case 'w':
     case 'W':
-      event.preventDefault(); //
-      startMovement(maxLinearSpeed.value, 0); //
+      event.preventDefault();
+      startMovement(maxLinearSpeed.value, 0);
       break;
     case 'ArrowDown':
     case 's':
     case 'S':
-      event.preventDefault(); //
-      startMovement(-maxLinearSpeed.value, 0); //
+      event.preventDefault();
+      startMovement(-maxLinearSpeed.value, 0);
       break;
     case 'ArrowLeft':
     case 'a':
     case 'A':
-      event.preventDefault(); //
-      startMovement(0, maxAngularSpeed.value); //
+      event.preventDefault();
+      startMovement(0, maxAngularSpeed.value);
       break;
     case 'ArrowRight':
     case 'd':
     case 'D':
-      event.preventDefault(); //
-      startMovement(0, -maxAngularSpeed.value); //
+      event.preventDefault();
+      startMovement(0, -maxAngularSpeed.value);
       break;
   }
 }
@@ -572,23 +581,23 @@ function handleKeyUp(event) {
     case 'A':
     case 'd':
     case 'D':
-      event.preventDefault(); //
-      stopMovement(); //
+      event.preventDefault();
+      stopMovement();
       break;
   }
 }
 
 // Settings update functions (from App.vue)
 function updateCommandRate(hz) {
-  commandRate.value = 1000 / hz; //
+  commandRate.value = 1000 / hz;
 }
 
 function updateMaxLinearSpeed(speed) {
-  maxLinearSpeed.value = parseFloat(speed); //
+  maxLinearSpeed.value = parseFloat(speed);
 }
 
 function updateMaxAngularSpeed(speed) {
-  maxAngularSpeed.value = parseFloat(speed); //
+  maxAngularSpeed.value = parseFloat(speed);
 }
 
 watch(manualModeEnabled, (value) => {
@@ -626,15 +635,15 @@ onMounted(() => {
 onUnmounted(() => {
   // Cleanup ROS connection, intervals, and event listeners
   if (movementInterval) {
-    clearInterval(movementInterval); //
+    clearInterval(movementInterval);
   }
-  cancelAutoRefresh(); //
+  cancelAutoRefresh();
   if (ros && ros.isConnected) {
-    sendCmd(0, 0); // Stop robot movement before unmounting //
+    sendCmd(0, 0); // Stop robot movement before unmounting
     ros.close();
   }
-  document.removeEventListener('keydown', handleKeyDown); //
-  document.removeEventListener('keyup', handleKeyUp); //
+  document.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('keyup', handleKeyUp);
 });
 </script>
 
