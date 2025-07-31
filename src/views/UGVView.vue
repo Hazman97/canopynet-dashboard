@@ -1,6 +1,5 @@
 <template>
   <div class="p-6 bg-gray-50 min-h-screen font-sans">
-    <!-- Conditionally render UGVTeleoperationView or UGVView content -->
     <UGVTeleoperationView
       v-if="showTeleoperationPage"
       :ugv-id="selectedUgvForTeleoperation ? selectedUgvForTeleoperation.id : ''"
@@ -9,7 +8,6 @@
     />
 
     <div v-else>
-      <!-- Header Section -->
       <div class="flex items-center mb-6">
         <i class="bx bxs-robot text-4xl text-gray-800 mr-3"></i>
         <div>
@@ -18,7 +16,6 @@
         </div>
       </div>
 
-      <!-- Tabs Section -->
       <div class="bg-white rounded-lg shadow-md p-2 mb-6 flex space-x-4">
         <button
           @click="activeTab = 'overview'"
@@ -29,17 +26,14 @@
         </button>
       </div>
 
-      <!-- Main Content Area -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Active UGVs Section (Left Column) -->
         <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 h-full">
           <h2 class="text-xl font-semibold text-gray-800 mb-4">Active UGVs</h2>
           <div class="space-y-4">
             <div
               v-for="ugv in activeUgvs"
               :key="ugv.id"
-              @click="selectUgv(ugv)"
-              :class="{'border-blue-500 ring-2 ring-blue-200': selectedUgv && selectedUgv.id === ugv.id}"
+              @click="navigateToTeleoperation(ugv)" :class="{'border-blue-500 ring-2 ring-blue-200': selectedUgv && selectedUgv.id === ugv.id}"
               class="bg-gray-50 p-4 rounded-lg border border-gray-200 cursor-pointer hover:shadow-sm transition-shadow duration-200 flex flex-col"
             >
               <div class="flex justify-between items-start mb-2">
@@ -68,42 +62,27 @@
           </div>
         </div>
 
-        <!-- Basic Controls Section (Right Column) -->
-        <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 h-full">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Basic Controls</h2>
-          <div v-if="selectedUgv" class="flex flex-col p-6 bg-gray-50 rounded-lg h-full border border-gray-200">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-2xl font-bold text-gray-800">{{ selectedUgv.id }}</h3>
-              <button @click="navigateToTeleoperation(selectedUgv)" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transition-colors flex items-center text-sm">
-                <i class="bx bx-wifi mr-2"></i>Teleoperation
-              </button>
+        <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 h-full flex flex-col">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">UGV Map Overview</h2>
+          <div class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+            <img src="https://placehold.co/600x400/E0E0E0/555555?text=Map+Overview" alt="Map Overview Placeholder" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
+              <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-plus text-lg"></i></button>
+              <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-minus text-lg"></i></button>
             </div>
-
-            <div class="grid grid-cols-3 gap-3 mb-6">
-              <button @click="controlUgv('start')" class="bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center text-lg font-semibold">
-                <i class="bx bx-play mr-2"></i> Start
-              </button>
-              <button @click="controlUgv('pause')" class="bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center text-lg font-semibold">
-                <i class="bx bx-pause mr-2"></i> Pause
-              </button>
-              <button @click="controlUgv('stop')" class="bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center text-lg font-semibold">
-                <i class="bx bx-stop mr-2"></i> Stop
-              </button>
+            <div class="absolute bottom-2 left-2 text-xs text-gray-600 z-10">
+              © Leaflet | © OpenStreetMap contributors
             </div>
-
-            <h3 class="text-lg font-semibold text-gray-800 mb-3">Current Status</h3>
-            <div class="space-y-2 text-gray-700 text-base">
-              <p><span class="font-medium">Task:</span> {{ selectedUgv.task }}</p>
-              <p><span class="font-medium">Status:</span> {{ selectedUgv.status }}</p>
-              <p><span class="font-medium">Progress:</span> {{ selectedUgv.progress }}%</p>
-              <p><span class="font-medium">Battery:</span> {{ selectedUgv.battery }}%</p>
+            <div v-if="activeUgvs.length > 0" class="absolute z-10"
+                 :style="{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }">
+              <i class="bx bx-current-location text-green-600 text-3xl animate-pulse"></i>
+              <span class="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded-md shadow-md">{{ activeUgvs[0].id }}</span>
             </div>
-
+            <div v-else class="text-center text-gray-600">No UGVs to display on map.</div>
           </div>
-          <div v-else class="flex flex-col items-center justify-center p-6 bg-gray-100 rounded-lg h-full text-center border border-gray-200">
-            <i class="bx bx-robot text-6xl text-gray-400 mb-4"></i>
-            <p class="text-lg text-gray-600">No UGV Selected</p>
-            <p class="text-sm text-gray-500 mt-2">Select a UGV from the list to control it</p>
+          <div class="mt-4 text-sm text-gray-700">
+            <p>This map shows the approximate location of all active UGVs.</p>
+            <p>Click on a UGV card on the left to enter its dedicated Teleoperation view.</p>
           </div>
         </div>
       </div>
@@ -116,16 +95,16 @@ import { ref } from 'vue';
 import UGVTeleoperationView from '../views/TeleoperationUGVView.vue'; // Import the teleoperation view component
 
 // Reactive state for active tab
-const activeTab = ref('overview'); // 'overview' or 'teleoperation'
+const activeTab = ref('overview');
 
-// Reactive state for selected UGV in the overview
+// Reactive state for selected UGV in the overview (will be primarily used for passing data)
 const selectedUgv = ref(null);
 
 // Reactive state to control visibility of UGVTeleoperationView
 const showTeleoperationPage = ref(false);
 const selectedUgvForTeleoperation = ref(null); // Data to pass to teleoperation view
 
-// Dummy data for active UGVs
+// Real data for the single active UGV
 const activeUgvs = ref([
   {
     id: 'UGV-001',
@@ -145,77 +124,7 @@ const activeUgvs = ref([
     lastCommunication: 'Just now', // Added for teleoperation view
     errorCodes: '', // Added for teleoperation view
   },
-  {
-    id: 'UGV-002',
-    status: 'working',
-    task: 'spray',
-    location: 'Block B-8',
-    progress: 30,
-    battery: 72,
-    connectionStatus: 'Connected',
-    speed: 5,
-    lat: '2.8000°N',
-    lng: '102.9500°E',
-    heading: '90',
-    signal: '88',
-    currentTask: 'Spraying',
-    batteryHealth: 'Good',
-    lastCommunication: '1 min ago',
-    errorCodes: '',
-  },
-  {
-    id: 'UGV-003',
-    status: 'idle',
-    task: 'awaiting orders',
-    location: 'Charging Station',
-    progress: 100,
-    battery: 98,
-    connectionStatus: 'Connected',
-    speed: 0,
-    lat: '2.7500°N',
-    lng: '102.9000°E',
-    heading: '0',
-    signal: '99',
-    currentTask: 'Idle',
-    batteryHealth: 'Excellent',
-    lastCommunication: '20 sec ago',
-    errorCodes: '',
-  },
-  {
-    id: 'UGV-004',
-    status: 'moving',
-    task: 'transport goods',
-    location: 'Warehouse',
-    progress: 80,
-    battery: 60,
-    connectionStatus: 'Connected',
-    speed: 10,
-    lat: '2.7600°N',
-    lng: '102.9300°E',
-    heading: '180',
-    signal: '75',
-    currentTask: 'Transporting',
-    batteryHealth: 'Fair',
-    lastCommunication: '5 min ago',
-    errorCodes: 'E101',
-  },
 ]);
-
-// Function to select a UGV for control
-const selectUgv = (ugv) => {
-  selectedUgv.value = ugv;
-};
-
-// Placeholder for UGV control actions
-const controlUgv = (action) => {
-  if (selectedUgv.value) {
-    alert(`Command sent to ${selectedUgv.value.id}: ${action}`);
-    // In a real application, you would send this command to a backend service
-    // or update the UGV's status in your data store.
-  } else {
-    alert('Please select a UGV first.');
-  }
-};
 
 // Function to "navigate" to the Teleoperation page
 const navigateToTeleoperation = (ugv) => {
