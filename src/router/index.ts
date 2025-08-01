@@ -23,6 +23,7 @@ import NetworkMap from '@/components/NetworkMap.vue'; // Import NetworkMap.vue
 import NodeManagement from '@/components/NodeManagement.vue'; // Import NodeManagement.vue
 import Monitoring from '@/components/Monitoring.vue'; // Import Monitoring.vue
 import GamePlatformView from '@/views/GamePlatformView.vue'; // ADDED: Import the new GamePlatformView component
+import GameTaskView from '@/views/GameTaskView.vue'; // Import GameTaskView.vue
 
 
 // --- TypeScript Augmentation for Vue Router's RouteMeta ---
@@ -160,6 +161,12 @@ const router = createRouter({
       path: '/game-platform',
       name: 'game-platform',
       component: GamePlatformView, // Your new GamePlatformView component
+      meta: { requiresAuth: true, roles: ['game'] } // Only 'game' roles can access this
+    },
+    {
+      path: '/game-tasks',
+      name: 'game-tasks',
+      component: GameTaskView, // Your new GameTaskView component
       meta: { requiresAuth: true, roles: ['game'] } // Only 'game' roles can access this
     }
   ]
