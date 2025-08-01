@@ -12,7 +12,7 @@
       <div class="flex items-center mb-6">
         <i class="bx bxs-robot text-4xl text-gray-800 mr-3"></i>
         <div>
-          <h1 class="text-3xl font-bold text-gray-800">UGV Control Center</h1>
+          <h1 class="text-3xl font-bold text-gray-800">UGV Control Centre</h1>
           <p class="text-gray-600">Advanced teleoperation and autonomous control for unmanned ground vehicles</p>
         </div>
       </div>
@@ -30,223 +30,387 @@
       <div class="bg-white rounded-lg shadow-md p-6 mb-6 flex items-center justify-between">
         <div class="flex items-center">
           <span class="w-3 h-3 rounded-full mr-3" :class="connectionStatus === 'Connected' ? 'bg-green-500' : 'bg-red-500'"></span>
-          <h2 class="text-xl font-semibold text-gray-800">UGV-{{ ugvId }} Teleoperation</h2>
+          <h2 class="text-xl font-semibold text-gray-800">{{ ugvId }} Teleoperation</h2>
           <p class="text-gray-600 ml-4">Status: <span :class="{'text-green-600': connectionStatus === 'Connected', 'text-red-600': connectionStatus !== 'Connected', 'font-bold': true}">{{ connectionStatus }}</span></p>
         </div>
-        <div class="flex items-center">
-          <span class="text-gray-700 mr-3">Manual Mode</span>
-          <label for="manualModeToggle" class="flex items-center cursor-pointer">
-            <div class="relative">
-              <input type="checkbox" id="manualModeToggle" class="sr-only" v-model="manualModeEnabled">
-              <div class="block bg-gray-300 w-14 h-8 rounded-full"></div>
-              <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition transform" :class="{ 'translate-x-6': manualModeEnabled }"></div>
-            </div>
-          </label>
-        </div>
       </div>
 
-      <div v-if="connectionStatus !== 'Connected'" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg" role="alert">
-        <div class="flex items-center">
-          <div class="py-1"><i class="bx bx-info-circle text-2xl mr-3"></i></div>
-          <div>
-            <p class="font-bold">Connection Lost</p>
-            <p>Attempting to reconnect...</p>
-          </div>
-        </div>
-        <div class="mt-4">
-          <div class="auto-refresh-section">
-            <label class="flex items-center text-sm">
-              <input type="checkbox" :checked="autoRefreshEnabled" @change="toggleAutoRefresh" class="mr-2">
-              Auto-refresh on disconnect ({{ autoRefreshDelay }}s delay)
-            </label>
-            <div class="mt-2" v-if="autoRefreshEnabled">
-              <label class="flex items-center text-sm">Refresh delay:
-                <input type="range" min="3" max="30" step="1" :value="autoRefreshDelay" @input="updateAutoRefreshDelay($event.target.value)" class="ml-2 w-32">
-                <span class="ml-2">{{ autoRefreshDelay }}s</span>
-              </label>
-            </div>
-            <div v-if="refreshCountdown > 0" class="refresh-notification mt-2">
-              🔄 Auto-refreshing in {{ refreshCountdown }}s...
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">UGV Position Tracking</h3>
-          <div class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
-            <img src="https://placehold.co/400x300/E0E0E0/555555?text=Map+Placeholder" alt="Map Placeholder" class="w-full h-full object-cover">
-            <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
-              <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-plus text-lg"></i></button>
-              <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-minus text-lg"></i></button>
-            </div>
-            <div class="absolute bottom-2 left-2 text-xs text-gray-600 z-10">
-              © Leaflet | © OpenStreetMap contributors
-            </div>
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-              <i class="bx bx-current-location text-green-600 text-3xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <div class="lg:col-span-1 bg-gray-900 rounded-lg shadow-md p-6 text-white flex flex-col items-center justify-center relative overflow-hidden">
-          <div class="absolute top-4 right-4 flex space-x-2 z-10">
-            <button class="bg-gray-700 p-2 rounded-full hover:bg-gray-600"><i class="bx bx-cog text-xl"></i></button>
-            <button class="bg-gray-700 p-2 rounded-full hover:bg-gray-600"><i class="bx bx-fullscreen text-xl"></i></button>
-          </div>
-          <img :src="cameraUrl" alt="UGV Camera Feed" class="w-full h-auto object-contain rounded-lg border-2 border-gray-700" v-if="connectionStatus === 'Connected'">
-          <div v-else class="text-center">
-            <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
-            <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
-            <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
-          </div>
-
-          <div class="mt-4 text-sm space-y-1">
-            <p>Linear Speed: <span class="font-medium">{{ motion.speed.toFixed(2) }} m/s</span></p>
-            <p>Angular Speed: <span class="font-medium">{{ currentAngular.toFixed(2) }} rad/s</span></p>
-            <p>Battery Voltage: <span class="font-medium">{{ dbw.battery_voltage.toFixed(2) }} V</span></p>
-            <p>Battery Current: <span class="font-medium">{{ dbw.battery_current.toFixed(2) }} A</span></p>
-            <p>Joystick Status: <span class="font-medium" :class="joystick.connection === 'Connected' ? 'text-green-400' : 'text-red-400'">{{ joystick.connection }} ({{ joystick.mode }})</span></p>
-            <p v-if="latencyMs !== null">Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span></p>
-          </div>
-        </div>
-
-        <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Movement Controls</h3>
-          <div :class="{'opacity-50 pointer-events-none bg-gray-100': !manualModeEnabled || connectionStatus !== 'Connected', 'bg-white': manualModeEnabled && connectionStatus === 'Connected'}" class="flex-grow flex flex-col items-center justify-center p-6 rounded-lg border border-gray-200 transition-all duration-300">
-            <i class="bx bx-game text-6xl text-gray-400 mb-4"></i>
-            <p class="text-lg text-gray-600 text-center mb-4">
-              {{ manualModeEnabled && connectionStatus === 'Connected' ? 'Use joystick or keyboard for control' : 'Enable Manual Mode and connect to UGV to access teleoperation controls' }}
-            </p>
-            <div v-if="manualModeEnabled && connectionStatus === 'Connected'" class="grid grid-rows-3 grid-cols-3 gap-3 w-full max-w-xs">
-              <div></div>
-              <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                      @mousedown="startMovement(maxLinearSpeed, 0)"
-                      @mouseup="stopMovement"
-                      @mouseleave="stopMovement"
-                      @touchstart="startMovement(maxLinearSpeed, 0)"
-                      @touchend="stopMovement">
-                <i class="bx bx-up-arrow-alt"></i>
-              </button>
-              <div></div>
-              <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                      @mousedown="startMovement(0, maxAngularSpeed)"
-                      @mouseup="stopMovement"
-                      @mouseleave="stopMovement"
-                      @touchstart="startMovement(0, maxAngularSpeed)"
-                      @touchend="stopMovement">
-                <i class="bx bx-left-arrow-alt"></i>
-              </button>
-              <button class="bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors active:bg-gray-700"
-                      @click="sendCmd(0, 0)">
-                Stop
-              </button>
-              <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                      @mousedown="startMovement(0, -maxAngularSpeed)"
-                      @mouseup="stopMovement"
-                      @mouseleave="stopMovement"
-                      @touchstart="startMovement(0, -maxAngularSpeed)"
-                      @touchend="stopMovement">
-                <i class="bx bx-right-arrow-alt"></i>
-              </button>
-              <div></div>
-              <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                      @mousedown="startMovement(-maxLinearSpeed, 0)"
-                      @mouseup="stopMovement"
-                      @mouseleave="stopMovement"
-                      @touchstart="startMovement(-maxLinearSpeed, 0)"
-                      @touchend="stopMovement">
-                <i class="bx bx-down-arrow-alt"></i>
-              </button>
-              <div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <!-- Connection Status Section -->
       <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Movement Settings</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="setting-item flex items-center">
-            <label for="commandRateSelect" class="text-gray-700 mr-2">Command Rate (Hz):</label>
-            <select id="commandRateSelect" @change="updateCommandRate($event.target.value)" class="form-select border border-gray-300 rounded-md p-2">
-              <option value="20" :selected="commandRate === 50">20 Hz (50ms)</option>
-              <option value="10" :selected="commandRate === 100">10 Hz (100ms)</option>
-              <option value="30" :selected="commandRate === 33">30 Hz (33ms)</option>
-              <option value="50" :selected="commandRate === 20">50 Hz (20ms)</option>
-            </select>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="bx bx-link text-xl mr-2"></i>Connection Status
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div class="border border-blue-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700">ROS Bridge:</p> 
+            <p class="text-lg font-bold" :class="connectionStatus === 'Connected' ? 'text-green-600' : 'text-red-600'">
+              {{ connectionStatus }}
+            </p>
           </div>
-          <div class="setting-item flex items-center">
-            <label for="maxLinearSpeedRange" class="text-gray-700 mr-2">Max Linear Speed:</label>
-            <input type="range" id="maxLinearSpeedRange" min="0.1" max="2.0" step="0.1" :value="maxLinearSpeed" @input="updateMaxLinearSpeed($event.target.value)" class="flex-grow">
-            <span class="ml-2 font-medium text-blue-600">{{ maxLinearSpeed.toFixed(1) }} m/s</span>
+          <div class="border border-blue-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700">Joystick Connection:</p>
+            <p class="text-lg font-bold" :class="joystick.connection === 'Connected' ? 'text-green-600' : 'text-red-600'">
+              {{ joystick.connection }}
+            </p>
           </div>
-          <div class="setting-item flex items-center">
-            <label for="maxAngularSpeedRange" class="text-gray-700 mr-2">Max Angular Speed:</label>
-            <input type="range" id="maxAngularSpeedRange" min="0.1" max="2.0" step="0.1" :value="maxAngularSpeed" @input="updateMaxAngularSpeed($event.target.value)" class="flex-grow">
-            <span class="ml-2 font-medium text-blue-600">{{ maxAngularSpeed.toFixed(1) }} rad/s</span>
+          <div class="border border-blue-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700">Joystick Mode:</p>
+            <p class="text-lg font-bold text-gray-800">{{ joystick.mode }}</p>
+          </div>
+          <div class="border border-blue-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700">Current Speed:</p>
+            <p class="text-sm text-gray-800">Linear={{ motion.speed.toFixed(2) }} m/s,</p>
+            <p class="text-sm text-gray-800">Angular={{ currentAngular.toFixed(2) }} rad/s</p>
+          </div>
+        </div>
+        
+        <!-- Auto-refresh notification -->
+        <div v-if="refreshCountdown > 0" class="border-t pt-4">
+          <div class="refresh-notification">
+            🔄 Auto-refreshing in {{ refreshCountdown }}s...
           </div>
         </div>
       </div>
 
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Information</h3>
-          <div class="space-y-2 text-gray-700 text-base">
-            <p><span class="font-medium">PIU State:</span> {{ dbw.piu_state }}</p>
-            <p><span class="font-medium">Estop Triggered:</span> <span :class="dbw.estop_trigger ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">{{ dbw.estop_trigger ? 'YES' : 'NO' }}</span></p>
-            <p><span class="font-medium">Front Motor Fault:</span> {{ dbw.front_md_fault }}</p>
-            <p><span class="font-medium">Rear Motor Fault:</span> {{ dbw.rear_md_fault }}</p>
-            <p><span class="font-medium">Left Encoder Ticks:</span> {{ motion.left_encoder_ticks }}</p>
-            <p><span class="font-medium">Right Encoder Ticks:</span> {{ motion.right_encoder_ticks }}</p>
-            <p><span class="font-medium">Current Task:</span> N/A (No ROS topic)</p>
-            <p><span class="font-medium">Last Communication:</span> Live (via ROS)</p>
+      <!-- Fullscreen Camera View -->
+      <div v-if="isFullscreen" class="fixed inset-0 z-50 bg-black flex flex-col">
+        <!-- Top bar with controls -->
+        <div class="flex justify-between items-center p-4 bg-gray-900 text-white">
+          <h3 class="text-lg font-semibold">Camera Feed</h3>
+          <button @click="toggleFullscreen" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">
+            <i class="bx bx-exit-fullscreen text-xl"></i>
+          </button>
+        </div>
+        
+        <!-- Main content area -->
+        <div class="flex-1 flex">
+          <!-- Camera feed (left side) -->
+          <div class="flex-1 flex items-center justify-center p-4">
+            <div class="relative w-full h-full flex items-center justify-center">
+              <img :src="cameraUrl" alt="UGV Camera Feed" class="max-w-full max-h-full object-contain rounded-lg border-2 border-gray-700" v-if="connectionStatus === 'Connected'">
+              <div v-else class="text-center text-white">
+                <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
+                <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
+                <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
+              </div>
+              <div v-if="latencyMs !== null" class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded">
+                <p class="text-sm">Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span></p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Movement controls (right side) -->
+          <div class="w-80 bg-gray-800 p-6 flex flex-col">
+            <h3 class="text-lg font-semibold text-white mb-4">Movement Controls</h3>
+            <div class="flex-1 flex flex-col items-center justify-center mb-6">
+              <div class="grid grid-rows-3 grid-cols-3 gap-3 w-full max-w-xs">
+                <div></div>
+                <button class="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(maxLinearSpeed, 0)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(maxLinearSpeed, 0)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-up-arrow-alt text-2xl"></i>
+                </button>
+                <div></div>
+                <button class="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(0, maxAngularSpeed)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(0, maxAngularSpeed)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-left-arrow-alt text-2xl"></i>
+                </button>
+                <div></div>
+                <button class="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(0, -maxAngularSpeed)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(0, -maxAngularSpeed)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-right-arrow-alt text-2xl"></i>
+                </button>
+                <div></div>
+                <button class="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(-maxLinearSpeed, 0)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(-maxLinearSpeed, 0)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-down-arrow-alt text-2xl"></i>
+                </button>
+                <div></div>
+              </div>
+            </div>
+            
+            <!-- UGV Position Tracking in fullscreen -->
+            <div class="bg-gray-700 rounded-lg p-4">
+              <h4 class="text-md font-semibold text-white mb-3">UGV Position Tracking</h4>
+              <div class="relative bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center h-48">
+                <img src="https://placehold.co/400x300/E0E0E0/555555?text=Map+Placeholder" alt="Map Placeholder" class="w-full h-full object-cover">
+                <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
+                  <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-plus text-sm"></i></button>
+                  <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-minus text-sm"></i></button>
+                </div>
+                <div class="absolute bottom-1 left-1 text-xs text-gray-600 z-10">
+                  © Leaflet | © OpenStreetMap
+                </div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                  <i class="bx bx-current-location text-green-600 text-2xl"></i>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Normal Layout -->
+      <div v-else>
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <!-- UGV Position Tracking -->
+          <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">UGV Position Tracking</h3>
+            <div class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="https://placehold.co/400x300/E0E0E0/555555?text=Map+Placeholder" alt="Map Placeholder" class="w-full h-full object-cover">
+              <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
+                <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-plus text-lg"></i></button>
+                <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100"><i class="bx bx-minus text-lg"></i></button>
+              </div>
+              <div class="absolute bottom-2 left-2 text-xs text-gray-600 z-10">
+                © Leaflet | © OpenStreetMap contributors
+              </div>
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                <i class="bx bx-current-location text-green-600 text-3xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Camera Feed -->
+          <div class="lg:col-span-1 bg-gray-900 rounded-lg shadow-md p-6 text-white flex flex-col items-center justify-center relative overflow-hidden">
+            <div class="absolute top-4 right-4 flex space-x-2 z-10">
+              <button @click="toggleFullscreen" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">
+                <i class="bx bx-fullscreen text-xl"></i>
+              </button>
+            </div>
+            <img :src="cameraUrl" alt="UGV Camera Feed" class="w-full h-auto object-contain rounded-lg border-2 border-gray-700" v-if="connectionStatus === 'Connected'">
+            <div v-else class="text-center">
+              <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
+              <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
+              <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
+            </div>
+            <div v-if="latencyMs !== null" class="mt-4 text-sm">
+              <p>Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span></p>
+            </div>
+          </div>
+
+          <!-- Movement Controls -->
+          <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Movement Controls</h3>
+            <div class="flex-grow flex flex-col items-center justify-center p-6 rounded-lg border border-gray-200">
+              <div class="grid grid-rows-3 grid-cols-3 gap-3 w-full max-w-xs">
+                <div></div>
+                <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(maxLinearSpeed, 0)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(maxLinearSpeed, 0)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-up-arrow-alt"></i>
+                </button>
+                <div></div>
+                <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(0, maxAngularSpeed)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(0, maxAngularSpeed)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-left-arrow-alt"></i>
+                </button>
+                <div></div>
+                <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(0, -maxAngularSpeed)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(0, -maxAngularSpeed)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-right-arrow-alt"></i>
+                </button>
+                <div></div>
+                <button class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
+                        @mousedown="startMovement(-maxLinearSpeed, 0)"
+                        @mouseup="stopMovement"
+                        @mouseleave="stopMovement"
+                        @touchstart="startMovement(-maxLinearSpeed, 0)"
+                        @touchend="stopMovement"
+                        :disabled="connectionStatus !== 'Connected'"
+                        :class="{'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected'}">
+                  <i class="bx bx-down-arrow-alt"></i>
+                </button>
+                <div></div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <!-- Movement Settings -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="bx bx-cog text-xl mr-2"></i>Movement Settings
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="setting-item flex items-center">
+              <label for="commandRateSelect" class="text-gray-700 mr-2">Command Rate (Hz):</label>
+              <select id="commandRateSelect" @change="updateCommandRate($event.target.value)" class="form-select border border-gray-300 rounded-md p-2">
+                <option value="20" :selected="commandRate === 50">20 Hz (50ms)</option>
+                <option value="10" :selected="commandRate === 100">10 Hz (100ms)</option>
+                <option value="30" :selected="commandRate === 33">30 Hz (33ms)</option>
+                <option value="50" :selected="commandRate === 20">50 Hz (20ms)</option>
+              </select>
+            </div>
+            <div class="setting-item flex items-center">
+              <label for="maxLinearSpeedRange" class="text-gray-700 mr-2">Max Linear Speed:</label>
+              <input type="range" id="maxLinearSpeedRange" min="0.1" max="2.0" step="0.1" :value="maxLinearSpeed" @input="updateMaxLinearSpeed($event.target.value)" class="flex-grow">
+              <span class="ml-2 font-medium text-blue-600">{{ maxLinearSpeed.toFixed(1) }} m/s</span>
+            </div>
+            <div class="setting-item flex items-center">
+              <label for="maxAngularSpeedRange" class="text-gray-700 mr-2">Max Angular Speed:</label>
+              <input type="range" id="maxAngularSpeedRange" min="0.1" max="2.0" step="0.1" :value="maxAngularSpeed" @input="updateMaxAngularSpeed($event.target.value)" class="flex-grow">
+              <span class="ml-2 font-medium text-blue-600">{{ maxAngularSpeed.toFixed(1) }} rad/s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Grid: Drive-by-Wire Status and Motion Feedback -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Drive-by-Wire Status -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <i class="bx bx-car text-xl mr-2"></i>Drive-by-Wire Status
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">PIU State:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.piu_state }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Battery Voltage:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.battery_voltage.toFixed(2) }} V</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Battery Current:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.battery_current.toFixed(2) }} A</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Battery Percentage:</p>
+                <p class="text-base font-bold text-gray-800">{{ batteryPercentage.toFixed(0) }}%</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Estop Triggered:</p>
+                <p class="text-base font-bold" :class="dbw.estop_trigger ? 'text-red-600' : 'text-green-600'">
+                  {{ dbw.estop_trigger ? 'YES' : 'NO' }}
+                </p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Front Motor Fault:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.front_md_fault }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3 md:col-span-2">
+                <p class="text-sm font-medium text-gray-700">Rear Motor Fault:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.rear_md_fault }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Motion Feedback -->
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <i class="bx bx-tachometer text-xl mr-2"></i>Motion Feedback
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Left Encoder Ticks:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.left_encoder_ticks }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Right Encoder Ticks:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.right_encoder_ticks }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Front Left RPM:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.front_left_rpm }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Rear Right RPM:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.rear_right_rpm }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Speed:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.speed.toFixed(2) }} m/s</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Left Wheel Speed:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.left_wheel_speed_mps.toFixed(2) }} m/s</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3 md:col-span-2">
+                <p class="text-sm font-medium text-gray-700">Right Wheel Speed:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.right_wheel_speed_mps.toFixed(2) }} m/s</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import ROSLIB from 'roslib';
-import { ref, watch, defineProps, defineEmits, onMounted, onUnmounted } from 'vue';
+import { ref, watch, defineProps, defineEmits, onMounted, onUnmounted, computed } from 'vue';
 
 const props = defineProps({
   ugvId: String,
-  // initialUgvData will no longer be used for live data, but kept if you need it for initial configuration
-  // initialUgvData: Object
 });
 
 const emit = defineEmits(['back-to-overview']);
 
-// UGV Teleoperation Specific
-const manualModeEnabled = ref(false);
+// Fullscreen state
+const isFullscreen = ref(false);
 
-// Camera configuration (from App.vue)
-const cameraUrl = ref('http://192.168.100.226:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color');
+// Camera configuration
+const cameraUrl = ref('http://192.168.100.5:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color');
 const latencyMs = ref(null);
 
-// Connection status (from App.vue)
+// Connection status
 const connectionStatus = ref('Disconnected');
 
-// Auto-refresh functionality (from App.vue)
-const autoRefreshEnabled = ref(true);
-const autoRefreshDelay = ref(5);
+// Auto-refresh functionality (always enabled)
+const autoRefreshDelay = ref(3); // Fixed delay at 3 seconds
 const refreshCountdown = ref(0);
-let refreshTimeout = null;
 let countdownInterval = null;
 
-// Movement control variables (from App.vue)
+// Movement control variables
 const isMoving = ref(false);
 const currentLinear = ref(0);
 const currentAngular = ref(0);
 let movementInterval = null;
 
-// Status data (from App.vue)
+// Status data
 const dbw = ref({
   piu_state: 'Unknown',
   battery_voltage: 0,
@@ -271,16 +435,41 @@ const joystick = ref({
   mode: 'Unknown'
 });
 
-// Adjustable parameters (from App.vue)
+// Computed property for battery percentage
+const batteryPercentage = computed(() => {
+  const voltage = dbw.value.battery_voltage;
+  const minVoltage = 10.0; // Assume 10V is 0%
+  const maxVoltage = 12.0; // Assume 12V is 100%
+  const percentage = ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100;
+  return Math.max(0, Math.min(100, percentage)); // Ensure the value is between 0 and 100
+});
+
+// Adjustable parameters
 const commandRate = ref(50); // milliseconds (20Hz)
 const accelerationStep = ref(0.1);
 const maxLinearSpeed = ref(1.0);
 const maxAngularSpeed = ref(1.0);
 
-// ROS connection setup (from App.vue)
-const ROBOT_IP = '192.168.100.226'; // Replace with your robot's IP
+// ROS connection setup
+const ROBOT_IP = '192.168.100.5'; // Replace with your robot's IP
 let ros = null;
 let cmdVel = null;
+
+// Fullscreen toggle function
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value;
+  
+  if (isFullscreen.value) {
+    // Enable keyboard controls when entering fullscreen
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+  } else {
+    // Remove keyboard controls when exiting fullscreen
+    document.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('keyup', handleKeyUp);
+    stopMovement();
+  }
+};
 
 const initializeRos = () => {
   if (ros && ros.isConnected) {
@@ -290,7 +479,7 @@ const initializeRos = () => {
     url: `ws://${ROBOT_IP}:9090`
   });
 
-  // ROS connection event handlers (from App.vue)
+  // ROS connection event handlers
   ros.on('connection', () => {
     console.log('✅ Connected to ROS');
     connectionStatus.value = 'Connected';
@@ -309,14 +498,14 @@ const initializeRos = () => {
     startAutoRefresh(); // Start auto-refresh on disconnect
   });
 
-  // Define the /cmd_vel publisher (from App.vue)
+  // Define the /cmd_vel publisher
   cmdVel = new ROSLIB.Topic({
     ros,
     name: '/cmd_vel',
     messageType: 'geometry_msgs/Twist'
   });
 
-  // Setup ROS subscribers for status data (from App.vue)
+  // Setup ROS subscribers for status data
   // Drive-by-wire topic
   const dbwTopic = new ROSLIB.Topic({
     ros: ros,
@@ -397,10 +586,8 @@ const initializeRos = () => {
   });
 };
 
-// Auto-refresh functions (from App.vue)
+// Auto-refresh functions (always enabled)
 function startAutoRefresh() {
-  if (!autoRefreshEnabled.value) return;
-
   console.log(`🔄 Starting auto-refresh countdown (${autoRefreshDelay.value}s)`);
   refreshCountdown.value = autoRefreshDelay.value;
 
@@ -408,16 +595,12 @@ function startAutoRefresh() {
     refreshCountdown.value--;
     if (refreshCountdown.value <= 0) {
       clearInterval(countdownInterval);
-      refreshPage();
+      initializeRos(); // Re-initialize the ROS connection instead of reloading the page
     }
   }, 1000);
 }
 
 function cancelAutoRefresh() {
-  if (refreshTimeout) {
-    clearTimeout(refreshTimeout);
-    refreshTimeout = null;
-  }
   if (countdownInterval) {
     clearInterval(countdownInterval);
     countdownInterval = null;
@@ -426,24 +609,7 @@ function cancelAutoRefresh() {
   console.log('❌ Auto-refresh cancelled');
 }
 
-function refreshPage() {
-  console.log('🔄 Auto-refreshing page...');
-  window.location.reload();
-}
-
-function toggleAutoRefresh() {
-  autoRefreshEnabled.value = !autoRefreshEnabled.value;
-  if (!autoRefreshEnabled.value) {
-    cancelAutoRefresh();
-  }
-  console.log(`Auto-refresh ${autoRefreshEnabled.value ? 'enabled' : 'disabled'}`);
-}
-
-function updateAutoRefreshDelay(delay) {
-  autoRefreshDelay.value = parseInt(delay);
-}
-
-// Send Twist command (from App.vue)
+// Send Twist command
 function sendCmd(linear, angular) {
   if (!cmdVel || !ros.isConnected) {
     console.warn('ROS not connected or cmdVel topic not initialized.');
@@ -459,9 +625,9 @@ function sendCmd(linear, angular) {
   cmdVel.publish(twist);
 }
 
-// Start continuous movement (from App.vue)
+// Start continuous movement
 function startMovement(targetLinear, targetAngular) {
-  if (!manualModeEnabled.value || connectionStatus.value !== 'Connected') return;
+  if (connectionStatus.value !== 'Connected') return;
 
   if (movementInterval) {
     clearInterval(movementInterval);
@@ -494,9 +660,9 @@ function startMovement(targetLinear, targetAngular) {
   }, commandRate.value);
 }
 
-// Stop movement (from App.vue)
+// Stop movement
 function stopMovement() {
-  if (!manualModeEnabled.value || connectionStatus.value !== 'Connected') return;
+  if (connectionStatus.value !== 'Connected') return;
 
   isMoving.value = false;
 
@@ -532,10 +698,10 @@ function stopMovement() {
   }, commandRate.value);
 }
 
-// Keyboard controls (from App.vue)
+// Keyboard controls
 function handleKeyDown(event) {
-  if (!manualModeEnabled.value || connectionStatus.value !== 'Connected') return; // Only enable if manual mode is on and connected
-  if (isMoving.value) return; // Prevent multiple commands while already moving
+  if (connectionStatus.value !== 'Connected') return;
+  if (isMoving.value) return;
 
   switch(event.key) {
     case 'ArrowUp':
@@ -562,11 +728,16 @@ function handleKeyDown(event) {
       event.preventDefault();
       startMovement(0, -maxAngularSpeed.value);
       break;
+    case 'Escape':
+      if (isFullscreen.value) {
+        toggleFullscreen();
+      }
+      break;
   }
 }
 
 function handleKeyUp(event) {
-  if (!manualModeEnabled.value || connectionStatus.value !== 'Connected') return; // Only enable if manual mode is on and connected
+  if (connectionStatus.value !== 'Connected') return;
 
   switch(event.key) {
     case 'ArrowUp':
@@ -587,7 +758,7 @@ function handleKeyUp(event) {
   }
 }
 
-// Settings update functions (from App.vue)
+// Settings update functions
 function updateCommandRate(hz) {
   commandRate.value = 1000 / hz;
 }
@@ -600,31 +771,18 @@ function updateMaxAngularSpeed(speed) {
   maxAngularSpeed.value = parseFloat(speed);
 }
 
-watch(manualModeEnabled, (value) => {
-  console.log('Manual mode:', value);
-  if (value && connectionStatus.value === 'Connected') {
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-  } else {
-    document.removeEventListener('keydown', handleKeyDown);
-    document.removeEventListener('keyup', handleKeyUp);
-    stopMovement(); // Ensure robot stops if manual mode is disabled
-  }
-});
-
 watch(connectionStatus, (status) => {
   if (status !== 'Connected') {
-    // Stop movement and disable keyboard controls if connection is lost
-    document.removeEventListener('keydown', handleKeyDown);
-    document.removeEventListener('keyup', handleKeyUp);
+    if (isFullscreen.value) {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+    }
     stopMovement();
-  } else if (manualModeEnabled.value) {
-    // Re-enable keyboard controls if connected and manual mode is enabled
+  } else if (isFullscreen.value) {
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
   }
 });
-
 
 onMounted(() => {
   if (props.ugvId) {
@@ -633,13 +791,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  // Cleanup ROS connection, intervals, and event listeners
   if (movementInterval) {
     clearInterval(movementInterval);
   }
   cancelAutoRefresh();
   if (ros && ros.isConnected) {
-    sendCmd(0, 0); // Stop robot movement before unmounting
+    sendCmd(0, 0);
     ros.close();
   }
   document.removeEventListener('keydown', handleKeyDown);
@@ -648,19 +805,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.dot {
-  transition: transform 0.3s ease;
-}
-
-/* Custom toggle switch styling */
-input:checked + .block {
-  background-color: #2563eb; /* blue-600 */
-}
-input:checked + .block .dot {
-  transform: translateX(100%);
-}
-
-/* Styles for Auto-refresh section from App.vue */
+/* Auto-refresh section styles */
 .auto-refresh-section {
   padding-top: 10px;
 }
@@ -685,5 +830,21 @@ input:checked + .block .dot {
   display: flex;
   align-items: center;
   font-weight: 500;
+}
+
+/* Fullscreen styles */
+.fixed {
+  position: fixed;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.z-50 {
+  z-index: 50;
 }
 </style>
