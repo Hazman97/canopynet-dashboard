@@ -495,7 +495,7 @@
         <img :src="taskIcon" class="w-8 mb-1" />
         Tasks
       </router-link>
-      <router-link to="/" class="flex flex-col items-center text-sm text-yellow-700">
+      <router-link to="/game-workers" class="flex flex-col items-center text-sm text-yellow-700">
         <img :src="crewIcon" class="w-8 mb-1" />
         Crew
       </router-link>

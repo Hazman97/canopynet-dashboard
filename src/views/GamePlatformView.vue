@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-blue-200 to-green-300 p-4">
-    <!-- Header with logout button -->
+  <div class="min-h-screen bg-gradient-to-b from-blue-200 to-green-300 p-4 relative overflow-hidden">
+    <!-- Header -->
     <div class="flex justify-between items-center mb-4">
       <div class="flex-1"></div>
       <h1 class="text-center text-3xl font-bold text-white flex-1">My Farm Dashboard</h1>
@@ -10,18 +10,19 @@
         </button>
       </div>
     </div>
-    
+
     <p class="text-center text-white mb-6 font-semibold">
       Welcome to your very own Palm Farm! Tap an icon to get started.
     </p>
 
+    <!-- Main Menu -->
     <div class="grid grid-cols-2 gap-4 max-w-xl mx-auto">
       <div @click="$router.push('/game-tasks')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
         <img src="@/assets/task.png" class="w-12 mb-2" alt="Tasks Icon" />
         <span class="text-lg font-bold text-green-800">Tasks</span>
       </div>
 
-      <div @click="$router.push('/')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+      <div @click="$router.push('/game-workers')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
         <img src="@/assets/crew.png" class="w-12 mb-2" alt="Crew Icon" />
         <span class="text-lg font-bold text-green-800">My Crew</span>
       </div>
@@ -37,6 +38,14 @@
       </div>
     </div>
 
+    <!-- Farmer NPC -->
+    <div class="absolute bottom-16 left-0 animate-farmer flex items-center space-x-2">
+      <img src="@/assets/farmer-walk.gif" alt="Farmer" class="w-12 h-12 pixelated" />
+      <div class="bg-white border border-gray-300 rounded-lg px-3 py-1 shadow-md text-xs font-bold text-green-700">
+        {{ currentMessage }}
+      </div>
+    </div>
+
     <!-- Bottom Navigation Bar -->
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t flex justify-around py-2">
       <div class="flex flex-col items-center text-green-700 font-bold">
@@ -47,7 +56,7 @@
         <img src="@/assets/task.png" class="w-8 mb-1" alt="Tasks" />
         <span class="text-sm">Tasks</span>
       </div>
-      <div @click="$router.push('/')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
+      <div @click="$router.push('/game-workers')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/crew.png" class="w-8 mb-1" alt="Crew" />
         <span class="text-sm">Crew</span>
       </div>
@@ -64,17 +73,55 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const messages = [
+  "Rise and shine, farmer!",
+  "Let's get those crops growing! 🌱",
+  "Hard work pays off! 💪",
+  "The farm is counting on you! 🐓",
+  "Time to harvest greatness!"
+];
+const currentMessage = ref(messages[0]);
+
+let messageIndex = 0;
+let intervalId;
+
+onMounted(() => {
+  intervalId = setInterval(() => {
+    messageIndex = (messageIndex + 1) % messages.length;
+    currentMessage.value = messages[messageIndex];
+  }, 4000);
+});
+
+onUnmounted(() => {
+  clearInterval(intervalId);
+});
 
 const logout = () => {
-  sessionStorage.removeItem('userToken'); // Clear token
-  sessionStorage.removeItem('userRole');  // Clear role
-  router.push('/login'); // Redirect to login page
+  sessionStorage.removeItem('userToken');
+  sessionStorage.removeItem('userRole');
+  router.push('/login');
 };
 </script>
 
 <style scoped>
-/* Tailwind CSS classes are used, no additional scoped styles needed */
+.pixelated {
+  image-rendering: pixelated;
+}
+
+@keyframes farmerWalk {
+  0% {
+    transform: translateX(-60px);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+.animate-farmer {
+  animation: farmerWalk 20s linear infinite;
+}
 </style>
