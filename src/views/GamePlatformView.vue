@@ -16,19 +16,19 @@
     </p>
 
     <div class="grid grid-cols-2 gap-4 max-w-xl mx-auto">
-      <div @click="$router.push('/tasks')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+      <div @click="$router.push('/game-tasks')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
         <img src="@/assets/task.png" class="w-12 mb-2" alt="Tasks Icon" />
         <span class="text-lg font-bold text-green-800">Tasks</span>
       </div>
 
-      <div @click="$router.push('/crew')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+      <div @click="$router.push('/')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
         <img src="@/assets/crew.png" class="w-12 mb-2" alt="Crew Icon" />
         <span class="text-lg font-bold text-green-800">My Crew</span>
       </div>
 
       <div class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
         <img src="@/assets/map.png" class="w-12 mb-2" alt="Farm Map Icon" />
-        <span class="text-lg font-bold text-green-800">Farm Map</span>
+        <span class="text-lg font-bold text-green-800">Farm Areas</span>
       </div>
 
       <div class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
@@ -43,17 +43,17 @@
         <img src="@/assets/house.png" class="w-8 mb-1" alt="Home" />
         <span class="text-sm">Home</span>
       </div>
-      <div @click="$router.push('/tasks')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
+      <div @click="$router.push('/game-tasks')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/task.png" class="w-8 mb-1" alt="Tasks" />
         <span class="text-sm">Tasks</span>
       </div>
-      <div @click="$router.push('/crew')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
+      <div @click="$router.push('/')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/crew.png" class="w-8 mb-1" alt="Crew" />
         <span class="text-sm">Crew</span>
       </div>
       <div class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/map.png" class="w-8 mb-1" alt="Map" />
-        <span class="text-sm">Map</span>
+        <span class="text-sm">Areas</span>
       </div>
       <div class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/tractor.png" class="w-8 mb-1" alt="Assets" />
