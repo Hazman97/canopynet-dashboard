@@ -499,11 +499,11 @@
         <img :src="crewIcon" class="w-8 mb-1" />
         Crew
       </router-link>
-      <router-link to="/" class="flex flex-col items-center text-sm text-blue-700">
+      <router-link to="/game-areas" class="flex flex-col items-center text-sm text-blue-700">
         <img :src="mapIcon" class="w-8 mb-1" />
         Map
       </router-link>
-      <router-link to="/" class="flex flex-col items-center text-sm text-brown-700">
+      <router-link to="/game-assets" class="flex flex-col items-center text-sm text-brown-700">
         <img :src="tractorIcon" class="w-8 mb-1" />
         Assets
       </router-link>

@@ -38,3 +38,9 @@ app.post('/api/send-at', async (req, res) => {
 app.listen(5001, () => {
   console.log('✅ Proxy running at http://localhost:5001')
 })
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+});
+
+export default api;

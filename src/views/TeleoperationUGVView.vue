@@ -625,8 +625,8 @@ const initializeRos = () => {
   // Define the /cmd_vel publisher
   cmdVel = new ROSLIB.Topic({
     ros,
-    name: '/cmd_vel',
-    messageType: 'geometry_msgs/Twist',
+    name: '/cmd_vel_ui',
+    messageType: 'geometry_msgs/msg/Twist',
   })
 
   // Setup ROS subscribers for status data

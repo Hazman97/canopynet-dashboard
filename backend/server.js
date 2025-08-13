@@ -13,7 +13,11 @@ const port = 3000;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+const corsOptions = {
+  origin: 'http://192.168.100.65:5173',
+  optionsSuccessStatus: 200 // For legacy browser support
+}
+app.use(cors(corsOptions));
 
 // --- PostgreSQL Database Configuration ---
 const pool = new Pool({
@@ -146,9 +150,9 @@ app.post('/api/login', async (req, res) => {
 });
 
 // --- Start the server ---
-app.listen(port, () => {
-  console.log(`Node.js backend server listening at http://localhost:${port}`);
-});
+app.listen(3000, '0.0.0.0', () => {
+    console.log('Server is running on http://0.0.0.0:3000');
+})
 
 // --- Graceful shutdown ---
 process.on('SIGINT', () => {

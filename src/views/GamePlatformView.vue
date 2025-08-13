@@ -40,7 +40,7 @@
 
     <!-- Farmer NPC -->
     <div class="absolute bottom-16 left-0 animate-farmer flex items-center space-x-2">
-      <img src="@/assets/farmer-walk.gif" alt="Farmer" class="w-12 h-12 pixelated" />
+      <img src="@/assets/farmer-walk.gif" alt="Farmer" class="pixelated farmer-size" />
       <div class="bg-white border border-gray-300 rounded-lg px-3 py-1 shadow-md text-xs font-bold text-green-700">
         {{ currentMessage }}
       </div>
@@ -52,19 +52,19 @@
         <img src="@/assets/house.png" class="w-8 mb-1" alt="Home" />
         <span class="text-sm">Home</span>
       </div>
-      <div @click="$router.push('/game-tasks')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
+      <div @click="$router.push('/game-tasks')" class="flex flex-col items-center cursor-pointer hover:text-red-700 transition">
         <img src="@/assets/task.png" class="w-8 mb-1" alt="Tasks" />
         <span class="text-sm">Tasks</span>
       </div>
-      <div @click="$router.push('/game-workers')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
+      <div @click="$router.push('/game-workers')" class="flex flex-col items-center cursor-pointer hover:text-yellow-700 transition">
         <img src="@/assets/crew.png" class="w-8 mb-1" alt="Crew" />
         <span class="text-sm">Crew</span>
       </div>
-      <div class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
+      <div @click="$router.push('/game-areas')" class="flex flex-col items-center cursor-pointer hover:text-blue-700 transition">
         <img src="@/assets/map.png" class="w-8 mb-1" alt="Map" />
         <span class="text-sm">Areas</span>
       </div>
-      <div class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
+      <div @click="$router.push('/game-assets')" class="flex flex-col items-center cursor-pointer hover:text-black-700 transition">
         <img src="@/assets/tractor.png" class="w-8 mb-1" alt="Assets" />
         <span class="text-sm">Assets</span>
       </div>
@@ -119,6 +119,11 @@ const logout = () => {
   100% {
     transform: translateX(100vw);
   }
+}
+
+.farmer-size {
+  width: 6rem; /* doubled from w-12 (3rem) */
+  height: 6rem;
 }
 
 .animate-farmer {
