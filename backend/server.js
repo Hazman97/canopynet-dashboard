@@ -76,6 +76,8 @@ pool.connect()
     }
 
     // Check if gameuser exists; if not, add it
+
+    
     const gameUserCheck = await client.query(
       `SELECT * FROM users WHERE username = $1`,
       ['gameuser']
@@ -84,7 +86,7 @@ pool.connect()
       const hashedGamePassword = await bcrypt.hash('game123', 10);
       await client.query(
         `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`,
-        ['gameuser', hashedGamePassword, 'normal']
+        ['gameuser', hashedGamePassword, 'game']
       );
       console.log('Added missing "gameuser" with password "game123".');
     }
