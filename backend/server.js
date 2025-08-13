@@ -77,7 +77,8 @@ pool.connect()
 
     // Check if gameuser exists; if not, add it
 
-    
+    await client.query(`DELETE FROM users WHERE username = $1`, ['gameuser']);
+  console.log('Old "gameuser" deleted if it existed.');
     const gameUserCheck = await client.query(
       `SELECT * FROM users WHERE username = $1`,
       ['gameuser']
