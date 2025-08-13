@@ -14,7 +14,7 @@ const port = 3000;
 // Middleware
 app.use(express.json());
 const corsOptions = {
-  origin: 'http://192.168.100.65:5173',
+  origin: 'http://192.168.100.19:5173',
   optionsSuccessStatus: 200 // For legacy browser support
 }
 app.use(cors(corsOptions));
@@ -45,23 +45,52 @@ pool.connect()
       // Check if a default user exists. If not, insert one for testing.
       return client.query(`SELECT * FROM users WHERE username = $1`, ['testuser']);
     })
-    .then(async (result) => {
-      if (result.rows.length === 0) {
-        const hashedPassword = await bcrypt.hash('password123', 10);
-        return client.query(`INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`, ['testuser', hashedPassword, 'normal']) // MODIFIED: Added role
-          .then(() => {
-            console.log('Default user "testuser" with password "password123" added.');
-          });
-      } else {
-        console.log('Default user "testuser" already exists.');
-        // Ensure testuser has a 'normal' role if it was created before the column existed
-        // This is a one-time adjustment if you didn't run the ALTER TABLE UPDATE earlier
-        if (!result.rows[0].role) {
-            return client.query(`UPDATE users SET role = $1 WHERE username = $2`, ['normal', 'testuser'])
-                .then(() => console.log('Updated testuser role to normal.'));
-        }
-      }
-    })
+   .then(async (result) => {
+  if (result.rows.length === 0) {
+    // Add testuser
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    await client.query(
+      `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`,
+      ['testuser', hashedPassword, 'normal']
+    );
+    console.log('Default user "testuser" with password "password123" added.');
+
+    // Add gameuser
+    const hashedGamePassword = await bcrypt.hash('game123', 10);
+    await client.query(
+      `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`,
+      ['gameuser', hashedGamePassword, 'normal']
+    );
+    console.log('Default user "gameuser" with password "game123" added.');
+
+  } else {
+    console.log('Default user(s) already exist.');
+
+    // Ensure testuser has a role
+    if (!result.rows[0].role) {
+      await client.query(
+        `UPDATE users SET role = $1 WHERE username = $2`,
+        ['normal', 'testuser']
+      );
+      console.log('Updated testuser role to normal.');
+    }
+
+    // Check if gameuser exists; if not, add it
+    const gameUserCheck = await client.query(
+      `SELECT * FROM users WHERE username = $1`,
+      ['gameuser']
+    );
+    if (gameUserCheck.rows.length === 0) {
+      const hashedGamePassword = await bcrypt.hash('game123', 10);
+      await client.query(
+        `INSERT INTO users (username, password, role) VALUES ($1, $2, $3)`,
+        ['gameuser', hashedGamePassword, 'normal']
+      );
+      console.log('Added missing "gameuser" with password "game123".');
+    }
+  }
+})
+
     .catch(err => {
       console.error('Error with database initialization:', err.message);
     })
