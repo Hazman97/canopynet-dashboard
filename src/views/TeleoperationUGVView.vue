@@ -514,7 +514,7 @@ const isFullscreen = ref(false)
 
 // Camera configuration
 const cameraUrl = ref(
-  'http://192.168.100.226:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color',
+  'http://192.168.100.5:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color',
 )
 const latencyMs = ref(null)
 
@@ -575,7 +575,7 @@ const maxLinearSpeed = ref(1.0)
 const maxAngularSpeed = ref(1.0)
 
 // ROS connection setup
-const ROBOT_IP = '192.168.100.226' // Replace with your robot's IP
+const ROBOT_IP = '192.168.100.5' // Replace with your robot's IP
 let ros = null
 let cmdVel = null
 
