@@ -4,6 +4,21 @@
       <div class="header-content">
         <div class="title-section">
           <h1 class="main-title">My Farm Areas!</h1>
+          <!-- Quick Summary Section -->
+          <div class="area-stats">
+            <div class="stat-item">
+              <img src="@/assets/tree.png" alt="Trees Icon" class="stat-icon-img" />
+              <span class="stat-text">{{ stats.totalTrees }} Trees</span>
+            </div>
+            <div class="stat-item">
+              <img src="@/assets/block.png" alt="Blocks Icon" class="stat-icon-img" />
+              <span class="stat-text">{{ stats.totalBlocks }} Blocks</span>
+            </div>
+            <div class="stat-item">
+              <img src="@/assets/active-phase.png" alt="Phases Icon" class="stat-icon-img" />
+              <span class="stat-text">{{ stats.totalPhases }} Phases</span>
+            </div>
+          </div>
         </div>
         <button @click="logout" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm">
           Logout
@@ -43,9 +58,9 @@
             </select>
           </div>
 
-          <button @click="openModal(currentView)" class="add-worker-btn">
+          <button @click="openModal('addPhase')" class="add-worker-btn" title="Add New Phase">
             <span class="plus-icon">+</span>
-            Add New {{ currentView.slice(0, -1) }}
+            Add New Phase
           </button>
         </div>
       </div>
@@ -109,15 +124,44 @@
       </div>
     </div>
 
-    <Modal v-if="showModal === 'phases'" @close="closeModal">
-      </Modal>
-    <Modal v-if="showModal === 'blocks'" @close="closeModal">
-      </Modal>
-    <Modal v-if="showModal === 'trees'" @close="closeModal">
-      </Modal>
-    <Modal v-if="showModal === 'treeDetail'" @close="closeModal">
-      </Modal>
+    <!-- Add New Phase Modal -->
+    <div v-if="showModal === 'addPhase'" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="text-2xl font-bold">Add New Phase</h3>
+        </div>
+        <form @submit.prevent="saveNewPhase" class="modal-body">
+          <div class="form-group">
+            <label for="name">Phase Name</label>
+            <input type="text" id="name" v-model="newPhase.name" class="form-input" placeholder="e.g. Phase 6 - New Planting" required />
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" v-model="newPhase.status" class="form-select" required>
+              <option value="" disabled>Select a status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Development">Development</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="established">Established Date</label>
+            <input type="date" id="established" v-model="newPhase.established" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" v-model="newPhase.description" class="form-textarea" rows="3" placeholder="Description of the phase" required></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="closeModal" class="cancel-btn">Cancel</button>
+            <button type="submit" class="save-btn">Save Phase</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
+    <!-- Bottom Navigation Bar -->
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t flex justify-around py-2">
       <div @click="$router.push('/game-platform')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/house.png" class="w-8 mb-1" alt="Home" />
@@ -250,6 +294,18 @@ const phases = ref([
   }
 ]);
 
+// Reactive object for the new phase form
+const newPhase = ref({
+  name: '',
+  status: '',
+  established: '',
+  totalArea: 0,
+  totalTrees: 0,
+  totalBlocks: 0,
+  description: '',
+  blocks: []
+});
+
 const statusConfig = {
   phases: {
     'Active': { color: 'border-green-400', icon: 'src/assets/active-phase.png' },
@@ -333,10 +389,42 @@ const breadcrumb = computed(() => {
 
 const openModal = (type) => {
   showModal.value = type;
+  if (type === 'addPhase') {
+    newPhase.value = {
+      name: '',
+      status: '',
+      established: '',
+      totalArea: 0,
+      totalTrees: 0,
+      totalBlocks: 0,
+      description: '',
+      blocks: []
+    };
+  }
 };
 
 const closeModal = () => {
   showModal.value = null;
+};
+
+// Function to save a new phase
+const saveNewPhase = () => {
+  if (newPhase.value.name && newPhase.value.status && newPhase.value.established) {
+    const newId = phases.value.length + 1;
+    const phaseToAdd = {
+      ...newPhase.value,
+      id: newId,
+      totalArea: 0,
+      totalTrees: 0,
+      totalBlocks: 0,
+      blocks: []
+    };
+    phases.value.push(phaseToAdd);
+    closeModal();
+    alert('New Phase added successfully!');
+  } else {
+    alert('Please fill in all required fields.');
+  }
 };
 
 const generateQRCode = (text) => {
@@ -424,6 +512,7 @@ const deleteItem = (item) => {
   position: relative;
 }
 
+/* Header Styles */
 .header-section {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
   padding: 20px;
@@ -450,6 +539,34 @@ const deleteItem = (item) => {
   font-weight: bold;
   margin: 0 0 15px 0;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* New stats summary styles */
+.area-stats {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.stat-icon-img {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.stat-text {
+  font-size: 1rem;
 }
 
 .workers-content {
@@ -628,5 +745,118 @@ const deleteItem = (item) => {
 
 .delete-btn:hover {
   background: rgba(255, 0, 0, 0.1);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: modal-fade-in 0.3s ease-out;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #3a7bd5;
+  box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.2);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 12px 24px;
+  border-radius: 25px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn {
+  background: #e0e0e0;
+  color: #555;
+}
+
+.cancel-btn:hover {
+  background: #c2c2c2;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  color: white;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>

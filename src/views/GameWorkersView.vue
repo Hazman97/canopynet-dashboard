@@ -1,6 +1,5 @@
 <template>
   <div class="farm-workers-container">
-    <!-- Header -->
     <div class="header-section">
       <div class="header-content">
         <div class="title-section">
@@ -22,7 +21,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="nav-tabs">
       <button 
         class="nav-tab" 
@@ -48,15 +46,13 @@
         <span class="tab-icon">📈</span>
         Performance Report
       </button>
-      <button class="add-worker-btn" @click="showAddWorkerModal = true">
+      <button class="add-worker-btn" @click="openModal()">
         <span class="plus-icon">+</span>
         Add New Worker
       </button>
     </div>
 
-    <!-- Workers List Tab -->
     <div v-if="currentTab === 'workers'" class="workers-content">
-      <!-- Search Bar -->
       <div class="search-section">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
@@ -68,7 +64,6 @@
           />
         </div>
         
-        <!-- Filter Buttons -->
         <div class="filter-buttons">
           <button 
             class="filter-btn" 
@@ -97,7 +92,6 @@
         </div>
       </div>
 
-      <!-- Workers Grid -->
       <div class="workers-grid">
         <div 
           v-for="worker in filteredWorkers" 
@@ -106,7 +100,6 @@
           :class="{ 
             active: worker.status === 'Active', 
             inactive: worker.status === 'Inactive',
-            'on-break': worker.status === 'On-break'
           }"
         >
           <div class="worker-info">
@@ -122,18 +115,25 @@
             </div>
           </div>
           <div class="worker-actions">
-            <button class="edit-btn" @click="editWorker(worker)">✏️</button>
+            <button class="edit-btn" @click="openModal(worker)">✏️</button>
             <button class="delete-btn" @click="deleteWorker(worker.id)">🗑️</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Attendance Table Tab -->
     <div v-if="currentTab === 'attendance'" class="attendance-content">
       <div class="attendance-header">
         <div class="attendance-title">
-          <h2>Attendance Table - 📅 {{ currentDate }}</h2>
+          <h2 class="inline-flex items-center">Attendance Table - 
+            <label for="attendance-date" class="sr-only">Choose a date</label>
+            <input 
+              type="date" 
+              id="attendance-date" 
+              v-model="selectedAttendanceDate" 
+              class="ml-2 bg-transparent text-white border-0 focus:ring-0 cursor-pointer"
+            />
+          </h2>
         </div>
         <button class="download-btn" @click="downloadAttendance">
           <span class="download-icon">⬇️</span>
@@ -148,22 +148,25 @@
           <div class="table-col">ATTENDANCE</div>
         </div>
         <div class="table-body">
-          <div v-for="(worker, index) in workers.filter(w => w.status !== 'Inactive')" :key="worker.id" class="table-row">
+          <div v-for="(worker, index) in workersForAttendance" :key="worker.id" class="table-row">
             <div class="table-col">{{ index + 1 }}</div>
             <div class="table-col">{{ worker.name.toUpperCase() }} - {{ worker.id }}</div>
             <div class="table-col">
-              <span class="attendance-status" :class="{ present: worker.attendance === 'Present', absent: worker.attendance === 'Absent' }">
-                <span v-if="worker.attendance === 'Present'" class="status-icon">✅</span>
-                <span v-else class="status-icon">❌</span>
-                {{ worker.attendance.toUpperCase() }}
-              </span>
+              <label class="attendance-checkbox-container">
+                <input 
+                  type="checkbox" 
+                  :checked="isWorkerPresent(worker.id)"
+                  @change="toggleAttendance(worker.id, $event.target.checked)"
+                />
+                <span class="checkmark"></span>
+                <span class="status-text">{{ isWorkerPresent(worker.id) ? 'Present' : 'Absent' }}</span>
+              </label>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Performance Report Tab -->
     <div v-if="currentTab === 'performance'" class="performance-content">
       <div class="performance-header">
         <h2>Performance Report</h2>
@@ -184,7 +187,7 @@
           <div class="perf-col">STATUS</div>
         </div>
         <div class="perf-table-body">
-          <div v-for="(worker, index) in sortedWorkersByProductivity" :key="worker.id" class="perf-table-row">
+          <div v-for="(worker, index) in sortedWorkersByPerformance" :key="worker.id" class="perf-table-row">
             <div class="perf-col">
               <div class="rank-badge" :class="getRankClass(index)">
                 <span v-if="index === 0">🥇</span>
@@ -194,12 +197,12 @@
               </div>
             </div>
             <div class="perf-col">{{ worker.name.toUpperCase() }} - {{ worker.id }}</div>
-            <div class="perf-col">{{ worker.productivity }}</div>
+            <div class="perf-col">{{ worker.performance[timeFilter].productivity }}</div>
             <div class="perf-col">
-              <span class="trend" :class="{ positive: worker.trend > 0, negative: worker.trend < 0, neutral: worker.trend === 0 }">
-                <span v-if="worker.trend > 0">📈</span>
-                <span v-else-if="worker.trend < 0">📉</span>
-                {{ worker.trend > 0 ? '+' : '' }}{{ worker.trend }}%
+              <span class="trend" :class="{ positive: worker.performance[timeFilter].trend > 0, negative: worker.performance[timeFilter].trend < 0, neutral: worker.performance[timeFilter].trend === 0 }">
+                <span v-if="worker.performance[timeFilter].trend > 0">📈</span>
+                <span v-else-if="worker.performance[timeFilter].trend < 0">📉</span>
+                {{ worker.performance[timeFilter].trend > 0 ? '+' : '' }}{{ worker.performance[timeFilter].trend }}%
               </span>
             </div>
             <div class="perf-col">
@@ -210,38 +213,36 @@
       </div>
     </div>
 
-    <!-- Add Worker Modal -->
-    <div v-if="showAddWorkerModal" class="modal-overlay" @click="closeModal">
+    <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Add New Worker</h2>
+        <div class="modal-header-light">
+          <h2>{{ isEditMode ? 'Edit Worker Details' : 'Add New Worker' }}</h2>
         </div>
-        <form @submit.prevent="addWorker" class="worker-form">
+        <form @submit.prevent="saveWorker" class="worker-form">
           <div class="form-group">
             <label>Workers Name:</label>
-            <input type="text" v-model="newWorker.name" required class="form-input" />
+            <input type="text" v-model="currentWorker.name" required class="form-input" />
           </div>
           <div class="form-group">
             <label>Workers ID:</label>
-            <input type="text" v-model="newWorker.id" required class="form-input" />
+            <input type="text" v-model="currentWorker.id" required class="form-input" :readonly="isEditMode" />
           </div>
           <div class="form-group">
             <label>Workers Status:</label>
-            <select v-model="newWorker.status" required class="form-select">
+            <select v-model="currentWorker.status" required class="form-select">
               <option value="">-- Choose Status --</option>
               <option value="Active">🟢 Active</option>
               <option value="Inactive">🔴 Inactive</option>
             </select>
           </div>
           <div class="modal-actions">
-            <button type="submit" class="add-btn">Add</button>
+            <button type="submit" class="add-btn">{{ isEditMode ? 'Save Changes' : 'Add Worker' }}</button>
             <button type="button" class="cancel-btn" @click="closeModal">Cancel</button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t flex justify-around py-2">
       <div @click="$router.push('/game-platform')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/house.png" class="w-8 mb-1" alt="Home" />
@@ -271,64 +272,61 @@
 export default {
   name: 'GameWorkersView',
   data() {
+    const today = new Date().toISOString().split('T')[0];
     return {
       currentTab: 'workers',
       workerFilter: 'all',
       timeFilter: 'today',
       searchQuery: '',
-      showAddWorkerModal: false,
-      newWorker: {
+      showModal: false,
+      isEditMode: false,
+      currentWorker: {
         name: '',
         id: '',
         status: ''
       },
       workers: [
-        {
-          id: '#S001',
-          name: 'Farah Nabila',
-          status: 'Active',
-          rating: 5,
-          productivity: 550.00,
-          trend: 5,
-          attendance: 'Present'
+        { id: '#S001', name: 'Farah Nabila', status: 'Active', rating: 5, performance: { today: { productivity: 550.00, trend: 5 }, week: { productivity: 2750.00, trend: 10 }, month: { productivity: 11000.00, trend: 20 }, quarter: { productivity: 33000.00, trend: 15 } } },
+        { id: '#S002', name: 'Fatini Zahirah', status: 'Active', rating: 3, performance: { today: { productivity: 198.96, trend: 0 }, week: { productivity: 994.80, trend: 2 }, month: { productivity: 3979.20, trend: -5 }, quarter: { productivity: 11937.60, trend: -3 } } },
+        { id: '#S003', name: 'Hadyna Redwani', status: 'Active', rating: 4, performance: { today: { productivity: 480.25, trend: 1 }, week: { productivity: 2401.25, trend: 3 }, month: { productivity: 9605.00, trend: 8 }, quarter: { productivity: 28815.00, trend: 5 } } },
+        { id: '#S004', name: 'Farah Shahira', status: 'Inactive', rating: 1, performance: { today: { productivity: 0, trend: 0 }, week: { productivity: 0, trend: 0 }, month: { productivity: 0, trend: 0 }, quarter: { productivity: 0, trend: 0 } } },
+        { id: '#S005', name: 'Izzatul Hanan', status: 'Active', rating: 5, performance: { today: { productivity: 200.00, trend: -0.5 }, week: { productivity: 1000.00, trend: -1 }, month: { productivity: 4000.00, trend: 5 }, quarter: { productivity: 12000.00, trend: 10 } } },
+        { id: '#S006', name: 'Nurul Huda', status: 'Active', rating: 4, performance: { today: { productivity: 350.00, trend: 2 }, week: { productivity: 1750.00, trend: 4 }, month: { productivity: 7000.00, trend: 6 }, quarter: { productivity: 21000.00, trend: 8 } } },
+        { id: '#S007', name: 'Alif Zulkarnain', status: 'Inactive', rating: 2, performance: { today: { productivity: 10.00, trend: -2 }, week: { productivity: 50.00, trend: -5 }, month: { productivity: 200.00, trend: -10 }, quarter: { productivity: 600.00, trend: -15 } } },
+        { id: '#S008', name: 'Siti Aisyah', status: 'Inactive', rating: 3, performance: { today: { productivity: 0, trend: 0 }, week: { productivity: 0, trend: 0 }, month: { productivity: 0, trend: 0 }, quarter: { productivity: 0, trend: 0 } } },
+        { id: '#S009', name: 'Ahmad bin Ali', status: 'Active', rating: 5, performance: { today: { productivity: 620.00, trend: 8 }, week: { productivity: 3100.00, trend: 12 }, month: { productivity: 12400.00, trend: 15 }, quarter: { productivity: 37200.00, trend: 25 } } },
+        { id: '#S010', name: 'Kamal bin Hashim', status: 'Active', rating: 4, performance: { today: { productivity: 450.00, trend: 3 }, week: { productivity: 2250.00, trend: 7 }, month: { productivity: 9000.00, trend: 10 }, quarter: { productivity: 27000.00, trend: 12 } } },
+        { id: '#S011', name: 'Aminah binti Idris', status: 'Active', rating: 5, performance: { today: { productivity: 580.00, trend: 6 }, week: { productivity: 2900.00, trend: 11 }, month: { productivity: 11600.00, trend: 18 }, quarter: { productivity: 34800.00, trend: 22 } } }
+      ],
+      selectedAttendanceDate: today,
+      attendanceRecords: {
+        [today]: {
+          '#S001': true,
+          '#S002': true,
+          '#S003': false,
+          '#S004': false,
+          '#S005': true,
+          '#S006': true,
+          '#S007': false,
+          '#S008': false,
+          '#S009': true,
+          '#S010': true,
+          '#S011': true,
         },
-        {
-          id: '#S002',
-          name: 'Fatini Zahirah',
-          status: 'Active',
-          rating: 3,
-          productivity: 198.96,
-          trend: 0,
-          attendance: 'Present'
+        '2024-08-13': {
+          '#S001': true,
+          '#S002': true,
+          '#S003': true,
+          '#S004': false,
+          '#S005': true,
+          '#S006': false,
+          '#S007': false,
+          '#S008': false,
+          '#S009': true,
+          '#S010': true,
+          '#S011': true,
         },
-        {
-          id: '#S003',
-          name: 'Hadyna Redwani',
-          status: 'Active',
-          rating: 4,
-          productivity: 480.25,
-          trend: 1,
-          attendance: 'Absent'
-        },
-        {
-          id: '#S004',
-          name: 'Farah Shahira',
-          status: 'Inactive',
-          rating: 1,
-          productivity: 0,
-          trend: 0,
-          attendance: 'Absent'
-        },
-        {
-          id: '#S005',
-          name: 'Izzatul Hanan',
-          status: 'Active',
-          rating: 5,
-          productivity: 200.00,
-          trend: -0.5,
-          attendance: 'Present'
-        }
-      ]
+      }
     }
   },
   computed: {
@@ -339,11 +337,7 @@ export default {
       return this.workers.filter(worker => worker.status === 'Active').length;
     },
     currentDate() {
-      const now = new Date();
-      const day = String(now.getDate()).padStart(2, '0');
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const year = now.getFullYear();
-      return `${day}-${month}-${year}`;
+      return this.selectedAttendanceDate;
     },
     filteredWorkers() {
       let filtered = this.workers;
@@ -363,50 +357,72 @@ export default {
       
       return filtered;
     },
-    sortedWorkersByProductivity() {
-      return [...this.workers]
-        .filter(worker => worker.status !== 'Inactive')
-        .sort((a, b) => b.productivity - a.productivity);
+    workersForAttendance() {
+      return this.workers;
+    },
+    sortedWorkersByPerformance() {
+      const workersWithPerformance = this.workers.map(worker => ({
+        ...worker,
+        currentPerformance: worker.performance[this.timeFilter]
+      }));
+      
+      return workersWithPerformance.sort((a, b) => b.currentPerformance.productivity - a.currentPerformance.productivity);
     }
   },
   methods: {
+    isWorkerPresent(workerId) {
+      const attendance = this.attendanceRecords[this.selectedAttendanceDate];
+      return attendance ? attendance[workerId] : false;
+    },
+    toggleAttendance(workerId, isPresent) {
+      if (!this.attendanceRecords[this.selectedAttendanceDate]) {
+        this.$set(this.attendanceRecords, this.selectedAttendanceDate, {});
+      }
+      this.$set(this.attendanceRecords[this.selectedAttendanceDate], workerId, isPresent);
+    },
     logout() {
       if (confirm('Are you sure you want to log out?')) {
-        // Handle logout logic here
         console.log('Logging out...');
-        // Example: this.$router.push('/login');
       }
     },
-    addWorker() {
-      // Generate a new ID
-      const maxId = Math.max(...this.workers.map(w => parseInt(w.id.replace('#S', ''))));
-      const newId = `#S${String(maxId + 1).padStart(3, '0')}`;
-      
-      const worker = {
-        ...this.newWorker,
-        id: newId,
-        rating: 3,
-        productivity: 0,
-        trend: 0,
-        attendance: 'Present'
-      };
-      
-      this.workers.push(worker);
+    openModal(worker = null) {
+      this.isEditMode = !!worker;
+      if (this.isEditMode) {
+        this.currentWorker = { ...worker };
+      } else {
+        this.currentWorker = { name: '', id: '', status: '' };
+      }
+      this.showModal = true;
+    },
+    saveWorker() {
+      if (this.isEditMode) {
+        const index = this.workers.findIndex(w => w.id === this.currentWorker.id);
+        if (index !== -1) {
+          this.$set(this.workers, index, { ...this.currentWorker });
+          alert(`Worker ${this.currentWorker.name} updated successfully!`);
+        }
+      } else {
+        const maxId = Math.max(...this.workers.map(w => parseInt(w.id.replace('#S', ''))));
+        const newId = `#S${String(maxId + 1).padStart(3, '0')}`;
+        const newWorkerData = {
+          ...this.currentWorker,
+          id: newId,
+          rating: 3,
+          performance: {
+            today: { productivity: 0, trend: 0 },
+            week: { productivity: 0, trend: 0 },
+            month: { productivity: 0, trend: 0 },
+            quarter: { productivity: 0, trend: 0 }
+          },
+        };
+        this.workers.push(newWorkerData);
+        alert(`Worker ${newWorkerData.name} added successfully!`);
+      }
       this.closeModal();
-      
-      // Show success message
-      alert(`Worker ${worker.name} added successfully!`);
     },
     closeModal() {
-      this.showAddWorkerModal = false;
-      this.newWorker = { name: '', id: '', status: '' };
-    },
-    editWorker(worker) {
-      const newName = prompt(`Edit worker name:`, worker.name);
-      if (newName && newName.trim()) {
-        worker.name = newName.trim();
-        alert(`Worker updated successfully!`);
-      }
+      this.showModal = false;
+      this.currentWorker = { name: '', id: '', status: '' };
     },
     deleteWorker(workerId) {
       if (confirm('Are you sure you want to delete this worker?')) {
@@ -426,10 +442,12 @@ export default {
     },
     generateAttendanceCSV() {
       let csv = 'NO,WORKER NAME - CODE,ATTENDANCE\n';
-      const activeWorkers = this.workers.filter(w => w.status !== 'Inactive');
+      const workersForCsv = this.workersForAttendance;
+      const attendance = this.attendanceRecords[this.selectedAttendanceDate] || {};
       
-      activeWorkers.forEach((worker, index) => {
-        csv += `${index + 1},"${worker.name.toUpperCase()} - ${worker.id}",${worker.attendance.toUpperCase()}\n`;
+      workersForCsv.forEach((worker, index) => {
+        const status = attendance[worker.id] ? 'Present' : 'Absent';
+        csv += `${index + 1},"${worker.name.toUpperCase()} - ${worker.id}",${status.toUpperCase()}\n`;
       });
       
       return csv;
@@ -441,17 +459,7 @@ export default {
       return 'default';
     }
   },
-  mounted() {
-    // Initialize component
-    console.log('Farm Workers Management System loaded');
-  },
-    // Logout functionality
-  logout() {
-    sessionStorage.removeItem('userToken'); // Clear token
-    sessionStorage.removeItem('userRole');  // Clear role
-    this.$router.push('/login'); // Redirect to login page
-    }
-  }
+};
 </script>
 
 <style scoped>
@@ -473,7 +481,7 @@ export default {
   padding: 20px;
   border-radius: 0 0 30px 30px;
   margin-bottom: 20px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
@@ -493,7 +501,7 @@ export default {
   font-size: 2.5rem;
   font-weight: bold;
   margin: 0 0 15px 0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .worker-stats {
@@ -505,7 +513,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   padding: 8px 16px;
   border-radius: 20px;
   color: white;
@@ -514,29 +522,19 @@ export default {
 }
 
 .stat-item.active {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.stat-item.complete {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .stat-icon {
   font-size: 1.2rem;
 }
 
-.log-out-btn {
-  background: #ff6b6b;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 25px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
+.stat-text {
   font-size: 1rem;
-}
-
-.log-out-btn:hover {
-  background: #ff5252;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
 /* Navigation Tabs */
@@ -550,7 +548,7 @@ export default {
 }
 
 .nav-tab {
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   border: none;
   padding: 12px 20px;
   border-radius: 25px;
@@ -567,14 +565,14 @@ export default {
 
 .nav-tab:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .nav-tab.active {
   background: white;
   color: #4facfe;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .tab-icon {
@@ -599,7 +597,7 @@ export default {
 .add-worker-btn:hover {
   background: #00b8e6;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .plus-icon {
@@ -625,7 +623,7 @@ export default {
   border-radius: 25px;
   padding: 15px 20px;
   margin-bottom: 20px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
 }
 
@@ -656,7 +654,7 @@ export default {
 }
 
 .filter-btn {
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
   border: none;
   padding: 10px 20px;
   border-radius: 20px;
@@ -673,14 +671,14 @@ export default {
 
 .filter-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .filter-btn.active {
   background: #4facfe;
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .filter-icon {
@@ -699,21 +697,20 @@ export default {
   background: white;
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   border: 3px solid transparent;
   position: relative;
-  backdrop-filter: blur(10px);
 }
 
 .worker-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 .worker-card.active {
-  border-color: #4caf50;
-  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-color: #2196f3;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
 }
 
 .worker-card.inactive {
@@ -721,10 +718,6 @@ export default {
   background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
 }
 
-.worker-card.on-break {
-  border-color: #ff9800;
-  background: linear-gradient(135deg, #ffe0b2 0%, #ffcc02 100%);
-}
 
 .worker-info {
   display: flex;
@@ -734,60 +727,53 @@ export default {
 }
 
 .worker-avatar {
+  background: #e0e0e0;
+  border-radius: 50%;
   width: 50px;
   height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  border: 2px solid rgba(0,0,0,0.1);
-}
-
-.worker-details {
-  flex: 1;
 }
 
 .worker-name {
-  font-size: 1.2rem;
   font-weight: bold;
-  margin: 0;
+  font-size: 1.2rem;
   color: #333;
 }
 
 .worker-id {
-  color: #666;
-  margin: 5px 0 0 0;
   font-size: 0.9rem;
+  color: #666;
 }
 
 .worker-rating {
+  display: flex;
+  align-items: center;
   margin-bottom: 15px;
 }
 
 .stars {
-  display: flex;
-  gap: 2px;
+  font-size: 1.2rem;
 }
 
 .star {
-  font-size: 1.2rem;
-  opacity: 0.3;
-  transition: all 0.3s ease;
+  color: #ccc;
 }
 
 .star.filled {
-  opacity: 1;
+  color: #ffc107;
 }
 
 .worker-actions {
   display: flex;
-  gap: 10px;
   justify-content: flex-end;
+  gap: 10px;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -798,43 +784,43 @@ export default {
 }
 
 .edit-btn:hover {
-  background: rgba(0,0,0,0.1);
-  transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .delete-btn:hover {
-  background: rgba(255,0,0,0.1);
-  transform: scale(1.1);
+  background: rgba(255, 0, 0, 0.1);
 }
 
-/* Attendance Content */
-.attendance-content {
+/* Attendance Table */
+.attendance-content,
+.performance-content {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-.attendance-header {
+.attendance-header,
+.performance-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 15px;
 }
 
-.attendance-title h2 {
-  color: white;
+.attendance-title h2,
+.performance-header h2 {
   font-size: 1.5rem;
-  margin: 0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .download-btn {
-  background: #4facfe;
+  background: #4caf50;
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 12px 20px;
   border-radius: 25px;
   cursor: pointer;
   display: flex;
@@ -846,52 +832,41 @@ export default {
 }
 
 .download-btn:hover {
-  background: #3d8bfe;
+  background: #43a047;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-.download-icon {
-  font-size: 1.2rem;
-}
-
-.attendance-table {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.attendance-table,
+.performance-table {
+  background: white;
   border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  backdrop-filter: blur(10px);
 }
 
-.table-header {
-  background: rgba(0,0,0,0.2);
+.table-header,
+.perf-table-header {
   display: grid;
-  grid-template-columns: 80px 1fr 200px;
-  gap: 20px;
-  padding: 20px;
-  font-weight: bold;
+  grid-template-columns: 0.5fr 3fr 1fr;
+  background: #4facfe;
   color: white;
-  text-align: center;
+  font-weight: bold;
+  padding: 15px 20px;
+  text-transform: uppercase;
 }
 
-.table-body {
-  background: rgba(255,255,255,0.1);
+.attendance-table .table-body {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: 80px 1fr 200px;
-  gap: 20px;
-  padding: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  color: white;
-  text-align: center;
+  grid-template-columns: 0.5fr 3fr 1fr;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f0f0f0;
   align-items: center;
-  transition: all 0.3s ease;
-}
-
-.table-row:hover {
-  background: rgba(255,255,255,0.15);
 }
 
 .table-row:last-child {
@@ -899,58 +874,77 @@ export default {
 }
 
 .table-col {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #333;
+  font-size: 0.9rem;
 }
 
-.attendance-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.attendance-checkbox-container {
+  display: block;
+  position: relative;
+  padding-left: 35px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.attendance-checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  width: 20px;
+  background-color: #eee;
+  border-radius: 5px;
+}
+
+.attendance-checkbox-container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+.attendance-checkbox-container input:checked ~ .checkmark {
+  background-color: #4caf50;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.attendance-checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.attendance-checkbox-container .checkmark:after {
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.status-text {
   font-weight: bold;
-  padding: 5px 10px;
-  border-radius: 15px;
+  margin-left: 10px;
 }
 
-.attendance-status.present {
-  color: #4caf50;
-  background: rgba(76, 175, 80, 0.2);
-}
-
-.attendance-status.absent {
-  color: #f44336;
-  background: rgba(244, 67, 54, 0.2);
-}
-
-.status-icon {
-  font-size: 1.1rem;
-}
-
-/* Performance Content */
-.performance-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.performance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.performance-header h2 {
-  color: white;
-  font-size: 1.5rem;
-  margin: 0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
+/* Performance Table */
 .time-filters {
   display: flex;
   gap: 10px;
@@ -958,66 +952,42 @@ export default {
 }
 
 .time-filter {
-  background: rgba(255,255,255,0.2);
-  color: white;
+  background: rgba(255, 255, 255, 0.8);
   border: none;
   padding: 8px 16px;
-  border-radius: 15px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
   font-weight: 600;
+  color: #666;
+  transition: all 0.3s ease;
   font-size: 0.9rem;
-  backdrop-filter: blur(10px);
 }
 
 .time-filter:hover {
-  background: rgba(255,255,255,0.3);
   transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .time-filter.active {
   background: #4facfe;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.performance-table {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  backdrop-filter: blur(10px);
-}
-
-.perf-table-header {
-  background: rgba(0,0,0,0.2);
-  display: grid;
-  grid-template-columns: 100px 1fr 150px 120px 120px;
-  gap: 20px;
-  padding: 20px;
-  font-weight: bold;
   color: white;
-  text-align: center;
 }
 
-.perf-table-body {
-  background: rgba(255,255,255,0.1);
+.performance-table .perf-table-header {
+  grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
+}
+
+.performance-table .perf-table-body {
+  max-height: 400px; 
+  overflow-y: auto;
 }
 
 .perf-table-row {
   display: grid;
-  grid-template-columns: 100px 1fr 150px 120px 120px;
-  gap: 20px;
-  padding: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  color: white;
-  text-align: center;
+  grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f0f0f0;
   align-items: center;
-  transition: all 0.3s ease;
-}
-
-.perf-table-row:hover {
-  background: rgba(255,255,255,0.15);
 }
 
 .perf-table-row:last-child {
@@ -1025,98 +995,75 @@ export default {
 }
 
 .perf-col {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #333;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rank-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   font-weight: bold;
-  font-size: 1.2rem;
-  transition: all 0.3s ease;
-}
-
-.rank-badge:hover {
-  transform: scale(1.1);
+  color: white;
+  font-size: 0.8rem;
 }
 
 .rank-badge.gold {
-  background: linear-gradient(135deg, #ffd700, #ffb347);
-  color: #333;
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  background: #ffc107;
 }
 
 .rank-badge.silver {
-  background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
-  color: #333;
-  box-shadow: 0 0 20px rgba(192, 192, 192, 0.5);
+  background: #c0c0c0;
 }
 
 .rank-badge.bronze {
-  background: linear-gradient(135deg, #cd7f32, #b8860b);
-  color: white;
-  box-shadow: 0 0 20px rgba(205, 127, 50, 0.5);
+  background: #cd7f32;
 }
 
 .rank-badge.default {
-  background: rgba(255,255,255,0.2);
-  color: white;
-  border: 2px solid rgba(255,255,255,0.3);
+  background: #a5d6a7;
 }
 
 .trend {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 5px;
   font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 10px;
 }
 
 .trend.positive {
   color: #4caf50;
-  background: rgba(76, 175, 80, 0.2);
 }
 
 .trend.negative {
   color: #f44336;
-  background: rgba(244, 67, 54, 0.2);
 }
 
 .trend.neutral {
-  color: #666;
-  background: rgba(128, 128, 128, 0.2);
+  color: #9e9e9e;
 }
 
 .status-badge {
-  padding: 5px 12px;
-  border-radius: 15px;
-  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: bold;
+  color: white;
   text-transform: uppercase;
 }
 
 .status-badge.active {
-  background: #4caf50;
-  color: white;
-}
-
-.status-badge.onbreak {
-  background: #ff9800;
-  color: white;
+  background-color: #2196f3;
 }
 
 .status-badge.inactive {
-  background: #f44336;
-  color: white;
+  background-color: #f44336;
 }
 
 /* Modal Styles */
@@ -1124,553 +1071,96 @@ export default {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
 }
 
 .modal-content {
   background: white;
   border-radius: 20px;
-  padding: 30px;
-  width: 90%;
   max-width: 500px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  animation: slideIn 0.3s ease-out;
-  max-height: 80vh;
-  overflow-y: auto;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-.modal-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.modal-header h2 {
+.modal-header-light {
+  background: linear-gradient(135deg, #bbdefb 0%, #e3f2fd 100%);
   color: #333;
-  margin: 0;
-  font-size: 1.8rem;
+  padding: 20px;
+  border-radius: 20px 20px 0 0;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #a5d6a7;
 }
 
 .worker-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  padding: 24px;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
   color: #333;
-  font-weight: 600;
-  font-size: 1rem;
 }
 
-.form-input, .form-select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-  background: white;
-}
-
-.form-input:focus, .form-select:focus {
-  outline: none;
-  border-color: #4facfe;
-  box-shadow: 0 0 10px rgba(79, 172, 254, 0.2);
-}
-
+.form-input,
 .form-select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 20px;
-  padding-right: 40px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
 }
 
 .modal-actions {
   display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 30px;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .add-btn {
-  background: #4facfe;
+  background: #4caf50;
   color: white;
-  border: none;
   padding: 12px 24px;
   border-radius: 25px;
+  font-weight: bold;
   cursor: pointer;
-  font-weight: 600;
+  border: none;
   transition: all 0.3s ease;
-  font-size: 1rem;
-  min-width: 100px;
 }
 
 .add-btn:hover {
-  background: #3d8bfe;
+  background: #43a047;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .cancel-btn {
   background: #f44336;
   color: white;
-  border: none;
   padding: 12px 24px;
   border-radius: 25px;
+  font-weight: bold;
   cursor: pointer;
-  font-weight: 600;
+  border: none;
   transition: all 0.3s ease;
-  font-size: 1rem;
-  min-width: 100px;
 }
 
 .cancel-btn:hover {
-  background: #d32f2f;
+  background: #e53935;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-/* Bottom Navigation */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  display: flex;
-  justify-content: space-around;
-  padding: 15px 0;
-  box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
-  z-index: 100;
-  backdrop-filter: blur(10px);
-}
-
-.nav-item {
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  color: #999;
-  transition: all 0.3s ease;
-  padding: 8px 12px;
-  border-radius: 10px;
-  min-width: 60px;
-}
-
-.nav-item:hover {
-  color: #4facfe;
-  transform: translateY(-2px);
-}
-
-.nav-item.active {
-  color: #4facfe;
-  background: rgba(79, 172, 254, 0.1);
-  transform: translateY(-2px);
-}
-
-.nav-icon {
-  font-size: 1.5rem;
-}
-
-.nav-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-/* Animations */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.worker-card {
-  animation: slideIn 0.3s ease-out;
-}
-
-.modal-content {
-  animation: slideIn 0.3s ease-out;
-}
-
-.attendance-table, .performance-table {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.stat-item.active {
-  animation: pulse 2s infinite;
-}
-
-/* Loading States */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  color: white;
-  font-size: 1.2rem;
-}
-
-.loading::after {
-  content: "";
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 1s ease-in-out infinite;
-  margin-left: 10px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .main-title {
-    font-size: 2.2rem;
-  }
-  
-  .workers-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-  
-  .nav-tabs {
-    justify-content: center;
-    gap: 10px;
-  }
-  
-  .nav-tab, .add-worker-btn {
-    padding: 10px 16px;
-    font-size: 0.9rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-title {
-    font-size: 2rem;
-  }
-  
-  .header-content {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-  
-  .worker-stats {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .nav-tabs {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .nav-tab, .add-worker-btn {
-    width: 200px;
-    justify-content: center;
-  }
-  
-  .workers-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .filter-buttons {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .filter-btn {
-    width: 200px;
-    justify-content: center;
-  }
-  
-  .table-header, .table-row {
-    grid-template-columns: 50px 1fr 120px;
-    font-size: 0.9rem;
-    padding: 15px 10px;
-    gap: 10px;
-  }
-  
-  .perf-table-header, .perf-table-row {
-    grid-template-columns: 70px 1fr 100px 80px 100px;
-    font-size: 0.8rem;
-    padding: 15px 10px;
-    gap: 5px;
-  }
-  
-  .attendance-header, .performance-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-  
-  .time-filters {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .modal-content {
-    margin: 20px;
-    padding: 25px;
-    width: calc(100% - 40px);
-  }
-  
-  .modal-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .add-btn, .cancel-btn {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .farm-workers-container {
-    padding-bottom: 100px;
-  }
-  
-  .main-title {
-    font-size: 1.6rem;
-  }
-  
-  .worker-stats {
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-  
-  .stat-item {
-    justify-content: center;
-  }
-  
-  .log-out-btn {
-    width: 100%;
-    margin-top: 15px;
-  }
-  
-  .nav-tab, .add-worker-btn {
-    width: 180px;
-    padding: 12px 16px;
-  }
-  
-  .search-bar {
-    padding: 12px 15px;
-  }
-  
-  .worker-card {
-    padding: 15px;
-  }
-  
-  .worker-name {
-    font-size: 1.1rem;
-  }
-  
-  .table-header, .table-row {
-    grid-template-columns: 40px 1fr 100px;
-    font-size: 0.8rem;
-    padding: 12px 8px;
-    gap: 8px;
-  }
-  
-  .perf-table-header, .perf-table-row {
-    grid-template-columns: 60px 1fr 80px 70px 80px;
-    font-size: 0.7rem;
-    padding: 12px 5px;
-    gap: 3px;
-  }
-  
-  .rank-badge {
-    width: 30px;
-    height: 30px;
-    font-size: 1rem;
-  }
-  
-  .time-filter {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
-  
-  .bottom-nav {
-    padding: 12px 0;
-  }
-  
-  .nav-icon {
-    font-size: 1.3rem;
-  }
-  
-  .nav-label {
-    font-size: 0.7rem;
-  }
-  
-  .modal-content {
-    padding: 20px;
-    margin: 15px;
-  }
-  
-  .modal-header h2 {
-    font-size: 1.5rem;
-  }
-  
-  .form-input, .form-select {
-    padding: 10px 12px;
-  }
-}
-
-/* Focus States for Accessibility */
-.nav-tab:focus,
-.filter-btn:focus,
-.add-worker-btn:focus,
-.log-out-btn:focus,
-.download-btn:focus,
-.time-filter:focus,
-.form-input:focus,
-.form-select:focus,
-.add-btn:focus,
-.cancel-btn:focus,
-.nav-item:focus,
-.edit-btn:focus,
-.delete-btn:focus {
-  outline: 2px solid #4facfe;
-  outline-offset: 2px;
-}
-
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .worker-card {
-    border-width: 2px;
-  }
-  
-  .nav-tab, .filter-btn {
-    border: 2px solid #666;
-  }
-  
-  .nav-tab.active, .filter-btn.active {
-    border-color: #4facfe;
-  }
-}
-
-/* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Print Styles */
-@media print {
-  .header-section,
-  .nav-tabs,
-  .search-section,
-  .filter-buttons,
-  .bottom-nav,
-  .modal-overlay,
-  .worker-actions {
-    display: none !important;
-  }
-  
-  .farm-workers-container {
-    background: white !important;
-    color: black !important;
-  }
-  
-  .attendance-table,
-  .performance-table {
-    background: white !important;
-    color: black !important;
-    box-shadow: none !important;
-    border: 2px solid black;
-  }
-  
-  .table-header,
-  .table-row,
-  .perf-table-header,
-  .perf-table-row {
-    color: black !important;
-    background: white !important;
-  }
-  
-  .worker-card {
-    border: 2px solid black !important;
-    background: white !important;
-    color: black !important;
-    box-shadow: none !important;
-  }
-}
-
-/* Dark mode support (if needed) */
-@media (prefers-color-scheme: dark) {
-  .form-input, .form-select {
-    background: #333;
-    color: white;
-    border-color: #666;
-  }
-  
-  .modal-content {
-    background: #2a2a2a;
-    color: white;
-  }
-  
-  .modal-header h2 {
-    color: white;
-  }
-  
-  .form-group label {
-    color: white;
-  }
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 </style>

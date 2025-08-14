@@ -4,6 +4,20 @@
       <div class="header-content">
         <div class="title-section">
           <h1 class="main-title">Task Time!</h1>
+          <div class="worker-stats">
+            <div class="stat-item">
+              <span class="stat-icon">👥</span>
+              <span class="stat-text">{{ pendingTasksCount }} Pending Tasks</span>
+            </div>
+            <div class="stat-item active">
+              <span class="stat-icon">🟢</span>
+              <span class="stat-text">{{ inProgressTasksCount }} In Progress</span>
+            </div>
+            <div class="stat-item complete">
+              <span class="stat-icon">✅</span>
+              <span class="stat-text">{{ completeTasksCount }} Completed Tasks</span>
+            </div>
+          </div>
         </div>
         <button @click="logout" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm">
           Logout
@@ -65,74 +79,84 @@
           class="worker-card"
           :class="getTaskStatusClass(task.status)"
         >
-          <div class="worker-info">
-            <div class="worker-avatar">
-              <img
-                v-if="getTaskTypeIcon(task.type)"
-                :src="getTaskTypeIcon(task.type)"
-                class="w-8 h-8 object-contain"
-                :alt="task.type"
-              />
-            </div>
-            <div class="worker-details">
-              <h3 class="worker-name">{{ task.name }}</h3>
-              <p class="worker-id">ID: {{ task.taskId }}</p>
-            </div>
-          </div>
-          <div class="worker-rating">
-            <div class="stars">
-              <span class="star filled">📅</span>
-              <span class="text-sm text-gray-600">{{ task.date }}</span>
-            </div>
-          </div>
-          <div class="progress-bar-container">
-            <span class="text-sm font-medium">Progress:</span>
-            <span class="text-sm font-bold">{{ task.progress }}%</span>
-            <div class="progress-bar-bg">
-              <div
-                :class="getProgressBarClass(task.status)"
-                :style="{ width: task.progress + '%' }"
-                class="h-2 rounded-full transition-all duration-300"
-              ></div>
-            </div>
-          </div>
-          <div class="task-details">
-            <div class="detail-item">
-              <span class="detail-label">Status:</span>
-              <span :class="getStatusBadgeClass(task.status)">{{ task.status }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Area:</span>
-              <span>{{ task.area }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Workers:</span>
-              <div class="workers-list">
-                <p v-for="worker in task.workers" :key="worker">{{ worker }}</p>
+          <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+              <div class="flex items-center">
+                <img
+                  :src="getTaskTypeIcon(task.type)"
+                  class="h-10 w-10 mr-3"
+                  :alt="task.type"
+                />
+                <div>
+                  <h3 class="text-xl font-bold">{{ task.name }}</h3>
+                  <p class="text-sm text-gray-600">ID: {{ task.taskId }}</p>
+                </div>
+              </div>
+              <div class="flex space-x-2">
+                <button
+                  @click="editTask(task)"
+                  class="edit-btn"
+                  title="Edit Task"
+                >
+                  ✏️
+                </button>
+                <button
+                  @click="deleteTask(task)"
+                  class="delete-btn"
+                  title="Delete Task"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
-            <div v-if="task.assets && task.assets.length > 0" class="detail-item">
-              <span class="detail-label">Assets:</span>
-              <div class="assets-list">
-                <p v-for="asset in task.assets" :key="asset">{{ asset }}</p>
+
+            <div class="text-gray-700 space-y-2 mb-4">
+              <div class="flex items-center">
+                <img src="@/assets/calendar.png" alt="Date" class="inline-block h-4 w-4 mr-2" />
+                <span class="text-sm font-medium">Due Date:</span>
+                <span class="text-sm">{{ task.date }}</span>
+              </div>
+              <div class="flex items-center">
+                <img src="@/assets/map.png" alt="Area" class="inline-block h-4 w-4 mr-2" />
+                <span class="text-sm font-medium">Area:</span>
+                <span class="text-sm">{{ task.area }}</span>
+              </div>
+              <div class="flex items-center">
+                <span class="text-sm font-medium">Status:</span>
+                <span :class="getStatusBadgeClass(task.status)">{{ task.status }}</span>
               </div>
             </div>
-          </div>
-          <div class="worker-actions">
-            <button
-              @click="editTask(task)"
-              class="edit-btn"
-              title="Edit Task"
-            >
-              ✏️
-            </button>
-            <button
-              @click="deleteTask(task)"
-              class="delete-btn"
-              title="Delete Task"
-            >
-              🗑️
-            </button>
+
+            <div class="progress-bar-container">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-sm font-medium">Progress:</span>
+                <span class="text-sm font-bold">{{ task.progress }}%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div
+                  :class="getProgressBarClass(task.status)"
+                  :style="{ width: task.progress + '%' }"
+                  class="h-2 rounded-full transition-all duration-300"
+                ></div>
+              </div>
+            </div>
+
+            <div class="mt-4 text-gray-700 space-y-2">
+              <div v-if="task.workers && task.workers.length > 0" class="flex items-center">
+                <img src="@/assets/crew.png" alt="Workers" class="inline-block h-4 w-4 mr-2" />
+                <span class="text-sm font-medium">Workers:</span>
+                <div class="workers-list text-sm">
+                  <p v-for="worker in task.workers" :key="worker">{{ worker }}</p>
+                </div>
+              </div>
+              <div v-if="task.assets && task.assets.length > 0" class="flex items-center">
+                <img :src="getAssetIcon(getAssetTypeFromTask(task.assets))" alt="Assets" class="inline-block h-4 w-4 mr-2" />
+                <span class="text-sm font-medium">Assets:</span>
+                <div class="assets-list text-sm">
+                  <p v-for="asset in task.assets" :key="asset">{{ asset }}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -140,7 +164,7 @@
 
     <div
       v-if="showCreateModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 modal-overlay-bg flex items-center justify-center z-50 p-4"
       @click="closeModal"
     >
       <div
@@ -169,7 +193,7 @@
                   >
                     <span class="text-2xl">
                       <img
-                        :src="type.iconPath"
+                        :src="getTaskTypeIcon(type.name)"
                         class="w-8 h-8 object-contain"
                         :alt="type.name"
                       />
@@ -361,7 +385,7 @@
         </div>
       </div>
     </div>
-
+    
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t flex justify-around py-2">
       <div @click="$router.push('/game-platform')" class="flex flex-col items-center cursor-pointer hover:text-green-700 transition">
         <img src="@/assets/house.png" class="w-8 mb-1" alt="Home" />
@@ -391,7 +415,15 @@
 import TaskIcon from '@/assets/task.png';
 import CrewIcon from '@/assets/crew.png';
 import TractorIcon from '@/assets/tractor.png';
-import CowIcon from '@/assets/cow.png';
+import CheckingIcon from '@/assets/checking.png';
+import TransportingIcon from '@/assets/tractor.png';
+import WeedingIcon from '@/assets/weeding.png';
+import PruningIcon from '@/assets/pruning.png';
+import HarvestingIcon from '@/assets/harvesting.png';
+import CollectingIcon from '@/assets/collecting.png';
+import ManuringIcon from '@/assets/manuring.png';
+import PestControlIcon from '@/assets/pest-control.png';
+import MechanisationIcon from '@/assets/ugv.png';
 
 export default {
   name: 'GameTaskView',
@@ -401,17 +433,22 @@ export default {
       selectedStatus: '',
       selectedTaskType: '',
       tasks: [
-        { id: 1, taskId: '#T001', name: 'Planting Season', type: 'Planting', area: 'Phase 1 - Block 1', date: '2024-08-01', status: 'In Progress', progress: 50, workers: ['Farah Nabila'], assets: ['Tractor A'] },
-        { id: 2, taskId: '#T002', name: 'Livestock Feeding', type: 'Livestock', area: 'Phase 1 - Block 2', date: '2024-08-05', status: 'Pending', progress: 0, workers: ['Hadyna Redwani'], assets: ['Cow Feed'] },
-        { id: 3, taskId: '#T003', name: 'Harvesting Corn', type: 'Harvesting', area: 'Phase 2 - Block 3', date: '2024-08-10', status: 'Complete', progress: 100, workers: ['Farah Nabila', 'Fatini Zahirah'], assets: ['Harvesting Machine'] },
-        { id: 4, taskId: '#T004', name: 'Maintenance Check', type: 'Maintenance', area: 'Phase 2 - Block 4', date: '2024-08-12', status: 'Pending', progress: 0, workers: ['Izzatul Hanan'], assets: ['Tool Kit'] },
+        { id: 1, taskId: '#T001', name: 'Weeding Phase 1', type: 'Weeding', area: 'Phase 1 - Block 2', date: '2024-08-05', status: 'In Progress', progress: 50, workers: ['Fatini Zahirah'], assets: ['UGV #001'] },
+        { id: 2, taskId: '#T002', name: 'Manuring Crops', type: 'Manuring', area: 'Phase 3 - Block 1', date: '2024-08-08', status: 'Complete', progress: 100, workers: ['Hadyna Redwani'], assets: ['TRAC #001'] },
+        { id: 3, taskId: '#T003', name: 'Harvesting Corn', type: 'Harvesting', area: 'Phase 2 - Block 3', date: '2024-08-10', status: 'Complete', progress: 100, workers: ['Farah Nabila', 'Fatini Zahirah'], assets: ['TRAC #002'] },
+        { id: 4, taskId: '#T004', name: 'Pest Control', type: 'Pest control', area: 'Phase 4 - Block 4', date: '2024-08-12', status: 'Pending', progress: 0, workers: ['Izzatul Hanan'], assets: ['UGV #002'] },
+        { id: 5, taskId: '#T005', name: 'Pruning Trees', type: 'Pruning', area: 'Phase 1 - Block 1', date: '2024-08-15', status: 'Pending', progress: 0, workers: ['Farah Nabila', 'Hadyna Redwani'], assets: ['UGV #003'] },
       ],
       taskTypes: [
-        { name: 'Planting', iconPath: TaskIcon },
-        { name: 'Harvesting', iconPath: TaskIcon },
-        { name: 'Livestock', iconPath: CowIcon },
-        { name: 'Maintenance', iconPath: TractorIcon },
-        { name: 'General', iconPath: TaskIcon },
+        { name: 'Checking', iconPath: CheckingIcon },
+        { name: 'Transporting', iconPath: TransportingIcon },
+        { name: 'Weeding', iconPath: WeedingIcon },
+        { name: 'Pruning', iconPath: PruningIcon },
+        { name: 'Harvesting', iconPath: HarvestingIcon },
+        { name: 'Collecting', iconPath: CollectingIcon },
+        { name: 'Manuring', iconPath: ManuringIcon },
+        { name: 'Pest control', iconPath: PestControlIcon },
+        { name: 'Mechanisation', iconPath: MechanisationIcon },
       ],
       availableWorkers: [
         { name: 'Farah Nabila', iconPath: CrewIcon },
@@ -420,10 +457,12 @@ export default {
         { name: 'Izzatul Hanan', iconPath: CrewIcon },
       ],
       availableAssets: [
-        { name: 'Tractor A', type: 'Tractor', iconPath: TractorIcon },
-        { name: 'Cow Feed', type: 'Feed', iconPath: CowIcon },
-        { name: 'Harvesting Machine', type: 'Machine', iconPath: TractorIcon },
-        { name: 'Tool Kit', type: 'Tool', iconPath: TaskIcon },
+        { name: 'UGV #001', type: 'UGV', iconPath: MechanisationIcon },
+        { name: 'UGV #002', type: 'UGV', iconPath: MechanisationIcon },
+        { name: 'UGV #003', type: 'UGV', iconPath: MechanisationIcon },
+        { name: 'TRAC #001', type: 'Tractor', iconPath: TractorIcon },
+        { name: 'TRAC #002', type: 'Tractor', iconPath: TractorIcon },
+        { name: 'TRAC #006', type: 'Tractor', iconPath: TractorIcon },
       ],
       phases: ['1', '2', '3', '4'],
       blocks: ['1', '2', '3', '4'],
@@ -449,6 +488,15 @@ export default {
     };
   },
   computed: {
+    pendingTasksCount() {
+      return this.tasks.filter(task => task.status === 'Pending').length;
+    },
+    inProgressTasksCount() {
+      return this.tasks.filter(task => task.status === 'In Progress').length;
+    },
+    completeTasksCount() {
+      return this.tasks.filter(task => task.status === 'Complete').length;
+    },
     filteredTasks() {
       let filtered = this.tasks;
 
@@ -589,23 +637,15 @@ export default {
           return 'bg-gray-400';
       }
     },
-    getStatusTextClass(status) {
-      switch (status) {
-        case 'Pending':
-          return 'bg-gray-200 text-gray-700';
-        case 'In Progress':
-          return 'bg-blue-100 text-blue-700';
-        case 'Complete':
-          return 'bg-green-100 text-green-700';
-        default:
-          return 'bg-gray-200 text-gray-700';
-      }
-    },
     getAssetIcon(assetType) {
       if (assetType === 'Tractor') return TractorIcon;
-      if (assetType === 'Cow Feed') return CowIcon;
-      if (assetType === 'Machine') return TractorIcon;
-      return TaskIcon;
+      if (assetType === 'UGV') return MechanisationIcon;
+      return null;
+    },
+    getAssetTypeFromTask(assetNames) {
+      if (!assetNames || assetNames.length === 0) return null;
+      const asset = this.availableAssets.find(a => a.name === assetNames[0]);
+      return asset ? asset.type : null;
     },
     dragTaskType(type) {
       this.draggedItem = type;
@@ -698,6 +738,39 @@ export default {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+.worker-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.stat-item.active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.stat-item.complete {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.stat-icon {
+  font-size: 1.2rem;
+}
+
+.stat-text {
+  font-size: 1rem;
+}
+
 /* Workers Content */
 .workers-content {
   max-width: 1200px;
@@ -769,6 +842,13 @@ export default {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
+.dropdown-arrow {
+  position: absolute;
+  right: 15px;
+  pointer-events: none;
+  color: #666;
+}
+
 .add-worker-btn {
   background: #00d2ff;
   color: white;
@@ -820,121 +900,18 @@ export default {
 }
 
 .worker-card.active {
-  border-color: #4caf50;
-  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-color: #2196f3;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
 }
 
 .worker-card.on-break {
   border-color: #ff9800;
-  background: linear-gradient(135deg, #ffe0b2 0%, #ffcc02 100%);
+  background: linear-gradient(135deg, #ffecb3 0%, #ffcc02 100%);
 }
 
 .worker-card.complete {
-  border-color: #00bcd4;
-  background: linear-gradient(135deg, #b2ebf2 0%, #80deea 100%);
-}
-
-.worker-info {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.worker-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-}
-
-.worker-details {
-  flex: 1;
-}
-
-.worker-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin: 0;
-  color: #333;
-}
-
-.worker-id {
-  color: #666;
-  margin: 5px 0 0 0;
-  font-size: 0.9rem;
-}
-
-.worker-rating {
-  margin-bottom: 15px;
-}
-
-.stars {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.star {
-  font-size: 1.2rem;
-  opacity: 0.3;
-  transition: all 0.3s ease;
-}
-
-.star.filled {
-  opacity: 1;
-}
-
-.progress-bar-container {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-}
-
-.progress-bar-container > * {
-  margin-bottom: 5px;
-}
-
-.progress-bar-bg {
-  width: 100%;
-  background-color: #e0e0e0;
-  border-radius: 9999px;
-  height: 8px;
-}
-
-.task-details {
-  margin-bottom: 15px;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 5px;
-}
-
-.detail-label {
-  font-weight: bold;
-  color: #555;
-  margin-right: 5px;
-}
-
-.workers-list,
-.assets-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.worker-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
+  border-color: #4caf50;
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
 }
 
 .edit-btn,
@@ -956,6 +933,19 @@ export default {
   background: rgba(255, 0, 0, 0.1);
 }
 
+.progress-bar-container {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 9999px;
+  height: 8px;
+}
+
 .status-badge {
   padding: 4px 12px;
   border-radius: 20px;
@@ -963,6 +953,7 @@ export default {
   font-weight: bold;
   color: white;
   text-transform: uppercase;
+  margin-left: 8px;
 }
 
 .status-badge.pending {
@@ -977,17 +968,12 @@ export default {
   background-color: #4caf50;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+.workers-list,
+.assets-list {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-left: 8px;
 }
 
 .modal-content {
@@ -1088,5 +1074,9 @@ export default {
   border-radius: 20px;
   font-weight: bold;
   cursor: pointer;
+}
+
+.modal-overlay-bg {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 </style>
