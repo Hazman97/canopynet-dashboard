@@ -27,12 +27,12 @@
         <span class="text-lg font-bold text-green-800">My Crew</span>
       </div>
 
-      <div class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+      <div @click="$router.push('/game-areas')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
         <img src="@/assets/map.png" class="w-12 mb-2" alt="Farm Map Icon" />
         <span class="text-lg font-bold text-green-800">Farm Areas</span>
       </div>
 
-      <div class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+      <div @click="$router.push('/game-assets')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
         <img src="@/assets/tractor.png" class="w-12 mb-2" alt="Asset Icon" />
         <span class="text-lg font-bold text-green-800">Asset</span>
       </div>

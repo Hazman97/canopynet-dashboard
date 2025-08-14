@@ -1,3 +1,4 @@
+// GameTaskView.vue
 <template>
   <div class="farm-workers-container">
     <div class="header-section">
