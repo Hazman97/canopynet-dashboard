@@ -25,7 +25,8 @@ import Monitoring from '@/components/Monitoring.vue'; // Import Monitoring.vue
 import GamePlatformView from '@/views/GamePlatformView.vue'; // ADDED: Import the new GamePlatformView component
 import GameTaskView from '@/views/GameTaskView.vue'; // Import GameTaskView.vue
 import GameWorkersView from '@/views/GameWorkersView.vue'; // Import GameWorkersView.vue
-import GameAreasView from '@/views/GameAreasView.vue';
+import GameAreasView from '@/views/GameAreasView.vue';  // Import GameAreasView.vue
+import GameAssetsView from '@/views/GameAssetsView.vue';  // Import GameAssetsView.vue
 
 
 // --- TypeScript Augmentation for Vue Router's RouteMeta ---
@@ -181,6 +182,12 @@ const router = createRouter({
       path: '/game-areas',
       name: 'game-areas',
       component: GameAreasView, // Your new GameAreasView component
+      meta: { requiresAuth: true, roles: ['game'] } // Only 'game' roles can access this
+    },
+    {
+      path: '/game-assets',
+      name: 'game-assets',
+      component: GameAssetsView, // Your new GameAssetsView component
       meta: { requiresAuth: true, roles: ['game'] } // Only 'game' roles can access this
     }
   ]
