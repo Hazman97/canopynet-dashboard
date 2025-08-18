@@ -407,7 +407,6 @@
 
         <!-- Bottom Grid: Drive-by-Wire Status and Motion Feedback -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Drive-by-Wire Status -->
           <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <i class="bx bx-car text-xl mr-2"></i>Drive-by-Wire Status
