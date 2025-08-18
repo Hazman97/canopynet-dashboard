@@ -1,3 +1,4 @@
+//teleoperationUGVView.vue
 <template>
   <div class="p-6 bg-gray-50 min-h-screen font-sans">
     <div v-if="!ugvId">
@@ -52,7 +53,6 @@
         </div>
       </div>
 
-      <!-- Connection Status Section -->
       <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
           <i class="bx bx-link text-xl mr-2"></i>Connection Status
@@ -87,52 +87,125 @@
           </div>
         </div>
 
-        <!-- Auto-refresh notification -->
         <div v-if="refreshCountdown > 0" class="border-t pt-4">
           <div class="refresh-notification">🔄 Auto-refreshing in {{ refreshCountdown }}s...</div>
         </div>
       </div>
 
-      <!-- Fullscreen Camera View -->
-      <div v-if="isFullscreen" class="fixed inset-0 z-50 bg-black flex flex-col">
-        <!-- Top bar with controls -->
+      <div v-if="isFullscreen" class="fixed inset-0 z-50 bg-black flex flex-col overflow-y-auto">
         <div class="flex justify-between items-center p-4 bg-gray-900 text-white">
-          <h3 class="text-lg font-semibold">Camera Feed</h3>
+          <h3 class="text-lg font-semibold">Teleoperation Fullscreen View</h3>
           <button @click="toggleFullscreen" class="bg-gray-700 p-2 rounded-full hover:bg-gray-600">
             <i class="bx bx-exit-fullscreen text-xl"></i>
           </button>
         </div>
 
-        <!-- Main content area -->
-        <div class="flex-1 flex">
-          <!-- Camera feed (left side) -->
-          <div class="flex-1 flex items-center justify-center p-4">
-            <div class="relative w-full h-full flex items-center justify-center">
-              <img
-                :src="cameraUrl"
-                alt="UGV Camera Feed"
-                class="max-w-full max-h-full object-contain rounded-lg border-2 border-gray-700"
-                v-if="connectionStatus === 'Connected'"
-              />
-              <div v-else class="text-center text-white">
-                <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
-                <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
-                <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
+        <div class="flex-1 flex p-4 space-x-4">
+          <div class="w-80 bg-gray-800 p-6 flex flex-col rounded-lg shadow-md overflow-y-auto">
+            <div class="flex-1 flex flex-col">
+              <div class="bg-gray-700 rounded-lg p-4 mb-4 flex-1 flex flex-col">
+                <h4 class="text-md font-semibold text-white mb-3">UGV Position Tracking</h4>
+                <div
+                  class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center"
+                >
+                  <img
+                    src="https://placehold.co/400x300/E0E0E0/555555?text=Map+Placeholder"
+                    alt="Map Placeholder"
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
+                    <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100">
+                      <i class="bx bx-plus text-sm"></i>
+                    </button>
+                    <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100">
+                      <i class="bx bx-minus text-sm"></i>
+                    </button>
+                  </div>
+                  <div class="absolute bottom-1 left-1 text-xs text-gray-600 z-10">
+                    © Leaflet | © OpenStreetMap
+                  </div>
+                  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                    <i class="bx bx-current-location text-green-600 text-2xl"></i>
+                  </div>
+                </div>
               </div>
-              <div
-                v-if="latencyMs !== null"
-                class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded"
+            </div>
+            <div class="mt-auto mb-0 text-center">
+              <button 
+                @mousedown="activateVirtualSafety"
+                @mouseup="deactivateVirtualSafety"
+                @mouseleave="deactivateVirtualSafety"
+                @touchstart="activateVirtualSafety"
+                @touchend="deactivateVirtualSafety"
+                :class="{ 'bg-green-600 border-green-500': virtualSafetyPressed, 'bg-red-600 border-red-500': !virtualSafetyPressed }"
+                class="w-full py-2 px-4 text-white font-bold rounded-lg border-2 transition-colors text-sm"
+                :disabled="!uiControlEnabled"
               >
-                <p class="text-sm">
-                  Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span>
-                </p>
-              </div>
+                🛡️ {{ virtualSafetyPressed ? 'SAFETY ACTIVE' : 'HOLD FOR SAFETY' }}
+              </button>
+              <div class="text-xs text-gray-400 mt-1">Hold for touchscreen control</div>
             </div>
           </div>
 
-          <!-- Movement controls (right side) -->
-          <div class="w-80 bg-gray-800 p-6 flex flex-col">
+          <div class="flex-1 flex flex-col items-center justify-center relative rounded-lg shadow-md bg-gray-900 overflow-hidden">
+            <div class="relative w-full h-full">
+              <img
+                :src="cameraUrl"
+                alt="UGV Camera Feed"
+                class="w-full h-full object-cover rounded-lg"
+                v-if="connectionStatus === 'Connected'"
+              />
+              <div v-else class="absolute inset-0 flex items-center justify-center text-center text-white">
+                <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
+                <div>
+                  <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
+                  <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
+                </div>
+              </div>
+
+              <div class="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0">
+                  <path d="M 50 100 L 40 80 A 15 15 0 0 1 60 80 L 50 100" fill="rgba(255, 255, 255, 0.3)" stroke="white" stroke-width="0.5" stroke-dasharray="1, 1"/>
+                  <path d="M 40 80 L 30 65 A 30 30 0 0 1 70 65 L 60 80" fill="transparent" stroke="yellow" stroke-width="0.5" stroke-dasharray="1, 1"/>
+                  <path d="M 30 65 L 20 50 A 50 50 0 0 1 80 50 L 70 65" fill="transparent" stroke="red" stroke-width="0.5" stroke-dasharray="1, 1"/>
+                </svg>
+              </div>
+            </div>
+
+            <div
+              v-if="latencyMs !== null"
+              class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded"
+            >
+              <p class="text-sm">
+                Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="w-80 bg-gray-800 p-6 flex flex-col rounded-lg shadow-md overflow-y-auto">
             <h3 class="text-lg font-semibold text-white mb-4">Movement Controls</h3>
+            
+            <div class="mb-4">
+              <label class="flex items-center space-x-2 text-white cursor-pointer p-3 bg-gray-700 rounded-lg">
+                <input 
+                  type="checkbox" 
+                  :checked="uiControlEnabled" 
+                  @change="toggleUIControl"
+                  class="w-4 h-4"
+                >
+                <span class="text-sm font-medium">Enable UI Control (disables joystick)</span>
+              </label>
+            </div>
+
+            <div class="mb-4 p-3 bg-yellow-900 bg-opacity-50 rounded-lg border border-yellow-600 text-yellow-100">
+              <div class="text-xs font-semibold mb-1">
+                ⚠️ SAFETY: Hold <kbd class="px-1 py-0.5 bg-blue-600 rounded text-xs">{{ safetyKey }}</kbd> key or safety button
+              </div>
+              <div class="text-xs" :class="{ 'text-green-400': safetyButtonPressed && uiControlEnabled, 'text-red-400': !safetyButtonPressed || !uiControlEnabled }">
+                Status: {{ getSafetyStatusText() }}
+              </div>
+            </div>
+
             <div class="flex-1 flex flex-col items-center justify-center mb-6">
               <div class="grid grid-rows-3 grid-cols-3 gap-3 w-full max-w-xs">
                 <div></div>
@@ -143,8 +216,8 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(maxLinearSpeed, 0)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-up-arrow-alt text-2xl"></i>
                 </button>
@@ -156,8 +229,8 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(0, maxAngularSpeed)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-left-arrow-alt text-2xl"></i>
                 </button>
@@ -169,8 +242,8 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(0, -maxAngularSpeed)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-right-arrow-alt text-2xl"></i>
                 </button>
@@ -182,51 +255,20 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(-maxLinearSpeed, 0)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-down-arrow-alt text-2xl"></i>
                 </button>
                 <div></div>
               </div>
             </div>
-
-            <!-- UGV Position Tracking in fullscreen -->
-            <div class="bg-gray-700 rounded-lg p-4">
-              <h4 class="text-md font-semibold text-white mb-3">UGV Position Tracking</h4>
-              <div
-                class="relative bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center h-48"
-              >
-                <img
-                  src="https://placehold.co/400x300/E0E0E0/555555?text=Map+Placeholder"
-                  alt="Map Placeholder"
-                  class="w-full h-full object-cover"
-                />
-                <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
-                  <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100">
-                    <i class="bx bx-plus text-sm"></i>
-                  </button>
-                  <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100">
-                    <i class="bx bx-minus text-sm"></i>
-                  </button>
-                </div>
-                <div class="absolute bottom-1 left-1 text-xs text-gray-600 z-10">
-                  © Leaflet | © OpenStreetMap
-                </div>
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                  <i class="bx bx-current-location text-green-600 text-2xl"></i>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
-      <!-- Normal Layout -->
       <div v-else>
-        <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <!-- UGV Position Tracking -->
           <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">UGV Position Tracking</h3>
             <div
@@ -254,7 +296,6 @@
             </div>
           </div>
 
-          <!-- Camera Feed -->
           <div
             class="lg:col-span-1 bg-gray-900 rounded-lg shadow-md p-6 text-white flex flex-col items-center justify-center relative overflow-hidden"
           >
@@ -284,12 +325,57 @@
             </div>
           </div>
 
-          <!-- Movement Controls -->
           <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Movement Controls</h3>
+            
+            <div class="mb-4">
+              <label class="flex items-center space-x-3 cursor-pointer p-3 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-colors">
+                <input 
+                  type="checkbox" 
+                  :checked="uiControlEnabled" 
+                  @change="toggleUIControl"
+                  class="w-5 h-5"
+                >
+                <span class="font-medium text-gray-700">Enable UI Control (disables joystick)</span>
+              </label>
+            </div>
+
+            <div class="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <div class="text-sm font-semibold text-yellow-800 mb-2">
+                ⚠️ SAFETY: Hold <kbd class="px-2 py-1 bg-gray-200 rounded text-xs font-mono">{{ safetyKey }}</kbd> key or safety button while using controls
+              </div>
+              <div class="text-sm font-medium" :class="{ 'text-green-600': safetyButtonPressed && uiControlEnabled, 'text-red-600': !safetyButtonPressed || !uiControlEnabled }">
+                Status: {{ getSafetyStatusText() }}
+              </div>
+            </div>
+
+            <div class="mb-4 text-center">
+              <button 
+                @mousedown="activateVirtualSafety"
+                @mouseup="deactivateVirtualSafety"
+                @mouseleave="deactivateVirtualSafety"
+                @touchstart="activateVirtualSafety"
+                @touchend="deactivateVirtualSafety"
+                :class="{ 
+                  'bg-green-500 border-green-400 hover:bg-green-600': virtualSafetyPressed,
+                  'bg-red-500 border-red-400 hover:bg-red-600': !virtualSafetyPressed,
+                  'opacity-50 cursor-not-allowed': !uiControlEnabled
+                }"
+                class="w-full py-3 px-4 text-white font-bold rounded-lg border-2 transition-all duration-200 text-sm"
+                :disabled="!uiControlEnabled"
+              >
+                🛡️ {{ virtualSafetyPressed ? 'SAFETY ACTIVE' : 'HOLD FOR SAFETY' }}
+              </button>
+              <div class="text-xs text-gray-500 mt-2">Hold this button for touchscreen control</div>
+            </div>
+
             <div
               class="flex-grow flex flex-col items-center justify-center p-6 rounded-lg border border-gray-200"
+              :class="{ 'opacity-30': !uiControlEnabled || !safetyButtonPressed }"
             >
+              <div v-if="!safetyButtonPressed && uiControlEnabled" class="mb-4 p-2 bg-blue-50 rounded-lg text-center">
+                <div class="text-sm text-blue-600 font-medium">👆 Hold the safety button above, then use these controls</div>
+              </div>
               <div class="grid grid-rows-3 grid-cols-3 gap-3 w-full max-w-xs">
                 <div></div>
                 <button
@@ -299,8 +385,8 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(maxLinearSpeed, 0)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-up-arrow-alt"></i>
                 </button>
@@ -312,8 +398,8 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(0, maxAngularSpeed)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-left-arrow-alt"></i>
                 </button>
@@ -325,8 +411,8 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(0, -maxAngularSpeed)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-right-arrow-alt"></i>
                 </button>
@@ -338,23 +424,30 @@
                   @mouseleave="stopMovement"
                   @touchstart="startMovement(-maxLinearSpeed, 0)"
                   @touchend="stopMovement"
-                  :disabled="connectionStatus !== 'Connected'"
-                  :class="{ 'opacity-50 cursor-not-allowed': connectionStatus !== 'Connected' }"
+                  :disabled="!uiControlEnabled || !safetyButtonPressed"
+                  :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
                   <i class="bx bx-down-arrow-alt"></i>
                 </button>
                 <div></div>
               </div>
+              
+              <button 
+                @click="emergencyStop" 
+                :disabled="!uiControlEnabled" 
+                class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ⏹️ EMERGENCY STOP
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- Movement Settings -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
           <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <i class="bx bx-cog text-xl mr-2"></i>Movement Settings
           </h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="setting-item flex items-center">
               <label for="commandRateSelect" class="text-gray-700 mr-2">Command Rate (Hz):</label>
               <select
@@ -402,10 +495,24 @@
                 >{{ maxAngularSpeed.toFixed(1) }} rad/s</span
               >
             </div>
+            <div class="setting-item flex items-center">
+              <label for="safetyKeySelect" class="text-gray-700 mr-2">Safety Key:</label>
+              <select
+                id="safetyKeySelect"
+                @change="updateSafetyKey($event.target.value)"
+                class="form-select border border-gray-300 rounded-md p-2"
+              >
+                <option value="Shift" :selected="safetyKey === 'Shift'">Shift (Left or Right)</option>
+                <option value="Control" :selected="safetyKey === 'Control'">Ctrl (Left or Right)</option>
+                <option value="Alt" :selected="safetyKey === 'Alt'">Alt (Left or Right)</option>
+                <option value=" " :selected="safetyKey === ' '">Spacebar</option>
+                <option value="x" :selected="safetyKey === 'x'">X Key</option>
+                <option value="z" :selected="safetyKey === 'z'">Z Key</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <!-- Bottom Grid: Drive-by-Wire Status and Motion Feedback -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -452,7 +559,6 @@
             </div>
           </div>
 
-          <!-- Motion Feedback -->
           <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <i class="bx bx-tachometer text-xl mr-2"></i>Motion Feedback
@@ -525,13 +631,20 @@ const autoRefreshDelay = ref(3) // Fixed delay at 3 seconds
 const refreshCountdown = ref(0)
 let countdownInterval = null
 
-// Movement control variables
-const safetyEnabled = ref(false)
-
+// Movement control variables - Enhanced with safety system
 const isMoving = ref(false)
 const currentLinear = ref(0)
 const currentAngular = ref(0)
+const targetLinear = ref(0)
+const targetAngular = ref(0)
 let movementInterval = null
+
+// UI Control and Safety System (from App.vue)
+const uiControlEnabled = ref(false)
+const safetyButtonPressed = ref(false) // Combined state (keyboard OR virtual)
+const keyboardSafetyPressed = ref(false) // Track keyboard safety separately
+const virtualSafetyPressed = ref(false) // Track virtual safety separately
+const safetyKey = ref('Shift') // Default safety key
 
 // Status data
 const dbw = ref({
@@ -570,6 +683,7 @@ const batteryPercentage = computed(() => {
 // Adjustable parameters
 const commandRate = ref(50) // milliseconds (20Hz)
 const accelerationStep = ref(0.1)
+const accelerationRate = ref(2.0) // m/s² or rad/s² (from App.vue)
 const maxLinearSpeed = ref(1.0)
 const maxAngularSpeed = ref(1.0)
 
@@ -577,6 +691,75 @@ const maxAngularSpeed = ref(1.0)
 const ROBOT_IP = '192.168.100.5' // Replace with your robot's IP
 let ros = null
 let cmdVel = null
+
+// Safety System Functions (from App.vue)
+function activateVirtualSafety(event) {
+  event.preventDefault()
+  virtualSafetyPressed.value = true
+  updateSafetyState()
+}
+
+function deactivateVirtualSafety(event) {
+  event.preventDefault()
+  virtualSafetyPressed.value = false
+  updateSafetyState()
+  // Smooth deceleration when virtual safety is released
+  if (!keyboardSafetyPressed.value) {
+    targetLinear.value = 0
+    targetAngular.value = 0
+  }
+}
+
+function updateSafetyState() {
+  safetyButtonPressed.value = keyboardSafetyPressed.value || virtualSafetyPressed.value
+}
+
+function getSafetyStatusText() {
+  if (!uiControlEnabled.value) return 'UI Control Disabled'
+  if (safetyButtonPressed.value) {
+    if (virtualSafetyPressed.value && keyboardSafetyPressed.value) {
+      return 'ARMED - Both virtual and keyboard safety active'
+    } else if (virtualSafetyPressed.value) {
+      return 'ARMED - Virtual safety button held'
+    } else if (keyboardSafetyPressed.value) {
+      return 'ARMED - Keyboard safety key held'
+    }
+    return 'ARMED - Robot can move'
+  }
+  return 'SAFE - Hold safety button/key to enable movement'
+}
+
+function updateSafetyKey(key) {
+  safetyKey.value = key
+}
+
+function toggleUIControl() {
+  uiControlEnabled.value = !uiControlEnabled.value
+  
+  if (!uiControlEnabled.value) {
+    // When disabling UI control, immediately stop the robot
+    emergencyStop()
+  }
+}
+
+function emergencyStop() {
+  // Immediate stop - set both current and target to zero
+  targetLinear.value = 0
+  targetAngular.value = 0
+  currentLinear.value = 0
+  currentAngular.value = 0
+  isMoving.value = false
+  
+  if (movementInterval) {
+    clearInterval(movementInterval)
+    movementInterval = null
+  }
+  
+  // Always publish immediate stop command
+  if (uiControlEnabled.value && cmdVel && ros && ros.isConnected) {
+    sendCmd(0, 0)
+  }
+}
 
 // Fullscreen toggle function
 const toggleFullscreen = () => {
@@ -607,17 +790,20 @@ const initializeRos = () => {
     console.log('✅ Connected to ROS')
     connectionStatus.value = 'Connected'
     cancelAutoRefresh() // Cancel any pending refresh
+    startPublishing() // Start continuous publishing with safety system
   })
 
   ros.on('error', (error) => {
     console.error('❌ Error connecting to ROS:', error)
     connectionStatus.value = 'Error'
+    stopPublishing()
     startAutoRefresh() // Start auto-refresh on error
   })
 
   ros.on('close', () => {
     console.log('🔌 Connection to ROS closed')
     connectionStatus.value = 'Disconnected'
+    stopPublishing()
     startAutoRefresh() // Start auto-refresh on disconnect
   })
 
@@ -733,6 +919,66 @@ function cancelAutoRefresh() {
   console.log('❌ Auto-refresh cancelled')
 }
 
+// Enhanced Publishing System (from App.vue)
+let publishingInterval = null
+
+function startPublishing() {
+  if (publishingInterval) {
+    clearInterval(publishingInterval)
+  }
+  
+  publishingInterval = setInterval(() => {
+    // Always publish if UI control is enabled (for smooth deceleration)
+    if (!uiControlEnabled.value) {
+      return // Don't publish if UI control is disabled
+    }
+
+    // Calculate acceleration step for this iteration
+    const dt = commandRate.value / 1000 // Convert ms to seconds
+    const accelerationStep = accelerationRate.value * dt
+    
+    // Smoothly approach target speeds
+    let newLinear = currentLinear.value
+    let newAngular = currentAngular.value
+    
+    // Linear acceleration
+    if (Math.abs(targetLinear.value - currentLinear.value) > accelerationStep) {
+      if (targetLinear.value > currentLinear.value) {
+        newLinear = currentLinear.value + accelerationStep
+      } else {
+        newLinear = currentLinear.value - accelerationStep
+      }
+    } else {
+      newLinear = targetLinear.value
+    }
+    
+    // Angular acceleration
+    if (Math.abs(targetAngular.value - currentAngular.value) > accelerationStep) {
+      if (targetAngular.value > currentAngular.value) {
+        newAngular = currentAngular.value + accelerationStep
+      } else {
+        newAngular = currentAngular.value - accelerationStep
+      }
+    } else {
+      newAngular = targetAngular.value
+    }
+    
+    // Update current values
+    currentLinear.value = newLinear
+    currentAngular.value = newAngular
+    
+    // Publish the command
+    sendCmd(newLinear, newAngular)
+  }, commandRate.value)
+}
+
+function stopPublishing() {
+  if (publishingInterval) {
+    clearInterval(publishingInterval)
+    publishingInterval = null
+  }
+}
+
 // Send Twist command
 function sendCmd(linear, angular) {
   if (!cmdVel || !ros.isConnected) {
@@ -749,92 +995,37 @@ function sendCmd(linear, angular) {
   cmdVel.publish(twist)
 }
 
-// Start continuous movement
-function startMovement(targetLinear, targetAngular) {
-  if (connectionStatus.value !== 'Connected') return
-
-  if (movementInterval) {
-    clearInterval(movementInterval)
-  }
-
+// Enhanced Movement Controls (from App.vue with safety integration)
+function startMovement(linear, angular) {
+  if (!uiControlEnabled.value || !safetyButtonPressed.value) return // Safety check
+  
+  targetLinear.value = linear
+  targetAngular.value = angular
   isMoving.value = true
-  let currentLinearSpeed = currentLinear.value
-  let currentAngularSpeed = currentAngular.value
-
-  sendCmd(currentLinearSpeed, currentAngularSpeed)
-
-  movementInterval = setInterval(() => {
-    if (isMoving.value) {
-      if (Math.abs(currentLinearSpeed - targetLinear) > accelerationStep.value) {
-        currentLinearSpeed +=
-          targetLinear > currentLinearSpeed ? accelerationStep.value : -accelerationStep.value
-      } else {
-        currentLinearSpeed = targetLinear
-      }
-
-      if (Math.abs(currentAngularSpeed - targetAngular) > accelerationStep.value) {
-        currentAngularSpeed +=
-          targetAngular > currentAngularSpeed ? accelerationStep.value : -accelerationStep.value
-      } else {
-        currentAngularSpeed = targetAngular
-      }
-
-      currentLinear.value = currentLinearSpeed
-      currentAngular.value = currentAngularSpeed
-      sendCmd(currentLinearSpeed, currentAngularSpeed)
-    }
-  }, commandRate.value)
 }
 
-// Stop movement
 function stopMovement() {
-  if (connectionStatus.value !== 'Connected') return
-
+  if (!uiControlEnabled.value) return // Don't process if UI control is disabled
+  
+  targetLinear.value = 0
+  targetAngular.value = 0
   isMoving.value = false
-
-  if (movementInterval) {
-    clearInterval(movementInterval)
-    movementInterval = null
-  }
-
-  let currentLinearSpeed = currentLinear.value
-  let currentAngularSpeed = currentAngular.value
-
-  const decelerationInterval = setInterval(() => {
-    if (Math.abs(currentLinearSpeed) > accelerationStep.value) {
-      currentLinearSpeed *= 0.7
-    } else {
-      currentLinearSpeed = 0
-    }
-
-    if (Math.abs(currentAngularSpeed) > accelerationStep.value) {
-      currentAngularSpeed *= 0.7
-    } else {
-      currentAngularSpeed = 0
-    }
-
-    sendCmd(currentLinearSpeed, currentAngularSpeed)
-
-    if (Math.abs(currentLinearSpeed) < 0.01 && Math.abs(currentAngularSpeed) < 0.01) {
-      clearInterval(decelerationInterval)
-      currentLinear.value = 0
-      currentAngular.value = 0
-      sendCmd(0, 0)
-    }
-  }, commandRate.value)
 }
 
-// Keyboard controls
+// Enhanced Keyboard controls with safety system
 function handleKeyDown(event) {
-  if (event.key === 'k' || event.key === 'K') {
+  // Handle safety key (dead man's switch)
+  if (event.key === safetyKey.value || 
+      (safetyKey.value === 'Shift' && (event.key === 'ShiftLeft' || event.key === 'ShiftRight')) ||
+      (safetyKey.value === 'Control' && (event.key === 'ControlLeft' || event.key === 'ControlRight')) ||
+      (safetyKey.value === 'Alt' && (event.key === 'AltLeft' || event.key === 'AltRight'))) {
     event.preventDefault()
-    safetyEnabled.value = true // enable safety while key is held
+    keyboardSafetyPressed.value = true
+    updateSafetyState()
     return
   }
 
-  if (!safetyEnabled.value) return
-  if (connectionStatus.value !== 'Connected') return
-  if (isMoving.value) return
+  if (!uiControlEnabled.value || !safetyButtonPressed.value) return
 
   switch (event.key) {
     case 'ArrowUp':
@@ -866,19 +1057,28 @@ function handleKeyDown(event) {
         toggleFullscreen()
       }
       break
+    case ' ': // Spacebar for emergency stop
+      event.preventDefault()
+      emergencyStop()
+      break
   }
 }
 
 function handleKeyUp(event) {
-  if (event.key === 'k' || event.key === 'K') {
+  // Handle safety key release (dead man's switch)
+  if (event.key === safetyKey.value || 
+      (safetyKey.value === 'Shift' && (event.key === 'ShiftLeft' || event.key === 'ShiftRight')) ||
+      (safetyKey.value === 'Control' && (event.key === 'ControlLeft' || event.key === 'ControlRight')) ||
+      (safetyKey.value === 'Alt' && (event.key === 'AltLeft' || event.key === 'AltRight'))) {
     event.preventDefault()
-    safetyEnabled.value = false // disable safety when K is released
-    stopMovement() // also immediately stop moving when K released
+    keyboardSafetyPressed.value = false
+    updateSafetyState()
+    // Immediately stop movement when safety key is released
+    stopMovement()
     return
   }
 
-  if (!safetyEnabled.value) return
-  if (connectionStatus.value !== 'Connected') return
+  if (!uiControlEnabled.value) return
 
   switch (event.key) {
     case 'ArrowUp':
@@ -902,6 +1102,10 @@ function handleKeyUp(event) {
 // Settings update functions
 function updateCommandRate(hz) {
   commandRate.value = 1000 / hz
+  // Restart publishing with new rate if already running
+  if (publishingInterval && connectionStatus.value === 'Connected') {
+    startPublishing()
+  }
 }
 
 function updateMaxLinearSpeed(speed) {
@@ -912,6 +1116,7 @@ function updateMaxAngularSpeed(speed) {
   maxAngularSpeed.value = parseFloat(speed)
 }
 
+// Watch for connection status changes to handle safety
 watch(connectionStatus, (status) => {
   if (status !== 'Connected') {
     if (isFullscreen.value) {
@@ -919,9 +1124,17 @@ watch(connectionStatus, (status) => {
       document.removeEventListener('keyup', handleKeyUp)
     }
     stopMovement()
+    emergencyStop()
   } else if (isFullscreen.value) {
     document.addEventListener('keydown', handleKeyDown)
     document.addEventListener('keyup', handleKeyUp)
+  }
+})
+
+// Watch for safety state changes
+watch(safetyButtonPressed, (isPressed) => {
+  if (!isPressed) {
+    stopMovement()
   }
 })
 
@@ -929,13 +1142,19 @@ onMounted(() => {
   if (props.ugvId) {
     initializeRos()
   }
+  
+  // Add keyboard event listeners for normal mode
+  document.addEventListener('keydown', handleKeyDown)
+  document.addEventListener('keyup', handleKeyUp)
 })
 
 onUnmounted(() => {
   if (movementInterval) {
     clearInterval(movementInterval)
   }
+  stopPublishing()
   cancelAutoRefresh()
+  emergencyStop()
   if (ros && ros.isConnected) {
     sendCmd(0, 0)
     ros.close()
@@ -979,6 +1198,17 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+/* Keyboard key styling */
+kbd {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: bold;
+}
+
 /* Fullscreen styles */
 .fixed {
   position: fixed;
@@ -993,5 +1223,21 @@ onUnmounted(() => {
 
 .z-50 {
   z-index: 50;
+}
+
+/* Enhanced button styles */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  transform: none;
+}
+
+/* Safety button specific styles */
+.safety-btn:active, 
+.safety-btn.active {
+  transform: scale(0.98);
 }
 </style>
