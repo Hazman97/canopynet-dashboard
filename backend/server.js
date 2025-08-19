@@ -14,7 +14,7 @@ const port = 3000;
 // Middleware
 app.use(express.json());
 const corsOptions = {
-  origin: 'http://192.168.100.65:3000',
+  origin: '*',
   optionsSuccessStatus: 200 // For legacy browser support
 }
 app.use(cors(corsOptions));

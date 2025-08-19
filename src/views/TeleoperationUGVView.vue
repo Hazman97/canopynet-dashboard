@@ -105,28 +105,25 @@
             <div class="flex-1 flex flex-col">
               <div class="bg-gray-700 rounded-lg p-4 mb-4 flex-1 flex flex-col">
                 <h4 class="text-md font-semibold text-white mb-3">UGV Position Tracking</h4>
-                <div
-                  class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center"
-                >
-                  <img
-                    src="https://placehold.co/400x300/E0E0E0/555555?text=Map+Placeholder"
-                    alt="Map Placeholder"
-                    class="w-full h-full object-cover"
-                  />
-                  <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
-                    <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100">
-                      <i class="bx bx-plus text-sm"></i>
-                    </button>
-                    <button class="bg-white p-1 rounded shadow-md text-gray-700 hover:bg-gray-100">
-                      <i class="bx bx-minus text-sm"></i>
-                    </button>
-                  </div>
-                  <div class="absolute bottom-1 left-1 text-xs text-gray-600 z-10">
-                    © Leaflet | © OpenStreetMap
-                  </div>
-                  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                    <i class="bx bx-current-location text-green-600 text-2xl"></i>
-                  </div>
+
+                <div class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                  <div id="gps-map-fullscreen" class="w-full h-full gps-map"></div>
+                </div>
+                
+                <!-- Map Controls in Fullscreen -->
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <button @click="centerMapOnRobot" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+                    🎯 Center
+                  </button>
+                  <button @click="toggleTrail" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+                    {{ showTrail ? '👁️ Hide' : '👁️ Show' }}
+                  </button>
+                  <button @click="clearTrail" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
+                    🗑️ Clear
+                  </button>
+                </div>
+                <div class="text-xs text-gray-400 mt-1 text-center">
+                  Trail Points: {{ trailPoints.length }}
                 </div>
               </div>
             </div>
@@ -271,28 +268,46 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">UGV Position Tracking</h3>
-            <div
-              class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center"
-            >
-              <img
-                src="https://placehold.co/400x300/E0E0E0/555555?text=Map+Placeholder"
-                alt="Map Placeholder"
-                class="w-full h-full object-cover"
-              />
-              <div class="absolute top-2 left-2 flex flex-col space-y-1 z-10">
-                <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100">
-                  <i class="bx bx-plus text-lg"></i>
-                </button>
-                <button class="bg-white p-1.5 rounded-md shadow-md text-gray-700 hover:bg-gray-100">
-                  <i class="bx bx-minus text-lg"></i>
-                </button>
+            
+            <!-- GPS Status Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">GPS Status:</p>
+                <p class="text-sm font-bold" :class="getGpsStatusClass()">{{ getGpsStatusText() }}</p>
               </div>
-              <div class="absolute bottom-2 left-2 text-xs text-gray-600 z-10">
-                © Leaflet | © OpenStreetMap contributors
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Position:</p>
+                <p class="text-xs text-gray-800">{{ gpsData.latitude.toFixed(6) }}°</p>
+                <p class="text-xs text-gray-800">{{ gpsData.longitude.toFixed(6) }}°</p>
               </div>
-              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <i class="bx bx-current-location text-green-600 text-3xl"></i>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Altitude:</p>
+                <p class="text-sm text-gray-800">{{ gpsData.altitude.toFixed(2) }} m</p>
               </div>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Accuracy:</p>
+                <p class="text-sm text-gray-800">{{ getPositionAccuracy() }} m</p>
+              </div>
+            </div>
+
+            <div class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+              <div id="gps-map-normal" class="w-full h-full gps-map"></div>
+            </div>
+            
+            <!-- Map Controls -->
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button @click="centerMapOnRobot" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">
+                🎯 Center on Robot
+              </button>
+              <button @click="toggleTrail" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">
+                {{ showTrail ? '👁️ Hide Trail' : '👁️ Show Trail' }}
+              </button>
+              <button @click="clearTrail" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm">
+                🗑️ Clear Trail
+              </button>
+            </div>
+            <div class="text-sm text-gray-600 mt-2 text-center">
+              Trail Points: {{ trailPoints.length }} | Last Update: {{ formatTimestamp(gpsData.timestamp) }}
             </div>
           </div>
 
@@ -427,7 +442,7 @@
                   :disabled="!uiControlEnabled || !safetyButtonPressed"
                   :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
                 >
-                  <i class="bx bx-down-arrow-alt"></i>
+                  <i class="bx bx-down-arrow-alt text-2xl"></i>
                 </button>
                 <div></div>
               </div>
@@ -606,7 +621,7 @@
 
 <script setup>
 import ROSLIB from 'roslib'
-import { ref, watch, defineProps, defineEmits, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, defineProps, defineEmits, onMounted, onUnmounted, computed, nextTick } from 'vue'
 
 const props = defineProps({
   ugvId: String,
@@ -625,6 +640,27 @@ const latencyMs = ref(null)
 
 // Connection status
 const connectionStatus = ref('Disconnected')
+
+// GPS data (integrated from App.vue)
+const gpsData = ref({
+  latitude: 0,
+  longitude: 0,
+  altitude: 0,
+  status: 0,
+  service: 0,
+  position_covariance: [],
+  timestamp: null
+})
+
+// Map-related variables (integrated from App.vue)
+let map = null
+let robotMarker = null
+let trailPolyline = null
+let fullscreenMap = null
+let fullscreenRobotMarker = null
+let fullscreenTrailPolyline = null
+const trailPoints = ref([])
+const showTrail = ref(true)
 
 // Auto-refresh functionality (always enabled)
 const autoRefreshDelay = ref(3) // Fixed delay at 3 seconds
@@ -691,6 +727,269 @@ const maxAngularSpeed = ref(1.0)
 const ROBOT_IP = '192.168.100.5' // Replace with your robot's IP
 let ros = null
 let cmdVel = null
+
+// GPS utility functions (integrated from App.vue)
+function getGpsStatusText() {
+  const status = gpsData.value.status
+  switch(status) {
+    case 0: return 'No Fix'
+    case 1: return 'GPS Fix'
+    case 2: return 'DGPS Fix'
+    case 3: return 'PPS Fix'
+    case 4: return 'Real-time Kinematic'
+    case 5: return 'Float RTK'
+    case 6: return 'Dead Reckoning'
+    case 7: return 'Manual Input'
+    case 8: return 'Simulation'
+    default: return `Unknown (${status})`
+  }
+}
+
+function getGpsStatusClass() {
+  const status = gpsData.value.status
+  if (status >= 4) return 'text-green-600' // RTK quality
+  if (status >= 1) return 'text-yellow-600' // Basic GPS fix
+  return 'text-red-600' // No fix
+}
+
+function getPositionAccuracy() {
+  const cov = gpsData.value.position_covariance
+  if (cov.length >= 9) {
+    // Calculate approximate accuracy from covariance matrix
+    const horizontal_accuracy = Math.sqrt((cov[0] + cov[4]) / 2)
+    return horizontal_accuracy.toFixed(2)
+  }
+  return 'N/A'
+}
+
+function formatTimestamp(timestamp) {
+  if (!timestamp) return 'Never'
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString()
+}
+
+// Enhanced map functions to fix the disappearing issue
+function createRobotIcon() {
+  if (typeof window.L === 'undefined') return null
+  
+  return window.L.divIcon({
+    className: 'robot-marker',
+    html: '<div class="robot-icon">🤖</div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  })
+}
+
+function createTrailPolyline() {
+  if (typeof window.L === 'undefined') return null
+  
+  return window.L.polyline([], {
+    color: '#007bff',
+    weight: 3,
+    opacity: 0.7
+  })
+}
+
+// Map initialization and management (enhanced to fix the issue)
+async function initializeMap() {
+  await nextTick()
+  
+  // Wait for Leaflet to be available
+  if (typeof window.L === 'undefined') {
+    console.error('Leaflet not loaded yet')
+    return
+  }
+  
+  const L = window.L // Get Leaflet from global scope
+  
+  // Default to Malaysia coordinates if no GPS data yet
+  const defaultLat = gpsData.value.latitude || 2.92012435
+  const defaultLng = gpsData.value.longitude || 101.636099842
+  
+  // Try to initialize normal mode map first
+  const normalMapContainer = document.getElementById('gps-map-normal')
+  if (normalMapContainer && !normalMapContainer._leaflet_id) {
+    // Clean up any existing map
+    if (map) {
+      map.remove()
+      map = null
+      robotMarker = null
+      trailPolyline = null
+    }
+    
+    // Initialize Leaflet map for normal mode
+    map = L.map('gps-map-normal').setView([defaultLat, defaultLng], 18)
+    
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 22
+    }).addTo(map)
+    
+    // Create robot marker
+    const robotIcon = createRobotIcon()
+    if (robotIcon) {
+      robotMarker = L.marker([defaultLat, defaultLng], {
+        icon: robotIcon
+      }).addTo(map)
+    }
+    
+    // Initialize trail polyline
+    trailPolyline = createTrailPolyline()
+    if (trailPolyline) {
+      trailPolyline.addTo(map)
+      // Update with existing trail points
+      trailPolyline.setLatLngs([...trailPoints.value])
+    }
+    
+    // Force map to resize after initialization
+    setTimeout(() => {
+      if (map) {
+        map.invalidateSize()
+      }
+    }, 100)
+  }
+}
+
+async function initializeFullscreenMap() {
+  await nextTick()
+  
+  if (typeof window.L === 'undefined') {
+    console.error('Leaflet not loaded yet')
+    return
+  }
+  
+  const L = window.L
+  
+  const fullscreenMapContainer = document.getElementById('gps-map-fullscreen')
+  if (fullscreenMapContainer && !fullscreenMapContainer._leaflet_id) {
+    // Clean up any existing fullscreen map
+    if (fullscreenMap) {
+      fullscreenMap.remove()
+      fullscreenMap = null
+      fullscreenRobotMarker = null
+      fullscreenTrailPolyline = null
+    }
+    
+    const defaultLat = gpsData.value.latitude || 2.92012435
+    const defaultLng = gpsData.value.longitude || 101.636099842
+    
+    fullscreenMap = L.map('gps-map-fullscreen').setView([defaultLat, defaultLng], 18)
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 22
+    }).addTo(fullscreenMap)
+    
+    const robotIcon = createRobotIcon()
+    if (robotIcon) {
+      fullscreenRobotMarker = L.marker([defaultLat, defaultLng], {
+        icon: robotIcon
+      }).addTo(fullscreenMap)
+    }
+    
+    fullscreenTrailPolyline = createTrailPolyline()
+    if (fullscreenTrailPolyline) {
+      fullscreenTrailPolyline.setLatLngs([...trailPoints.value])
+      if (showTrail.value) {
+        fullscreenTrailPolyline.addTo(fullscreenMap)
+      }
+    }
+    
+    // Force map to resize after initialization
+    setTimeout(() => {
+      if (fullscreenMap) {
+        fullscreenMap.invalidateSize()
+      }
+    }, 100)
+  }
+}
+
+function updateMapLocation(lat, lng) {
+  const newPosition = [lat, lng]
+  
+  // Update normal map robot marker position
+  if (robotMarker) {
+    robotMarker.setLatLng(newPosition)
+  }
+  
+  // Update fullscreen robot marker if it exists
+  if (fullscreenRobotMarker) {
+    fullscreenRobotMarker.setLatLng(newPosition)
+  }
+  
+  // Add to trail if enabled and position has changed significantly
+  if (showTrail.value) {
+    const lastPoint = trailPoints.value[trailPoints.value.length - 1]
+    if (!lastPoint || 
+        Math.abs(lastPoint[0] - lat) > 0.00001 || 
+        Math.abs(lastPoint[1] - lng) > 0.00001) {
+      
+      trailPoints.value.push(newPosition)
+      
+      // Limit trail points to prevent memory issues
+      if (trailPoints.value.length > 1000) {
+        trailPoints.value.shift()
+      }
+      
+      // Update normal trail polyline
+      if (trailPolyline) {
+        trailPolyline.setLatLngs([...trailPoints.value])
+      }
+      
+      // Update fullscreen trail polyline if it exists
+      if (fullscreenTrailPolyline) {
+        fullscreenTrailPolyline.setLatLngs([...trailPoints.value])
+      }
+    }
+  }
+}
+
+function centerMapOnRobot() {
+  // Center main map
+  if (map && robotMarker) {
+    const position = robotMarker.getLatLng()
+    map.setView([position.lat, position.lng], map.getZoom())
+  }
+  
+  // Center fullscreen map if it exists
+  if (fullscreenMap && fullscreenRobotMarker) {
+    const fullscreenPosition = fullscreenRobotMarker.getLatLng()
+    fullscreenMap.setView([fullscreenPosition.lat, fullscreenPosition.lng], fullscreenMap.getZoom())
+  }
+}
+
+function toggleTrail() {
+  showTrail.value = !showTrail.value
+  
+  if (map && trailPolyline) {
+    if (showTrail.value) {
+      trailPolyline.addTo(map)
+    } else {
+      map.removeLayer(trailPolyline)
+    }
+  }
+  
+  if (fullscreenMap && fullscreenTrailPolyline) {
+    if (showTrail.value) {
+      fullscreenTrailPolyline.addTo(fullscreenMap)
+    } else {
+      fullscreenMap.removeLayer(fullscreenTrailPolyline)
+    }
+  }
+}
+
+function clearTrail() {
+  trailPoints.value = []
+  
+  if (trailPolyline) {
+    trailPolyline.setLatLngs([])
+  }
+  
+  if (fullscreenTrailPolyline) {
+    fullscreenTrailPolyline.setLatLngs([])
+  }
+}
 
 // Safety System Functions (from App.vue)
 function activateVirtualSafety(event) {
@@ -761,19 +1060,39 @@ function emergencyStop() {
   }
 }
 
-// Fullscreen toggle function
-const toggleFullscreen = () => {
+// Enhanced Fullscreen toggle function to fix map issue
+const toggleFullscreen = async () => {
   isFullscreen.value = !isFullscreen.value
 
   if (isFullscreen.value) {
     // Enable keyboard controls when entering fullscreen
     document.addEventListener('keydown', handleKeyDown)
     document.addEventListener('keyup', handleKeyUp)
+    
+    // Initialize fullscreen map after a delay to ensure DOM is ready
+    setTimeout(initializeFullscreenMap, 200)
   } else {
     // Remove keyboard controls when exiting fullscreen
     document.removeEventListener('keydown', handleKeyDown)
     document.removeEventListener('keyup', handleKeyUp)
     stopMovement()
+    
+    // Clean up fullscreen map references
+    if (fullscreenMap) {
+      fullscreenMap.remove()
+      fullscreenMap = null
+      fullscreenRobotMarker = null
+      fullscreenTrailPolyline = null
+    }
+    
+    // CRITICAL FIX: Reinitialize the normal map after exiting fullscreen
+    setTimeout(async () => {
+      await initializeMap()
+      // Force update map location with current GPS data
+      if (gpsData.value.latitude && gpsData.value.longitude) {
+        updateMapLocation(gpsData.value.latitude, gpsData.value.longitude)
+      }
+    }, 300)
   }
 }
 
@@ -815,6 +1134,27 @@ const initializeRos = () => {
   })
 
   // Setup ROS subscribers for status data
+  
+  // RTK GPS topic (integrated from App.vue)
+  const rtkTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: '/rtklib_nav',
+    messageType: 'rtklib_msgs/msg/RtklibNav'
+  })
+
+  rtkTopic.subscribe((msg) => {
+    gpsData.value.latitude = msg.status.latitude
+    gpsData.value.longitude = msg.status.longitude
+    gpsData.value.altitude = msg.status.altitude
+    gpsData.value.status = msg.status.status.status
+    gpsData.value.service = msg.status.status.service
+    gpsData.value.position_covariance = msg.status.position_covariance
+    gpsData.value.timestamp = Date.now()
+    
+    // Update map location
+    updateMapLocation(msg.status.latitude, msg.status.longitude)
+  })
+
   // Drive-by-wire topic
   const dbwTopic = new ROSLIB.Topic({
     ros: ros,
@@ -1138,7 +1478,36 @@ watch(safetyButtonPressed, (isPressed) => {
   }
 })
 
-onMounted(() => {
+// Watch for fullscreen changes to handle map reinitialization
+watch(isFullscreen, async (newValue) => {
+  if (!newValue) {
+    // Exiting fullscreen - reinitialize normal map after a delay
+    await nextTick()
+    setTimeout(async () => {
+      await initializeMap()
+      // Update with current GPS location
+      if (gpsData.value.latitude && gpsData.value.longitude) {
+        updateMapLocation(gpsData.value.latitude, gpsData.value.longitude)
+      }
+    }, 500)
+  }
+})
+
+onMounted(async () => {
+  // Load Leaflet CSS and JS (integrated from App.vue)
+  const leafletCSS = document.createElement('link')
+  leafletCSS.rel = 'stylesheet'
+  leafletCSS.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'
+  document.head.appendChild(leafletCSS)
+  
+  const leafletJS = document.createElement('script')
+  leafletJS.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
+  leafletJS.onload = () => {
+    // Wait a bit to ensure Leaflet is fully loaded
+    setTimeout(initializeMap, 100)
+  }
+  document.head.appendChild(leafletJS)
+
   if (props.ugvId) {
     initializeRos()
   }
@@ -1161,6 +1530,21 @@ onUnmounted(() => {
   }
   document.removeEventListener('keydown', handleKeyDown)
   document.removeEventListener('keyup', handleKeyUp)
+  
+  // Clean up map references
+  if (map) {
+    map.remove()
+    map = null
+    robotMarker = null
+    trailPolyline = null
+  }
+  
+  if (fullscreenMap) {
+    fullscreenMap.remove()
+    fullscreenMap = null
+    fullscreenRobotMarker = null
+    fullscreenTrailPolyline = null
+  }
 })
 </script>
 
@@ -1239,5 +1623,48 @@ button:disabled:hover {
 .safety-btn:active, 
 .safety-btn.active {
   transform: scale(0.98);
+}
+
+/* GPS Map Styles (integrated from App.vue) */
+.gps-map {
+  width: 100%;
+  height: 300px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  min-height: 200px;
+}
+
+/* Robot marker styles (integrated from App.vue) */
+:global(.robot-marker) {
+  background: none !important;
+  border: none !important;
+}
+
+:global(.robot-icon) {
+  font-size: 24px;
+  text-align: center;
+  line-height: 30px;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* GPS status color classes */
+.text-green-600 {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+.text-yellow-600 {
+  color: #ca8a04;
+  font-weight: bold;
+}
+
+.text-red-600 {
+  color: #dc2626;
+  font-weight: bold;
 }
 </style>
