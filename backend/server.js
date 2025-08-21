@@ -182,9 +182,10 @@ app.post('/api/login', async (req, res) => {
 });
 
 // --- Start the server ---
-app.listen(3000, '0.0.0.0', () => {
-    console.log('Server is running on http://0.0.0.0:3000');
-})
+// Listen on both IPv4 + IPv6
+app.listen(3000, '::', () => {
+  console.log('Server running on port 3000 (IPv4 & IPv6)');
+});
 
 // --- Graceful shutdown ---
 process.on('SIGINT', () => {
