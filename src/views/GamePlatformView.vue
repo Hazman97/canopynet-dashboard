@@ -17,23 +17,23 @@
 
     <!-- Main Menu -->
     <div class="grid grid-cols-2 gap-4 max-w-xl mx-auto">
-      <div @click="$router.push('/game-tasks')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
-        <img src="@/assets/task.png" class="w-12 mb-2" alt="Tasks Icon" />
+      <div @click="$router.push('/game-tasks')" class="bg-green-100 rounded-2xl p-8 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+        <img src="@/assets/task.png" class="w-16 mb-2" alt="Tasks Icon" />
         <span class="text-lg font-bold text-green-800">Tasks</span>
       </div>
 
-      <div @click="$router.push('/game-workers')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
-        <img src="@/assets/crew.png" class="w-12 mb-2" alt="Crew Icon" />
+      <div @click="$router.push('/game-workers')" class="bg-green-100 rounded-2xl p-8 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+        <img src="@/assets/crew.png" class="w-16 mb-2" alt="Crew Icon" />
         <span class="text-lg font-bold text-green-800">My Crew</span>
       </div>
 
-      <div @click="$router.push('/game-areas')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
-        <img src="@/assets/map.png" class="w-12 mb-2" alt="Farm Map Icon" />
+      <div @click="$router.push('/game-areas')" class="bg-green-100 rounded-2xl p-8 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+        <img src="@/assets/map.png" class="w-16 mb-2" alt="Farm Map Icon" />
         <span class="text-lg font-bold text-green-800">Farm Areas</span>
       </div>
 
-      <div @click="$router.push('/game-assets')" class="bg-green-100 rounded-2xl p-6 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
-        <img src="@/assets/tractor.png" class="w-12 mb-2" alt="Asset Icon" />
+      <div @click="$router.push('/game-assets')" class="bg-green-100 rounded-2xl p-8 shadow-md flex flex-col items-center justify-center cursor-pointer hover:bg-green-200 transition">
+        <img src="@/assets/tractor.png" class="w-16 mb-2" alt="Asset Icon" />
         <span class="text-lg font-bold text-green-800">Asset</span>
       </div>
     </div>
@@ -46,6 +46,7 @@
       </div>
     </div>
 
+    <!-- Bottom Navigation Bar -->
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t flex justify-around py-2">
       <div class="flex flex-col items-center text-green-700 font-bold">
         <img src="@/assets/house.png" class="w-8 mb-1" alt="Home" />
