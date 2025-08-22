@@ -46,7 +46,6 @@
       </div>
     </div>
 
-    <!-- Bottom Navigation Bar -->
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-inner border-t flex justify-around py-2">
       <div class="flex flex-col items-center text-green-700 font-bold">
         <img src="@/assets/house.png" class="w-8 mb-1" alt="Home" />
