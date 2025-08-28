@@ -80,16 +80,7 @@
             <p class="text-sm font-medium text-gray-700">Joystick Mode:</p>
             <p class="text-lg font-bold text-gray-800">{{ joystick.mode }}</p>
           </div>
-          <div class="border border-blue-200 rounded-lg p-4">
-            <p class="text-sm font-medium text-gray-700">Current Speed:</p>
-            <p class="text-sm text-gray-800">Linear={{ motion.speed.toFixed(2) }} m/s,</p>
-            <p class="text-sm text-gray-800">Angular={{ currentAngular.toFixed(2) }} rad/s</p>
           </div>
-        </div>
-
-        <div v-if="refreshCountdown > 0" class="border-t pt-4">
-          <div class="refresh-notification">🔄 Auto-refreshing in {{ refreshCountdown }}s...</div>
-        </div>
       </div>
 
       <div v-if="isFullscreen" class="fixed inset-0 z-50 bg-black flex flex-col overflow-y-auto">
@@ -110,7 +101,6 @@
                   <div id="gps-map-fullscreen" class="w-full h-full gps-map"></div>
                 </div>
                 
-                <!-- Map Controls in Fullscreen -->
                 <div class="flex flex-wrap gap-1 mt-2">
                   <button @click="centerMapOnRobot" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
                     🎯 Center
@@ -269,7 +259,6 @@
           <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">UGV Position Tracking</h3>
             
-            <!-- GPS Status Info -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
               <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">GPS Status:</p>
@@ -284,17 +273,12 @@
                 <p class="text-sm font-medium text-gray-700">Altitude:</p>
                 <p class="text-sm text-gray-800">{{ gpsData.altitude.toFixed(2) }} m</p>
               </div>
-              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Accuracy:</p>
-                <p class="text-sm text-gray-800">{{ getPositionAccuracy() }} m</p>
               </div>
-            </div>
 
             <div class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
               <div id="gps-map-normal" class="w-full h-full gps-map"></div>
             </div>
             
-            <!-- Map Controls -->
             <div class="flex flex-wrap gap-2 mt-3">
               <button @click="centerMapOnRobot" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">
                 🎯 Center on Robot
@@ -458,76 +442,6 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <i class="bx bx-cog text-xl mr-2"></i>Movement Settings
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="setting-item flex items-center">
-              <label for="commandRateSelect" class="text-gray-700 mr-2">Command Rate (Hz):</label>
-              <select
-                id="commandRateSelect"
-                @change="updateCommandRate($event.target.value)"
-                class="form-select border border-gray-300 rounded-md p-2"
-              >
-                <option value="20" :selected="commandRate === 50">20 Hz (50ms)</option>
-                <option value="10" :selected="commandRate === 100">10 Hz (100ms)</option>
-                <option value="30" :selected="commandRate === 33">30 Hz (33ms)</option>
-                <option value="50" :selected="commandRate === 20">50 Hz (20ms)</option>
-              </select>
-            </div>
-            <div class="setting-item flex items-center">
-              <label for="maxLinearSpeedRange" class="text-gray-700 mr-2">Max Linear Speed:</label>
-              <input
-                type="range"
-                id="maxLinearSpeedRange"
-                min="0.1"
-                max="2.0"
-                step="0.1"
-                :value="maxLinearSpeed"
-                @input="updateMaxLinearSpeed($event.target.value)"
-                class="flex-grow"
-              />
-              <span class="ml-2 font-medium text-blue-600"
-                >{{ maxLinearSpeed.toFixed(1) }} m/s</span
-              >
-            </div>
-            <div class="setting-item flex items-center">
-              <label for="maxAngularSpeedRange" class="text-gray-700 mr-2"
-                >Max Angular Speed:</label
-              >
-              <input
-                type="range"
-                id="maxAngularSpeedRange"
-                min="0.1"
-                max="2.0"
-                step="0.1"
-                :value="maxAngularSpeed"
-                @input="updateMaxAngularSpeed($event.target.value)"
-                class="flex-grow"
-              />
-              <span class="ml-2 font-medium text-blue-600"
-                >{{ maxAngularSpeed.toFixed(1) }} rad/s</span
-              >
-            </div>
-            <div class="setting-item flex items-center">
-              <label for="safetyKeySelect" class="text-gray-700 mr-2">Safety Key:</label>
-              <select
-                id="safetyKeySelect"
-                @change="updateSafetyKey($event.target.value)"
-                class="form-select border border-gray-300 rounded-md p-2"
-              >
-                <option value="Shift" :selected="safetyKey === 'Shift'">Shift (Left or Right)</option>
-                <option value="Control" :selected="safetyKey === 'Control'">Ctrl (Left or Right)</option>
-                <option value="Alt" :selected="safetyKey === 'Alt'">Alt (Left or Right)</option>
-                <option value=" " :selected="safetyKey === ' '">Spacebar</option>
-                <option value="x" :selected="safetyKey === 'x'">X Key</option>
-                <option value="z" :selected="safetyKey === 'z'">Z Key</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -535,41 +449,14 @@
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">PIU State:</p>
-                <p class="text-base font-bold text-gray-800">{{ dbw.piu_state }}</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">Battery Voltage:</p>
                 <p class="text-base font-bold text-gray-800">
                   {{ dbw.battery_voltage.toFixed(2) }} V
                 </p>
               </div>
               <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Battery Current:</p>
-                <p class="text-base font-bold text-gray-800">
-                  {{ dbw.battery_current.toFixed(2) }} A
-                </p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">Battery Percentage:</p>
                 <p class="text-base font-bold text-gray-800">{{ batteryPercentage.toFixed(0) }}%</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Estop Triggered:</p>
-                <p
-                  class="text-base font-bold"
-                  :class="dbw.estop_trigger ? 'text-red-600' : 'text-green-600'"
-                >
-                  {{ dbw.estop_trigger ? 'YES' : 'NO' }}
-                </p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Front Motor Fault:</p>
-                <p class="text-base font-bold text-gray-800">{{ dbw.front_md_fault }}</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3 md:col-span-2">
-                <p class="text-sm font-medium text-gray-700">Rear Motor Fault:</p>
-                <p class="text-base font-bold text-gray-800">{{ dbw.rear_md_fault }}</p>
               </div>
             </div>
           </div>
@@ -580,36 +467,8 @@
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Left Encoder Ticks:</p>
-                <p class="text-base font-bold text-gray-800">{{ motion.left_encoder_ticks }}</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Right Encoder Ticks:</p>
-                <p class="text-base font-bold text-gray-800">{{ motion.right_encoder_ticks }}</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Front Left RPM:</p>
-                <p class="text-base font-bold text-gray-800">{{ motion.front_left_rpm }}</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Rear Right RPM:</p>
-                <p class="text-base font-bold text-gray-800">{{ motion.rear_right_rpm }}</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">Speed:</p>
                 <p class="text-base font-bold text-gray-800">{{ motion.speed.toFixed(2) }} m/s</p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3">
-                <p class="text-sm font-medium text-gray-700">Left Wheel Speed:</p>
-                <p class="text-base font-bold text-gray-800">
-                  {{ motion.left_wheel_speed_mps.toFixed(2) }} m/s
-                </p>
-              </div>
-              <div class="border border-blue-200 rounded-lg p-3 md:col-span-2">
-                <p class="text-sm font-medium text-gray-700">Right Wheel Speed:</p>
-                <p class="text-base font-bold text-gray-800">
-                  {{ motion.right_wheel_speed_mps.toFixed(2) }} m/s
-                </p>
               </div>
             </div>
           </div>
@@ -662,11 +521,6 @@ let fullscreenTrailPolyline = null
 const trailPoints = ref([])
 const showTrail = ref(true)
 
-// Auto-refresh functionality (always enabled)
-const autoRefreshDelay = ref(3) // Fixed delay at 3 seconds
-const refreshCountdown = ref(0)
-let countdownInterval = null
-
 // Movement control variables - Enhanced with safety system
 const isMoving = ref(false)
 const currentLinear = ref(0)
@@ -684,22 +538,13 @@ const safetyKey = ref('Shift') // Default safety key
 
 // Status data
 const dbw = ref({
-  piu_state: 'Unknown',
+  // PUI state, Battery Current, Estop Triggered, Front Motor Fault, Rear Motor Fault are removed
   battery_voltage: 0,
-  battery_current: 0,
-  estop_trigger: false,
-  front_md_fault: 'Unknown',
-  rear_md_fault: 'Unknown',
 })
 
 const motion = ref({
-  left_encoder_ticks: 0,
-  right_encoder_ticks: 0,
-  front_left_rpm: 0,
-  rear_right_rpm: 0,
+  // All features except speed are removed
   speed: 0,
-  left_wheel_speed_mps: 0,
-  right_wheel_speed_mps: 0,
 })
 
 const joystick = ref({
@@ -753,12 +598,7 @@ function getGpsStatusClass() {
 }
 
 function getPositionAccuracy() {
-  const cov = gpsData.value.position_covariance
-  if (cov.length >= 9) {
-    // Calculate approximate accuracy from covariance matrix
-    const horizontal_accuracy = Math.sqrt((cov[0] + cov[4]) / 2)
-    return horizontal_accuracy.toFixed(2)
-  }
+  // This function is removed as per the request to delete the Accuracy feature
   return 'N/A'
 }
 
@@ -1104,28 +944,6 @@ const initializeRos = () => {
     url: `ws://${ROBOT_IP}:9090`,
   })
 
-  // ROS connection event handlers
-  ros.on('connection', () => {
-    console.log('✅ Connected to ROS')
-    connectionStatus.value = 'Connected'
-    cancelAutoRefresh() // Cancel any pending refresh
-    startPublishing() // Start continuous publishing with safety system
-  })
-
-  ros.on('error', (error) => {
-    console.error('❌ Error connecting to ROS:', error)
-    connectionStatus.value = 'Error'
-    stopPublishing()
-    startAutoRefresh() // Start auto-refresh on error
-  })
-
-  ros.on('close', () => {
-    console.log('🔌 Connection to ROS closed')
-    connectionStatus.value = 'Disconnected'
-    stopPublishing()
-    startAutoRefresh() // Start auto-refresh on disconnect
-  })
-
   // Define the /cmd_vel publisher
   cmdVel = new ROSLIB.Topic({
     ros,
@@ -1163,12 +981,8 @@ const initializeRos = () => {
   })
 
   dbwTopic.subscribe((msg) => {
-    dbw.value.piu_state = msg.piu_state
+    // Only subscribe to the battery voltage, other features removed
     dbw.value.battery_voltage = msg.battery_voltage
-    dbw.value.battery_current = msg.battery_current
-    dbw.value.estop_trigger = msg.estop_trigger
-    dbw.value.front_md_fault = msg.front_md_fault
-    dbw.value.rear_md_fault = msg.rear_md_fault
   })
 
   // Motion topic
@@ -1179,13 +993,8 @@ const initializeRos = () => {
   })
 
   motionTopic.subscribe((msg) => {
-    motion.value.left_encoder_ticks = msg.left_encoder_ticks
-    motion.value.right_encoder_ticks = msg.right_encoder_ticks
-    motion.value.front_left_rpm = msg.front_left_rpm
-    motion.value.rear_right_rpm = msg.rear_right_rpm
+    // Only subscribe to the speed, other features removed
     motion.value.speed = msg.speed
-    motion.value.left_wheel_speed_mps = msg.left_wheel_speed_mps
-    motion.value.right_wheel_speed_mps = msg.right_wheel_speed_mps
   })
 
   // Joystick connection topic
@@ -1234,29 +1043,6 @@ const initializeRos = () => {
       'data:image/jpeg;base64,' + btoa(String.fromCharCode.apply(null, message.data))
     cameraUrl.value = imageData
   })
-}
-
-// Auto-refresh functions (always enabled)
-function startAutoRefresh() {
-  console.log(`🔄 Starting auto-refresh countdown (${autoRefreshDelay.value}s)`)
-  refreshCountdown.value = autoRefreshDelay.value
-
-  countdownInterval = setInterval(() => {
-    refreshCountdown.value--
-    if (refreshCountdown.value <= 0) {
-      clearInterval(countdownInterval)
-      initializeRos() // Re-initialize the ROS connection instead of reloading the page
-    }
-  }, 1000)
-}
-
-function cancelAutoRefresh() {
-  if (countdownInterval) {
-    clearInterval(countdownInterval)
-    countdownInterval = null
-  }
-  refreshCountdown.value = 0
-  console.log('❌ Auto-refresh cancelled')
 }
 
 // Enhanced Publishing System (from App.vue)
@@ -1549,21 +1335,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Auto-refresh section styles */
-.auto-refresh-section {
-  padding-top: 10px;
-}
-
-.refresh-notification {
-  background-color: #fff3cd;
-  color: #856404;
-  padding: 8px;
-  border-radius: 6px;
-  border-left: 4px solid #ffc107;
-  font-weight: bold;
-  animation: pulse 1s ease-in-out infinite;
-}
-
 @keyframes pulse {
   0% {
     opacity: 1;
