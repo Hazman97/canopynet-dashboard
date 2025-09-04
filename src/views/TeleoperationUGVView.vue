@@ -68,6 +68,15 @@
             </p>
           </div>
           <div class="border border-blue-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700">WebRTC Stream:</p>
+            <p
+              class="text-lg font-bold"
+              :class="webrtcConnected ? 'text-green-600' : 'text-red-600'"
+            >
+              {{ webrtcConnected ? 'Connected' : 'Disconnected' }}
+            </p>
+          </div>
+          <div class="border border-blue-200 rounded-lg p-4">
             <p class="text-sm font-medium text-gray-700">Joystick Connection:</p>
             <p
               class="text-lg font-bold"
@@ -134,38 +143,68 @@
             </div>
           </div>
 
+          <!-- WebRTC Video Stream (Fullscreen) -->
           <div class="flex-1 flex flex-col items-center justify-center relative rounded-lg shadow-md bg-gray-900 overflow-hidden">
-            <div class="relative w-full h-full">
-              <img
-                :src="cameraUrl"
-                alt="UGV Camera Feed"
-                class="w-full h-full object-cover rounded-lg"
-                v-if="connectionStatus === 'Connected'"
-              />
-              <div v-else class="absolute inset-0 flex items-center justify-center text-center text-white">
-                <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
-                <div>
-                  <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
-                  <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
+            <div class="webrtc-container bg-black h-full w-full">
+              <!-- Video Stream -->
+              <div class="video-container h-full">
+                <video 
+                  ref="videoRef" 
+                  autoplay 
+                  playsinline 
+                  controls 
+                  muted
+                  class="video-stream h-full w-full"
+                  :class="{ 'streaming': isStreaming }"
+                ></video>
+                
+                <div v-if="!isStreaming" class="video-placeholder">
+                  <div class="placeholder-content">
+                    <div class="camera-icon">📹</div>
+                    <p>Click "Start Stream" to begin</p>
+                  </div>
                 </div>
               </div>
 
-              <div class="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
-                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0">
-                  <path d="M 50 100 L 40 80 A 15 15 0 0 1 60 80 L 50 100" fill="rgba(255, 255, 255, 0.3)" stroke="white" stroke-width="0.5" stroke-dasharray="1, 1"/>
-                  <path d="M 40 80 L 30 65 A 30 30 0 0 1 70 65 L 60 80" fill="transparent" stroke="yellow" stroke-width="0.5" stroke-dasharray="1, 1"/>
-                  <path d="M 30 65 L 20 50 A 50 50 0 0 1 80 50 L 70 65" fill="transparent" stroke="red" stroke-width="0.5" stroke-dasharray="1, 1"/>
-                </svg>
+              <!-- Controls -->
+              <div class="controls absolute bottom-4 left-4 right-4 flex justify-center gap-2">
+                <button 
+                  @click="startWebRTCConnection" 
+                  :disabled="webrtcConnected || webrtcConnecting"
+                  class="btn primary"
+                >
+                  <span v-if="webrtcConnecting">🔄 Connecting...</span>
+                  <span v-else>▶️ Start Stream</span>
+                </button>
+                
+                <button 
+                  @click="stopWebRTCConnection" 
+                  :disabled="!webrtcConnected"
+                  class="btn secondary"
+                >
+                  ⏹️ Stop Stream
+                </button>
+                
+                <button 
+                  @click="toggleTestSource" 
+                  :disabled="!webrtcConnected"
+                  class="btn tertiary"
+                >
+                  {{ useTestSource ? '📹 Use ROS Camera' : '🎾 Use Test Pattern' }}
+                </button>
               </div>
-            </div>
 
-            <div
-              v-if="latencyMs !== null"
-              class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded"
-            >
-              <p class="text-sm">
-                Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span>
-              </p>
+              <!-- Status Info -->
+              <div class="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded text-sm">
+                <div class="flex items-center gap-2">
+                  <span :class="['status-dot', webrtcConnected ? 'connected' : 'disconnected']"></span>
+                  WebRTC: {{ getWebRTCStatusText() }}
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <span :class="['status-dot', wsConnected ? 'connected' : 'disconnected']"></span>
+                  WebSocket: {{ wsConnected ? 'Connected' : 'Disconnected' }}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -295,9 +334,8 @@
             </div>
           </div>
 
-          <div
-            class="lg:col-span-1 bg-gray-900 rounded-lg shadow-md p-6 text-white flex flex-col items-center justify-center relative overflow-hidden"
-          >
+          <!-- WebRTC Video Stream (Normal View) -->
+          <div class="lg:col-span-1 bg-gray-900 rounded-lg shadow-md p-6 text-white flex flex-col items-center justify-center relative overflow-hidden">
             <div class="absolute top-4 right-4 flex space-x-2 z-10">
               <button
                 @click="toggleFullscreen"
@@ -306,21 +344,63 @@
                 <i class="bx bx-fullscreen text-xl"></i>
               </button>
             </div>
-            <img
-              :src="cameraUrl"
-              alt="UGV Camera Feed"
-              class="w-full h-auto object-contain rounded-lg border-2 border-gray-700"
-              v-if="connectionStatus === 'Connected'"
-            />
-            <div v-else class="text-center">
-              <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
-              <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
-              <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
-            </div>
-            <div v-if="latencyMs !== null" class="mt-4 text-sm">
-              <p>
-                Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span>
-              </p>
+            
+            <div class="webrtc-container h-full w-full">
+              <!-- Video Stream -->
+              <div class="video-container h-full">
+                <video 
+                  ref="videoRef" 
+                  autoplay 
+                  playsinline 
+                  controls 
+                  muted
+                  class="video-stream h-full w-full"
+                  :class="{ 'streaming': isStreaming }"
+                ></video>
+                
+                <div v-if="!isStreaming" class="video-placeholder">
+                  <div class="placeholder-content">
+                    <div class="camera-icon">📹</div>
+                    <p>Click "Start Stream" to begin</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Controls -->
+              <div class="controls absolute bottom-4 left-4 right-4 flex justify-center gap-2">
+                <button 
+                  @click="startWebRTCConnection" 
+                  :disabled="webrtcConnected || webrtcConnecting"
+                  class="btn primary text-sm"
+                >
+                  <span v-if="webrtcConnecting">🔄 Connecting...</span>
+                  <span v-else>▶️ Start Stream</span>
+                </button>
+                
+                <button 
+                  @click="stopWebRTCConnection" 
+                  :disabled="!webrtcConnected"
+                  class="btn secondary text-sm"
+                >
+                  ⏹️ Stop
+                </button>
+                
+                <button 
+                  @click="toggleTestSource" 
+                  :disabled="!webrtcConnected"
+                  class="btn tertiary text-sm"
+                >
+                  {{ useTestSource ? '📹 Camera' : '🎾 Test' }}
+                </button>
+              </div>
+
+              <!-- Status Info -->
+              <div class="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded text-sm">
+                <div class="flex items-center gap-2">
+                  <span :class="['status-dot', webrtcConnected ? 'connected' : 'disconnected']"></span>
+                  WebRTC: {{ getWebRTCStatusText() }}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -488,14 +568,26 @@ const props = defineProps({
 
 const emit = defineEmits(['back-to-overview'])
 
+// WebRTC variables (from WebRTC.vue)
+const videoRef = ref(null)
+const webrtcConnected = ref(false)
+const webrtcConnecting = ref(false)
+const wsConnected = ref(false)
+const isStreaming = ref(false)
+const connectionState = ref('new')
+const iceConnectionState = ref('new')
+const signalingState = ref('stable')
+const messageCount = ref(0)
+const useTestSource = ref(false)
+
+let pc = null
+let ws = null
+
+// Update this with your robot's IP address
+const SIGNALING_SERVER = "ws://192.168.100.5:8765"
+
 // Fullscreen state
 const isFullscreen = ref(false)
-
-// Camera configuration
-const cameraUrl = ref(
-  'http://192.168.100.5:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color',
-)
-const latencyMs = ref(null)
 
 // Connection status
 const connectionStatus = ref('Disconnected')
@@ -572,6 +664,184 @@ const maxAngularSpeed = ref(1.0)
 const ROBOT_IP = '192.168.100.5' // Replace with your robot's IP
 let ros = null
 let cmdVel = null
+
+// WebRTC Functions (from WebRTC.vue)
+function getWebRTCStatusText() {
+  const stateMap = {
+    'new': '⚪ New',
+    'connecting': '🔄 Connecting',
+    'connected': '✅ Connected', 
+    'disconnected': '⚠️ Disconnected',
+    'failed': '❌ Failed',
+    'closed': '⭕ Closed'
+  }
+  return stateMap[connectionState.value] || `❓ ${connectionState.value}`
+}
+
+function startWebRTCConnection() {
+  if (webrtcConnected.value || webrtcConnecting.value) return
+
+  console.log("🌐 Connecting to signaling server:", SIGNALING_SERVER)
+  webrtcConnecting.value = true
+  
+  ws = new WebSocket(SIGNALING_SERVER)
+
+  ws.onopen = () => {
+    console.log("✅ Connected to signaling server")
+    wsConnected.value = true
+    webrtcConnecting.value = false
+  }
+
+  ws.onclose = () => {
+    console.warn("⚠️ WebSocket closed")
+    wsConnected.value = false
+    webrtcConnected.value = false
+    webrtcConnecting.value = false
+    isStreaming.value = false
+  }
+
+  ws.onerror = (err) => {
+    console.error("❌ WebSocket error:", err)
+    webrtcConnecting.value = false
+  }
+
+  ws.onmessage = async (event) => {
+    try {
+      const msg = JSON.parse(event.data)
+      console.log("📩 Received message:", msg.type)
+      messageCount.value++
+
+      if (msg.type === "offer") {
+        console.log("📡 Handling offer from robot")
+        await handleOffer(msg.sdp)
+      } else if (msg.type === "ice") {
+        console.log("🔹 Adding ICE candidate from robot")
+        if (pc) {
+          await pc.addIceCandidate(new RTCIceCandidate({
+            candidate: msg.candidate,
+            sdpMLineIndex: msg.sdpMLineIndex
+          }))
+          console.log("✅ ICE candidate added")
+        }
+      } else {
+        console.warn("⚠️ Unknown message type:", msg.type)
+      }
+    } catch (err) {
+      console.error("❌ Failed to parse WebSocket message:", err)
+    }
+  }
+
+  createPeerConnection()
+}
+
+function stopWebRTCConnection() {
+  if (pc) {
+    pc.close()
+    pc = null
+  }
+  if (ws) {
+    ws.close()
+    ws = null
+  }
+  
+  webrtcConnected.value = false
+  wsConnected.value = false
+  isStreaming.value = false
+  connectionState.value = 'closed'
+  iceConnectionState.value = 'closed'
+  
+  if (videoRef.value) {
+    videoRef.value.srcObject = null
+  }
+  
+  console.log("🔌 Connection stopped")
+}
+
+function createPeerConnection() {
+  pc = new RTCPeerConnection({
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" }
+    ]
+  })
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate && ws && ws.readyState === WebSocket.OPEN) {
+      console.log("🔹 Sending ICE candidate to robot")
+      ws.send(JSON.stringify({
+        type: "ice",
+        candidate: event.candidate.candidate,
+        sdpMLineIndex: event.candidate.sdpMLineIndex
+      }))
+    }
+  }
+
+  pc.ontrack = (event) => {
+    console.log("🎥 Remote stream received")
+    if (videoRef.value && event.streams[0]) {
+      videoRef.value.srcObject = event.streams[0]
+      isStreaming.value = true
+    }
+  }
+
+  pc.onconnectionstatechange = () => {
+    connectionState.value = pc.connectionState
+    console.log("📶 PeerConnection state:", pc.connectionState)
+    webrtcConnected.value = pc.connectionState === 'connected'
+    
+    if (pc.connectionState === 'connected') {
+      isStreaming.value = true
+    } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+      isStreaming.value = false
+    }
+  }
+
+  pc.oniceconnectionstatechange = () => {
+    iceConnectionState.value = pc.iceConnectionState
+    console.log("❄️ ICE connection state:", pc.iceConnectionState)
+  }
+
+  pc.onsignalingstatechange = () => {
+    signalingState.value = pc.signalingState
+    console.log("📡 Signaling state:", pc.signalingState)
+  }
+
+  webrtcConnected.value = true
+}
+
+async function handleOffer(sdp) {
+  if (!pc) return
+  
+  console.log("📡 Setting remote description")
+  const desc = { type: "offer", sdp: sdp }
+  await pc.setRemoteDescription(desc)
+  console.log("✅ Remote description set")
+
+  console.log("📡 Creating local answer")
+  const answer = await pc.createAnswer()
+  await pc.setLocalDescription(answer)
+  console.log("✅ Local description (answer) set")
+
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: "answer",
+      sdp: answer.sdp
+    }))
+    console.log("📤 Answer sent to robot")
+  }
+}
+
+function toggleTestSource() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return
+  
+  useTestSource.value = !useTestSource.value
+  ws.send(JSON.stringify({
+    type: "test_source",
+    enable: useTestSource.value
+  }))
+  
+  console.log(`🎾 Switched to ${useTestSource.value ? 'test pattern' : 'ROS camera'}`)
+}
 
 // GPS utility functions (integrated from App.vue)
 function getGpsStatusText() {
@@ -1019,30 +1289,7 @@ const initializeRos = () => {
     joystick.value.mode = msg.data
   })
 
-  // Create a subscriber for the compressed image topic
-  const imageListener = new ROSLIB.Topic({
-    ros: ros,
-    name: '/zed2i/zed_node/rgb/image_rect_color/compressed',
-    messageType: 'sensor_msgs/CompressedImage',
-  })
-
-  imageListener.subscribe(function (message) {
-    // 1. Get the ROS capture timestamp
-    const robotCaptureTimeSec = message.header.stamp.sec
-    const robotCaptureTimeNanosec = message.header.stamp.nanosec
-    const robotCaptureTimeMs = robotCaptureTimeSec * 1000 + robotCaptureTimeNanosec / 1000000
-
-    // 2. Get the current client-side time (when the message is received/about to be displayed)
-    const clientReceiveTimeMs = Date.now() // Current time in milliseconds since epoch
-
-    // Calculate the latency
-    latencyMs.value = clientReceiveTimeMs - robotCaptureTimeMs
-
-    // Now, render the image data
-    const imageData =
-      'data:image/jpeg;base64,' + btoa(String.fromCharCode.apply(null, message.data))
-    cameraUrl.value = imageData
-  })
+  connectionStatus.value = 'Connected'
 }
 
 // Enhanced Publishing System (from App.vue)
@@ -1308,7 +1555,7 @@ onUnmounted(() => {
     clearInterval(movementInterval)
   }
   stopPublishing()
-  cancelAutoRefresh()
+  stopWebRTCConnection()
   emergencyStop()
   if (ros && ros.isConnected) {
     sendCmd(0, 0)
@@ -1437,5 +1684,119 @@ button:disabled:hover {
 .text-red-600 {
   color: #dc2626;
   font-weight: bold;
+}
+
+/* WebRTC Styles (from WebRTC.vue) */
+.webrtc-container {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.video-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 16/9;  /* Match ZED2i 640x360 aspect ratio */
+}
+
+.video-stream {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: none;
+}
+
+.video-stream.streaming {
+  border: 3px solid #28a745;
+}
+
+.video-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.placeholder-content {
+  text-align: center;
+}
+
+.camera-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.btn.secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn.secondary:hover:not(:disabled) {
+  background: #545b62;
+}
+
+.btn.tertiary {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn.tertiary:hover:not(:disabled) {
+  background: #138496;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.status-dot.connected {
+  background-color: #28a745;
+}
+
+.status-dot.disconnected {
+  background-color: #dc3545;
 }
 </style>
