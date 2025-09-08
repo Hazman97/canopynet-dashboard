@@ -1,4 +1,7 @@
-<template>
+//teleoperationUGVView.vue
+<template><div>
+  <webrtc />
+</div>
   <div class="p-6 bg-gray-50 min-h-screen font-sans">
     <div v-if="!ugvId">
       <div
@@ -79,6 +82,15 @@
             <p class="text-sm font-medium text-gray-700">Joystick Mode:</p>
             <p class="text-lg font-bold text-gray-800">{{ joystick.mode }}</p>
           </div>
+          <div class="border border-blue-200 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-700">Current Speed:</p>
+            <p class="text-sm text-gray-800">Linear={{ motion.speed.toFixed(2) }} m/s,</p>
+            <p class="text-sm text-gray-800">Angular={{ currentAngular.toFixed(2) }} rad/s</p>
+          </div>
+        </div>
+
+        <div v-if="refreshCountdown > 0" class="border-t pt-4">
+          <div class="refresh-notification">🔄 Auto-refreshing in {{ refreshCountdown }}s...</div>
         </div>
       </div>
 
@@ -100,6 +112,7 @@
                   <div id="gps-map-fullscreen" class="w-full h-full gps-map"></div>
                 </div>
                 
+                <!-- Map Controls in Fullscreen -->
                 <div class="flex flex-wrap gap-1 mt-2">
                   <button @click="centerMapOnRobot" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
                     🎯 Center
@@ -135,9 +148,11 @@
 
           <div class="flex-1 flex flex-col items-center justify-center relative rounded-lg shadow-md bg-gray-900 overflow-hidden">
             <div class="relative w-full h-full">
-              <webrtc 
-                v-if="connectionStatus === 'Connected'"
+              <img
+                :src="cameraUrl"
+                alt="UGV Camera Feed"
                 class="w-full h-full object-cover rounded-lg"
+                v-if="connectionStatus === 'Connected'"
               />
               <div v-else class="absolute inset-0 flex items-center justify-center text-center text-white">
                 <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
@@ -147,8 +162,23 @@
                 </div>
               </div>
 
+              <div class="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0">
+                  <path d="M 50 100 L 40 80 A 15 15 0 0 1 60 80 L 50 100" fill="rgba(255, 255, 255, 0.3)" stroke="white" stroke-width="0.5" stroke-dasharray="1, 1"/>
+                  <path d="M 40 80 L 30 65 A 30 30 0 0 1 70 65 L 60 80" fill="transparent" stroke="yellow" stroke-width="0.5" stroke-dasharray="1, 1"/>
+                  <path d="M 30 65 L 20 50 A 50 50 0 0 1 80 50 L 70 65" fill="transparent" stroke="red" stroke-width="0.5" stroke-dasharray="1, 1"/>
+                </svg>
+              </div>
             </div>
 
+            <div
+              v-if="latencyMs !== null"
+              class="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded"
+            >
+              <p class="text-sm">
+                Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span>
+              </p>
+            </div>
           </div>
 
           <div class="w-80 bg-gray-800 p-6 flex flex-col rounded-lg shadow-md overflow-y-auto">
@@ -241,6 +271,7 @@
           <div class="lg:col-span-1 bg-white rounded-lg shadow-md p-6 flex flex-col">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">UGV Position Tracking</h3>
             
+            <!-- GPS Status Info -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
               <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">GPS Status:</p>
@@ -255,12 +286,17 @@
                 <p class="text-sm font-medium text-gray-700">Altitude:</p>
                 <p class="text-sm text-gray-800">{{ gpsData.altitude.toFixed(2) }} m</p>
               </div>
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Accuracy:</p>
+                <p class="text-sm text-gray-800">{{ getPositionAccuracy() }} m</p>
+              </div>
             </div>
 
             <div class="relative flex-grow bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
               <div id="gps-map-normal" class="w-full h-full gps-map"></div>
             </div>
             
+            <!-- Map Controls -->
             <div class="flex flex-wrap gap-2 mt-3">
               <button @click="centerMapOnRobot" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm">
                 🎯 Center on Robot
@@ -288,14 +324,21 @@
                 <i class="bx bx-fullscreen text-xl"></i>
               </button>
             </div>
-            <webrtc 
-              v-if="connectionStatus === 'Connected'"
+            <img
+              :src="cameraUrl"
+              alt="UGV Camera Feed"
               class="w-full h-auto object-contain rounded-lg border-2 border-gray-700"
+              v-if="connectionStatus === 'Connected'"
             />
             <div v-else class="text-center">
               <i class="bx bx-video-off text-6xl text-gray-400 mb-4"></i>
               <p class="text-xl font-semibold mb-2">Camera Feed Unavailable</p>
               <p class="text-sm text-gray-400">Not connected to robot or stream error</p>
+            </div>
+            <div v-if="latencyMs !== null" class="mt-4 text-sm">
+              <p>
+                Latency: <span class="font-medium">{{ latencyMs.toFixed(2) }} ms</span>
+              </p>
             </div>
           </div>
 
@@ -417,6 +460,76 @@
           </div>
         </div>
 
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="bx bx-cog text-xl mr-2"></i>Movement Settings
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="setting-item flex items-center">
+              <label for="commandRateSelect" class="text-gray-700 mr-2">Command Rate (Hz):</label>
+              <select
+                id="commandRateSelect"
+                @change="updateCommandRate($event.target.value)"
+                class="form-select border border-gray-300 rounded-md p-2"
+              >
+                <option value="20" :selected="commandRate === 50">20 Hz (50ms)</option>
+                <option value="10" :selected="commandRate === 100">10 Hz (100ms)</option>
+                <option value="30" :selected="commandRate === 33">30 Hz (33ms)</option>
+                <option value="50" :selected="commandRate === 20">50 Hz (20ms)</option>
+              </select>
+            </div>
+            <div class="setting-item flex items-center">
+              <label for="maxLinearSpeedRange" class="text-gray-700 mr-2">Max Linear Speed:</label>
+              <input
+                type="range"
+                id="maxLinearSpeedRange"
+                min="0.1"
+                max="2.0"
+                step="0.1"
+                :value="maxLinearSpeed"
+                @input="updateMaxLinearSpeed($event.target.value)"
+                class="flex-grow"
+              />
+              <span class="ml-2 font-medium text-blue-600"
+                >{{ maxLinearSpeed.toFixed(1) }} m/s</span
+              >
+            </div>
+            <div class="setting-item flex items-center">
+              <label for="maxAngularSpeedRange" class="text-gray-700 mr-2"
+                >Max Angular Speed:</label
+              >
+              <input
+                type="range"
+                id="maxAngularSpeedRange"
+                min="0.1"
+                max="2.0"
+                step="0.1"
+                :value="maxAngularSpeed"
+                @input="updateMaxAngularSpeed($event.target.value)"
+                class="flex-grow"
+              />
+              <span class="ml-2 font-medium text-blue-600"
+                >{{ maxAngularSpeed.toFixed(1) }} rad/s</span
+              >
+            </div>
+            <div class="setting-item flex items-center">
+              <label for="safetyKeySelect" class="text-gray-700 mr-2">Safety Key:</label>
+              <select
+                id="safetyKeySelect"
+                @change="updateSafetyKey($event.target.value)"
+                class="form-select border border-gray-300 rounded-md p-2"
+              >
+                <option value="Shift" :selected="safetyKey === 'Shift'">Shift (Left or Right)</option>
+                <option value="Control" :selected="safetyKey === 'Control'">Ctrl (Left or Right)</option>
+                <option value="Alt" :selected="safetyKey === 'Alt'">Alt (Left or Right)</option>
+                <option value=" " :selected="safetyKey === ' '">Spacebar</option>
+                <option value="x" :selected="safetyKey === 'x'">X Key</option>
+                <option value="z" :selected="safetyKey === 'z'">Z Key</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -424,14 +537,41 @@
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">PIU State:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.piu_state }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">Battery Voltage:</p>
                 <p class="text-base font-bold text-gray-800">
                   {{ dbw.battery_voltage.toFixed(2) }} V
                 </p>
               </div>
               <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Battery Current:</p>
+                <p class="text-base font-bold text-gray-800">
+                  {{ dbw.battery_current.toFixed(2) }} A
+                </p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">Battery Percentage:</p>
                 <p class="text-base font-bold text-gray-800">{{ batteryPercentage.toFixed(0) }}%</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Estop Triggered:</p>
+                <p
+                  class="text-base font-bold"
+                  :class="dbw.estop_trigger ? 'text-red-600' : 'text-green-600'"
+                >
+                  {{ dbw.estop_trigger ? 'YES' : 'NO' }}
+                </p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Front Motor Fault:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.front_md_fault }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3 md:col-span-2">
+                <p class="text-sm font-medium text-gray-700">Rear Motor Fault:</p>
+                <p class="text-base font-bold text-gray-800">{{ dbw.rear_md_fault }}</p>
               </div>
             </div>
           </div>
@@ -441,9 +581,37 @@
               <i class="bx bx-tachometer text-xl mr-2"></i>Motion Feedback
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="border border-blue-200 rounded-lg p-3 md:col-span-2">
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Left Encoder Ticks:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.left_encoder_ticks }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Right Encoder Ticks:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.right_encoder_ticks }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Front Left RPM:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.front_left_rpm }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Rear Right RPM:</p>
+                <p class="text-base font-bold text-gray-800">{{ motion.rear_right_rpm }}</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
                 <p class="text-sm font-medium text-gray-700">Speed:</p>
                 <p class="text-base font-bold text-gray-800">{{ motion.speed.toFixed(2) }} m/s</p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3">
+                <p class="text-sm font-medium text-gray-700">Left Wheel Speed:</p>
+                <p class="text-base font-bold text-gray-800">
+                  {{ motion.left_wheel_speed_mps.toFixed(2) }} m/s
+                </p>
+              </div>
+              <div class="border border-blue-200 rounded-lg p-3 md:col-span-2">
+                <p class="text-sm font-medium text-gray-700">Right Wheel Speed:</p>
+                <p class="text-base font-bold text-gray-800">
+                  {{ motion.right_wheel_speed_mps.toFixed(2) }} m/s
+                </p>
               </div>
             </div>
           </div>
@@ -465,6 +633,12 @@ const emit = defineEmits(['back-to-overview'])
 
 // Fullscreen state
 const isFullscreen = ref(false)
+
+// Camera configuration
+const cameraUrl = ref(
+  'http://192.168.100.5:8080/stream?topic=/zed2i/zed_node/rgb_raw/image_raw_color',
+)
+const latencyMs = ref(null)
 
 // Connection status
 const connectionStatus = ref('Disconnected')
@@ -489,6 +663,11 @@ let fullscreenRobotMarker = null
 let fullscreenTrailPolyline = null
 const trailPoints = ref([])
 const showTrail = ref(true)
+
+// Auto-refresh functionality (always enabled)
+const autoRefreshDelay = ref(3) // Fixed delay at 3 seconds
+const refreshCountdown = ref(0)
+let countdownInterval = null
 
 // Movement control variables - Enhanced with safety system
 const isMoving = ref(false)
@@ -931,6 +1110,7 @@ const initializeRos = () => {
   ros.on('connection', () => {
     console.log('✅ Connected to ROS')
     connectionStatus.value = 'Connected'
+    cancelAutoRefresh() // Cancel any pending refresh
     startPublishing() // Start continuous publishing with safety system
   })
 
@@ -938,12 +1118,14 @@ const initializeRos = () => {
     console.error('❌ Error connecting to ROS:', error)
     connectionStatus.value = 'Error'
     stopPublishing()
+    startAutoRefresh() // Start auto-refresh on error
   })
 
   ros.on('close', () => {
     console.log('🔌 Connection to ROS closed')
     connectionStatus.value = 'Disconnected'
     stopPublishing()
+    startAutoRefresh() // Start auto-refresh on disconnect
   })
 
   // Define the /cmd_vel publisher
@@ -983,12 +1165,12 @@ const initializeRos = () => {
   })
 
   dbwTopic.subscribe((msg) => {
-    // dbw.value.piu_state = msg.piu_state
+    dbw.value.piu_state = msg.piu_state
     dbw.value.battery_voltage = msg.battery_voltage
-    // dbw.value.battery_current = msg.battery_current
-    // dbw.value.estop_trigger = msg.estop_trigger
-    // dbw.value.front_md_fault = msg.front_md_fault
-    // dbw.value.rear_md_fault = msg.rear_md_fault
+    dbw.value.battery_current = msg.battery_current
+    dbw.value.estop_trigger = msg.estop_trigger
+    dbw.value.front_md_fault = msg.front_md_fault
+    dbw.value.rear_md_fault = msg.rear_md_fault
   })
 
   // Motion topic
@@ -999,13 +1181,13 @@ const initializeRos = () => {
   })
 
   motionTopic.subscribe((msg) => {
-    // motion.value.left_encoder_ticks = msg.left_encoder_ticks
-    // motion.value.right_encoder_ticks = msg.right_encoder_ticks
-    // motion.value.front_left_rpm = msg.front_left_rpm
-    // motion.value.rear_right_rpm = msg.rear_right_rpm
+    motion.value.left_encoder_ticks = msg.left_encoder_ticks
+    motion.value.right_encoder_ticks = msg.right_encoder_ticks
+    motion.value.front_left_rpm = msg.front_left_rpm
+    motion.value.rear_right_rpm = msg.rear_right_rpm
     motion.value.speed = msg.speed
-    // motion.value.left_wheel_speed_mps = msg.left_wheel_speed_mps
-    // motion.value.right_wheel_speed_mps = msg.right_wheel_speed_mps
+    motion.value.left_wheel_speed_mps = msg.left_wheel_speed_mps
+    motion.value.right_wheel_speed_mps = msg.right_wheel_speed_mps
   })
 
   // Joystick connection topic
@@ -1038,10 +1220,45 @@ const initializeRos = () => {
   })
 
   imageListener.subscribe(function (message) {
+    // 1. Get the ROS capture timestamp
+    const robotCaptureTimeSec = message.header.stamp.sec
+    const robotCaptureTimeNanosec = message.header.stamp.nanosec
+    const robotCaptureTimeMs = robotCaptureTimeSec * 1000 + robotCaptureTimeNanosec / 1000000
+
+    // 2. Get the current client-side time (when the message is received/about to be displayed)
+    const clientReceiveTimeMs = Date.now() // Current time in milliseconds since epoch
+
+    // Calculate the latency
+    latencyMs.value = clientReceiveTimeMs - robotCaptureTimeMs
+
+    // Now, render the image data
     const imageData =
       'data:image/jpeg;base64,' + btoa(String.fromCharCode.apply(null, message.data))
     cameraUrl.value = imageData
   })
+}
+
+// Auto-refresh functions (always enabled)
+function startAutoRefresh() {
+  console.log(`🔄 Starting auto-refresh countdown (${autoRefreshDelay.value}s)`)
+  refreshCountdown.value = autoRefreshDelay.value
+
+  countdownInterval = setInterval(() => {
+    refreshCountdown.value--
+    if (refreshCountdown.value <= 0) {
+      clearInterval(countdownInterval)
+      initializeRos() // Re-initialize the ROS connection instead of reloading the page
+    }
+  }, 1000)
+}
+
+function cancelAutoRefresh() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+    countdownInterval = null
+  }
+  refreshCountdown.value = 0
+  console.log('❌ Auto-refresh cancelled')
 }
 
 // Enhanced Publishing System (from App.vue)
@@ -1307,6 +1524,7 @@ onUnmounted(() => {
     clearInterval(movementInterval)
   }
   stopPublishing()
+  cancelAutoRefresh()
   emergencyStop()
   if (ros && ros.isConnected) {
     sendCmd(0, 0)
@@ -1334,6 +1552,31 @@ onUnmounted(() => {
 
 <style scoped>
 /* Auto-refresh section styles */
+.auto-refresh-section {
+  padding-top: 10px;
+}
+
+.refresh-notification {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+  font-weight: bold;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 
 .setting-item label {
   display: flex;
