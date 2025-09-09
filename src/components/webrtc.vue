@@ -17,13 +17,6 @@
           {{ getConnectionStatusText() }}
         </span>
       </div>
-      <!--
-      <div class="status-item">
-        <span class="label">ROS2 Topic:</span>
-        <span class="topic">/zed2i/zed_node/right/image_rect_color</span>
-      </div>
-      -->
-    </div>
     </div>
 
     <!-- Video Stream -->
@@ -38,64 +31,22 @@
         :class="{ 'streaming': isStreaming }"
       ></video>
       
+      <!-- Updated placeholder text -->
       <div v-if="!isStreaming" class="video-placeholder">
         <div class="placeholder-content">
           <div class="camera-icon">📹</div>
-          <p>Click "Start Stream" to begin</p>
+          <p>{{ connecting ? 'Attempting to connect...' : 'Initializing Stream...' }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Controls -->
-    <div class="controls">
-      <button 
-        @click="startConnection" 
-        :disabled="connected || connecting"
-        class="btn primary"
-      >
-        <span v-if="connecting">🔄 Connecting...</span>
-        <span v-else>▶️ Start Stream</span>
-      </button>
-      
-      <button 
-        @click="stopConnection" 
-        :disabled="!connected"
-        class="btn secondary"
-      >
-        ⏹️ Stop Stream
-      </button>
-      
-      <!-- <button 
-        @click="toggleTestSource" 
-        :disabled="!connected"
-        class="btn tertiary"
-      >
-        {{ useTestSource ? '📹 Use ROS Camera' : '🎾 Use Test Pattern' }}
-      </button> -->
-    </div>
+    <!-- Controls have been removed for automatic streaming -->
 
-    <!-- Debug Info -->
-    <!-- <div v-if="showDebug" class="debug-panel">
-      <h4>🔧 Debug Information</h4>
-      <div class="debug-item">
-        <strong>ICE Connection State:</strong> {{ iceConnectionState }}
-      </div>
-      <div class="debug-item">
-        <strong>Signaling State:</strong> {{ signalingState }}
-      </div>
-      <div class="debug-item">
-        <strong>Messages Received:</strong> {{ messageCount }}
-      </div>
-    </div>
-
-    <button @click="showDebug = !showDebug" class="debug-toggle">
-      {{ showDebug ? 'Hide Debug' : 'Show Debug' }}
-    </button>
-   -->
+  </div>
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const videoRef = ref(null)
 const connected = ref(false)
@@ -106,7 +57,6 @@ const connectionState = ref('new')
 const iceConnectionState = ref('new')
 const signalingState = ref('stable')
 const messageCount = ref(0)
-const showDebug = ref(false)
 const useTestSource = ref(false)
 
 let pc = null
@@ -114,6 +64,18 @@ let ws = null
 
 // Update this with your robot's IP address
 const SIGNALING_SERVER = "ws://192.168.100.5:8765"
+
+// Automatically start the connection when the component is mounted
+onMounted(() => {
+  console.log("WebRTC component mounted. Automatically starting connection.")
+  startConnection()
+})
+
+// Cleanup on component unmount
+onBeforeUnmount(() => {
+  stopConnection()
+})
+
 
 function getConnectionStatusText() {
   const stateMap = {
@@ -234,6 +196,7 @@ function createPeerConnection() {
   }
 
   pc.onconnectionstatechange = () => {
+    if (!pc) return;
     connectionState.value = pc.connectionState
     console.log("📶 PeerConnection state:", pc.connectionState)
     
@@ -245,11 +208,13 @@ function createPeerConnection() {
   }
 
   pc.oniceconnectionstatechange = () => {
+    if (!pc) return;
     iceConnectionState.value = pc.iceConnectionState
     console.log("❄️ ICE connection state:", pc.iceConnectionState)
   }
 
   pc.onsignalingstatechange = () => {
+    if (!pc) return;
     signalingState.value = pc.signalingState
     console.log("📡 Signaling state:", pc.signalingState)
   }
@@ -291,10 +256,6 @@ function toggleTestSource() {
   console.log(`🎾 Switched to ${useTestSource.value ? 'test pattern' : 'ROS camera'}`)
 }
 
-// Cleanup on component unmount
-onBeforeUnmount(() => {
-  stopConnection()
-})
 </script>
 
 <style scoped>
@@ -303,16 +264,26 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 1rem;
 }
 
 .status-panel {
   display: flex;
   gap: 20px;
-  margin: 20px 0;
+  margin-bottom: 20px;
   padding: 15px;
   background: #f8f9fa;
   border-radius: 8px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .status-item {
@@ -344,12 +315,12 @@ onBeforeUnmount(() => {
 
 .video-container {
   position: relative;
-  margin: 20px 0;
   border-radius: 12px;
   overflow: hidden;
   background: #000;
-  aspect-ratio: 16/9;  /* Match ZED2i 640x360 aspect ratio */
-  min-height: 360px;
+  aspect-ratio: 16/9;
+  width: 100%;
+  flex-grow: 1;
 }
 
 .video-stream {
@@ -385,96 +356,10 @@ onBeforeUnmount(() => {
   margin-bottom: 1rem;
 }
 
-.controls {
-  display: flex;
-  gap: 12px;
-  margin: 20px 0;
-  flex-wrap: wrap;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 120px;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn.primary {
-  background: #007bff;
-  color: white;
-}
-
-.btn.primary:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.btn.secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn.secondary:hover:not(:disabled) {
-  background: #545b62;
-}
-
-.btn.tertiary {
-  background: #17a2b8;
-  color: white;
-}
-
-.btn.tertiary:hover:not(:disabled) {
-  background: #138496;
-}
-
-.debug-panel {
-  margin: 20px 0;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #17a2b8;
-}
-
-.debug-item {
-  margin: 8px 0;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 0.9em;
-}
-
-.debug-toggle {
-  margin-top: 10px;
-  padding: 8px 16px;
-  background: #e9ecef;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.debug-toggle:hover {
-  background: #dee2e6;
-}
-
 @media (max-width: 768px) {
   .status-panel {
     flex-direction: column;
     gap: 10px;
-  }
-  
-  .controls {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
   }
 }
 </style>
