@@ -50,41 +50,66 @@
         </div>
       </div>
 
-      <!-- Trail History Modal -->
-      <div v-if="showHistoryModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-          <div class="p-4 border-b flex justify-between items-center">
-            <h3 class="text-xl font-semibold text-gray-800"><i class="bx bx-history mr-2"></i>Saved Trail History</h3>
-            <button @click="showHistoryModal = false" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-          </div>
-          <div class="p-4 overflow-y-auto">
-            <div v-if="trailHistory.length === 0" class="text-center text-gray-500 p-8">
-              <p>No saved trails yet.</p>
-              <p class="text-sm">Use the "Save Current Trail" button on the map to save a trail.</p>
+      <!-- Trail History Modal - Fixed to right side -->
+      <div v-if="showHistoryModal" class="fixed inset-0 bg-black bg-opacity-60 z-50">
+        <div class="flex h-full">
+          <!-- Left side - clickable overlay to close modal -->
+          <div class="flex-1" @click="showHistoryModal = false"></div>
+          
+          <!-- Right side - modal content -->
+          <div class="w-full max-w-md bg-white shadow-xl flex flex-col h-full">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+              <h3 class="text-xl font-semibold text-gray-800">
+                <i class="bx bx-history mr-2"></i>Saved Trail History
+              </h3>
+              <button @click="showHistoryModal = false" class="text-gray-500 hover:text-gray-800 text-2xl">
+                &times;
+              </button>
             </div>
-            <ul v-else class="space-y-3">
-              <li v-for="(trail, index) in trailHistory" :key="trail.id" class="bg-gray-50 p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between">
-                <div class="flex-grow mb-2 sm:mb-0">
-                  <input 
-                    v-if="trail.editing" 
-                    v-model="trail.name" 
-                    @blur="finishEditingTrail(trail)" 
-                    @keyup.enter="finishEditingTrail(trail)" 
-                    class="w-full p-1 border rounded" 
-                  />
-                  <p v-else class="font-semibold text-gray-700">{{ trail.name }}</p>
-                  <p class="text-xs text-gray-500">{{ trail.points.length }} points | Saved: {{ formatDate(trail.date) }}</p>
-                </div>
-                <div class="flex items-center space-x-2 flex-shrink-0">
-                  <button @click="loadHistoricalTrail(trail)" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-xs rounded-md">Load</button>
-                  <button @click="toggleEditTrail(trail)" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded-md">{{ trail.editing ? 'Save' : 'Rename' }}</button>
-                  <button @click="deleteFromHistory(trail.id)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded-md">Delete</button>
-                </div>
-              </li>
-            </ul>
-          </div>
-          <div class="p-4 border-t text-right">
-            <button @click="showHistoryModal = false" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Close</button>
+            
+            <div class="flex-1 p-4 overflow-y-auto">
+              <div v-if="trailHistory.length === 0" class="text-center text-gray-500 p-8">
+                <p>No saved trails yet.</p>
+                <p class="text-sm">Use the "Save Current Trail" button on the map to save a trail.</p>
+              </div>
+              <ul v-else class="space-y-3">
+                <li v-for="(trail, index) in trailHistory" :key="trail.id" 
+                    class="bg-gray-50 p-3 rounded-lg border flex flex-col justify-between">
+                  <div class="mb-2">
+                    <input 
+                      v-if="trail.editing" 
+                      v-model="trail.name" 
+                      @blur="finishEditingTrail(trail)" 
+                      @keyup.enter="finishEditingTrail(trail)" 
+                      class="w-full p-1 border rounded" 
+                    />
+                    <p v-else class="font-semibold text-gray-700">{{ trail.name }}</p>
+                    <p class="text-xs text-gray-500">{{ trail.points.length }} points | Saved: {{ formatDate(trail.date) }}</p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button @click="loadHistoricalTrail(trail)" 
+                            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-xs rounded-md flex-1">
+                      Load
+                    </button>
+                    <button @click="toggleEditTrail(trail)" 
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-xs rounded-md flex-1">
+                      {{ trail.editing ? 'Save' : 'Rename' }}
+                    </button>
+                    <button @click="deleteFromHistory(trail.id)" 
+                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded-md flex-1">
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="p-4 border-t bg-gray-50">
+              <button @click="showHistoryModal = false" 
+                      class="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1136,12 +1161,6 @@ const initializeRos = () => {
 
   joystickModeTopic.subscribe((msg) => {
     joystick.value.mode = msg.data
-  })
-
-  const imageListener = new ROSLIB.Topic({
-    ros: ros,
-    name: '/zed2i/zed_node/rgb/image_rect_color/compressed',
-    messageType: 'sensor_msgs/CompressedImage',
   })
 
   imageListener.subscribe(function (message) {
