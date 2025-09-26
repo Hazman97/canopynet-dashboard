@@ -162,10 +162,10 @@
                 <div></div>
                 <button
                   class="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                  @mousedown="startMovement(0, maxAngularSpeed)"
+                  @mousedown="startMovement(0, -maxAngularSpeed)"
                   @mouseup="stopMovement"
                   @mouseleave="stopMovement"
-                  @touchstart="startMovement(0, maxAngularSpeed)"
+                  @touchstart="startMovement(0, -maxAngularSpeed)"
                   @touchend="stopMovement"
                   :disabled="!uiControlEnabled || !safetyButtonPressed"
                   :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
@@ -175,10 +175,10 @@
                 <div></div>
                 <button
                   class="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                  @mousedown="startMovement(0, -maxAngularSpeed)"
+                  @mousedown="startMovement(0, maxAngularSpeed)"
                   @mouseup="stopMovement"
                   @mouseleave="stopMovement"
-                  @touchstart="startMovement(0, -maxAngularSpeed)"
+                  @touchstart="startMovement(0, maxAngularSpeed)"
                   @touchend="stopMovement"
                   :disabled="!uiControlEnabled || !safetyButtonPressed"
                   :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
@@ -298,10 +298,10 @@
                 <div></div>
                 <button
                   class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                  @mousedown="startMovement(0, maxAngularSpeed)"
+                  @mousedown="startMovement(0, -maxAngularSpeed)"
                   @mouseup="stopMovement"
                   @mouseleave="stopMovement"
-                  @touchstart="startMovement(0, maxAngularSpeed)"
+                  @touchstart="startMovement(0, -maxAngularSpeed)"
                   @touchend="stopMovement"
                   :disabled="!uiControlEnabled || !safetyButtonPressed"
                   :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
@@ -311,10 +311,10 @@
                 <div></div>
                 <button
                   class="bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors active:bg-blue-700"
-                  @mousedown="startMovement(0, -maxAngularSpeed)"
+                  @mousedown="startMovement(0, maxAngularSpeed)"
                   @mouseup="stopMovement"
                   @mouseleave="stopMovement"
-                  @touchstart="startMovement(0, -maxAngularSpeed)"
+                  @touchstart="startMovement(0, maxAngularSpeed)"
                   @touchend="stopMovement"
                   :disabled="!uiControlEnabled || !safetyButtonPressed"
                   :class="{ 'opacity-50 cursor-not-allowed': !uiControlEnabled || !safetyButtonPressed }"
@@ -723,8 +723,9 @@ function handleKeyDown(event) {
   switch (event.key.toLowerCase()) {
     case 'w': case 'arrowup': event.preventDefault(); startMovement(maxLinearSpeed.value, 0); break;
     case 's': case 'arrowdown': event.preventDefault(); startMovement(-maxLinearSpeed.value, 0); break;
-    case 'a': case 'arrowleft': event.preventDefault(); startMovement(0, maxAngularSpeed.value); break;
-    case 'd': case 'arrowright': event.preventDefault(); startMovement(0, -maxAngularSpeed.value); break;
+    // Reversed left/right directions:
+    case 'a': case 'arrowleft': event.preventDefault(); startMovement(0, -maxAngularSpeed.value); break; // Now moves right
+    case 'd': case 'arrowright': event.preventDefault(); startMovement(0, maxAngularSpeed.value); break; // Now moves left
     case 'escape': if (isFullscreen.value) toggleFullscreen(); break;
     case ' ': event.preventDefault(); emergencyStop(); break;
   }
