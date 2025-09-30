@@ -155,8 +155,8 @@ export default {
       // Initialize map and fit to the bounds of the new polygon
       map.value = window.L.map('map').fitBounds(perimeterPoints);
 
-      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
       }).addTo(map.value);
 
       // --- Custom Icon Definitions ---
@@ -268,7 +268,7 @@ export default {
       perimeterLayer.value = window.L.polygon(perimeterPoints, {
         color: 'green',
         fillColor: 'green',
-        fillOpacity: 0.25,
+        fillOpacity: 0,
       }).bindPopup(`<b>Defined Area Boundary</b>`);
 
       // Skipped Area
