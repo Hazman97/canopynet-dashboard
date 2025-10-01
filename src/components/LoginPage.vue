@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+  <div class="min-h-screen flex items-center justify-center p-4" :style="backgroundStyle">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
 
       <div class="text-center mb-2">
@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router'; // Import useRouter
 
 // Reactive variables for form input and UI state
@@ -80,6 +80,20 @@ const loading = ref(false); // To manage button loading state
 
 // Initialize Vue Router
 const router = useRouter();
+
+// Background image - replace with your actual palm oil plantation image
+const backgroundImageUrl = ref('https://pulitzercenter.org/sites/default/files/styles/1140x695_scale/public/2021-04/shutterstock_636466505.jpeg.webp?itok=llpscEX5');
+
+// Computed property for background style
+const backgroundStyle = computed(() => {
+  return {
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImageUrl.value})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed'
+  };
+});
 
 /**
  * Handles the login form submission.

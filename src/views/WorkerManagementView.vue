@@ -591,7 +591,6 @@ const processedPerformanceData = computed(() => {
         const avgEfficiency = dailyRecordsCount > 0 ? totalEfficiency / dailyRecordsCount : 0;
 
         // Simple trend simulation: +5% if total productivity > 200, -5% if < 50
-        // In a real app, this would compare to the previous period.
         let trend = 0;
         if (totalProductivity > 200) trend = 5;
         else if (totalProductivity < 50 && dailyRecordsCount > 0) trend = -5;
@@ -693,7 +692,6 @@ onMounted(() => {
     attendanceRecords.value.push({ workerId: worker.id, date: today, isPresent: ['w1', 'w2', 'w4'].includes(worker.id) });
     attendanceRecords.value.push({ workerId: worker.id, date: yesterday, isPresent: ['w1', 'w3'].includes(worker.id) });
     attendanceRecords.value.push({ workerId: worker.id, date: twoDaysAgo, isPresent: ['w2', 'w4'].includes(worker.id) });
-    // Add more attendance history as needed for realism
 
     // Performance Data (simulated daily records)
     // For Today
@@ -705,7 +703,6 @@ onMounted(() => {
     // For Yesterday
     if (worker.id === 'w1') worker.dailyPerformance.push({ date: yesterday, productivityKg: 240, efficiency: 95, coverageHa: 2.4, hours: 6.0 });
     if (worker.id === 'w2') worker.dailyPerformance.push({ date: yesterday, productivityKg: 175, efficiency: 91, coverageHa: 1.7, hours: 7.0 });
-    // John Smith was present yesterday with a task (productivity 0 for tractor example)
     if (worker.id === 'w3') worker.dailyPerformance.push({ date: yesterday, productivityKg: 0, efficiency: 97, coverageHa: 0.0, hours: 8.0 });
     if (worker.id === 'w4') worker.dailyPerformance.push({ date: yesterday, productivityKg: 0, efficiency: 93, coverageHa: 0.0, hours: 8.0 });
 
@@ -716,7 +713,6 @@ onMounted(() => {
     if (worker.id === 'w4') worker.dailyPerformance.push({ date: twoDaysAgo, productivityKg: 0, efficiency: 92, coverageHa: 0.0, hours: 8.0 });
 
     // Add some more random historical data for 'This Month' and 'This Quarter'
-    // For simplicity, let's add a few more for Ahmad and Siti earlier in the month/quarter
     for (let i = 3; i <= 20; i += 5) { // Roughly every 5 days for the last ~20 days
       const pastDate = new Date(new Date().setDate(new Date().getDate() - i)).toISOString().split('T')[0];
       if (worker.id === 'w1') worker.dailyPerformance.push({ date: pastDate, productivityKg: 200 + i, efficiency: 90 + i/2, coverageHa: 2.0 + i/10, hours: 6.0 + i/10 });
@@ -768,8 +764,6 @@ const handleAddWorker = (newWorkerData) => {
 const handleUpdateWorker = (updatedWorkerData) => {
   const index = workers.value.findIndex(w => w.id === updatedWorkerData.id);
   if (index !== -1) {
-    // Merge updated data into the existing worker object
-    // Keep existing dailyPerformance as it's not edited via this modal
     const currentPerformance = workers.value[index].dailyPerformance;
     workers.value[index] = { ...workers.value[index], ...updatedWorkerData, dailyPerformance: currentPerformance };
   }
@@ -779,7 +773,7 @@ const handleUpdateWorker = (updatedWorkerData) => {
 const deleteWorker = (id) => {
   if (confirm('Are you sure you want to delete this worker?')) {
     workers.value = workers.value.filter(worker => worker.id !== id);
-    // Also remove attendance records for this worker
+    // remove attendance records
     attendanceRecords.value = attendanceRecords.value.filter(record => record.workerId !== id);
   }
 };
