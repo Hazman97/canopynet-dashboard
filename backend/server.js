@@ -12,7 +12,7 @@ const pool = require('./config/database');
 // Import route files
 const userRoutes = require('./routes/userRoutes');
 const workerRoutes = require('./routes/workerRoutes');
-
+const logRoutes = require('./routes/logRoutes');
 // Initialize the Express application
 const app = express();
 const port = 3000;
@@ -199,7 +199,7 @@ pool
 // --- Use Routes ---
 app.use('/api', userRoutes);
 app.use('/api/workers', workerRoutes);
-
+app.use('/api/worker-logs', logRoutes); // <-- ADD THIS LINE
 // --- Start the server ---
 app.listen(port, '::', () => {
   console.log(`Server running on port ${port}`);
