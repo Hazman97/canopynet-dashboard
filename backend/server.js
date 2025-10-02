@@ -107,6 +107,32 @@ const swaggerOptions = {
             lastUpdate: { type: 'string', example: '2023-10-27T12:00:00.000Z' },
           },
         },
+        // ... inside swaggerOptions.definition.components.schemas
+// ... (after WorkerResponse)
+
+// --- NEW: Worker Log Schemas ---
+WorkerLogInput: {
+  type: 'object',
+  required: ['workerId', 'date'],
+  properties: {
+    workerId: { type: 'integer', example: 1, description: 'The ID of the worker this log belongs to.' },
+    date: { type: 'string', format: 'date', example: '2023-10-27' },
+    attendance: { type: 'string', example: 'Present' },
+    hoursWorked: { type: 'number', format: 'float', example: 8.5 },
+    totalHarvest: { type: 'number', format: 'float', example: 150.75 }
+  },
+},
+WorkerLogResponse: {
+  type: 'object',
+  properties: {
+    id: { type: 'integer', example: 1 },
+    workerId: { type: 'integer', example: 1 },
+    date: { type: 'string', example: '2023-10-27' },
+    attendance: { type: 'string', example: 'Present' },
+    hoursWorked: { type: 'number', format: 'float', example: 8.5 },
+    totalHarvest: { type: 'number', format: 'float', example: 150.75 }
+  },
+},
       },
     },
   },
@@ -129,16 +155,17 @@ const pool = new Pool({
 
 // --- Database Connection Test and Initialization (FIXED) ---
 // --- Database Connection Test and Initialization (CORRECTED FOR DATA PERSISTENCE) ---
-let client
+// --- Database Connection Test and Initialization (CORRECTED) ---
+// --- Database Connection Test and Initialization (No UUID) ---
+let client;
+
 pool
   .connect()
   .then((connectedClient) => {
-    client = connectedClient
-    console.log('Connected to the PostgreSQL database.')
+    client = connectedClient;
+    console.log('Connected to the PostgreSQL database.');
 
-    // The DROP TABLE line has been removed to prevent data loss.
-
-    // This command will only create the table if it doesn't already exist.
+    // Create Users Table
     return client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -146,22 +173,34 @@ pool
         email VARCHAR(255) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(50) NOT NULL,
-        worker_id VARCHAR(255),
+        worker_id INTEGER, -- CHANGED: Storing an integer worker_id is better
         created_at TIMESTAMP DEFAULT NOW(),
         last_login TIMESTAMP
       )
-    `)
+    `);
   })
   .then(() => {
-    console.log('Users table is ready.')
-    // The rest of your logic to add a default user is already smart enough
-    // to not create a duplicate if it already exists.
-    return client.query(`SELECT * FROM users WHERE username = $1`, ['testuser'])
+    console.log('Users table is ready.');
+    
+    // Create Workers Table (Updated to use SERIAL ID)
+    return client.query(`
+      CREATE TABLE IF NOT EXISTS workers (
+        id SERIAL PRIMARY KEY,              -- CHANGED: Now uses an auto-incrementing integer
+        name VARCHAR(255),
+        code VARCHAR(255),
+        workDivision VARCHAR(50),
+        role VARCHAR(50),
+        status VARCHAR(50),
+        blockNo VARCHAR(255),
+        lastUpdate TIMESTAMP,
+        taskNo VARCHAR(255)
+      )
+    `);
   })
- .then(async () => { // <-- Make this .then() block async so we can use await
+  .then(async () => {
     console.log('Workers table is ready.');
 
-    // Check if default user exists
+    // --- Handle Default User ---
     const userCheck = await client.query(`SELECT * FROM users WHERE username = $1`, ['testuser']);
     if (userCheck.rows.length === 0) {
       const hashedPassword = await bcrypt.hash('password123', 10);
@@ -171,33 +210,37 @@ pool
       console.log('Default user "testuser" already exists.');
     }
 
-    // Check if sample workers exist
-    const workerCheck = await client.query(`SELECT * FROM workers WHERE code = $1`, ['WKR-001']); // <-- ADDED await
+    // --- Handle Sample Workers ---
+    const workerCheck = await client.query(`SELECT * FROM workers WHERE code = $1`, ['WKR-001']);
     if (workerCheck.rows.length === 0) {
-      await client.query(`INSERT INTO workers (name, code, workDivision, role, status, blockNo, taskNo) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        ['Alice Smith', 'WKR-001', 'Harvesting', 'Picker', 'Active', 'B05', 'TSK-101']
+      const now = new Date().toISOString(); // Get current timestamp
+
+      // REMOVED 'id' from the INSERT. The database will create it automatically.
+      await client.query(
+        `INSERT INTO workers (name, code, workDivision, role, status, blockNo, lastUpdate, taskNo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        ['Alice Smith', 'WKR-001', 'Harvesting', 'Picker', 'Active', 'B05', now, 'TSK-101']
       );
-      await client.query(`INSERT INTO workers (name, code, workDivision, role, status, blockNo, taskNo) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        ['Bob Johnson', 'WKR-002', 'Planting', 'Planter', 'On Leave', 'C11', 'TSK-102']
+      await client.query(
+        `INSERT INTO workers (name, code, workDivision, role, status, blockNo, lastUpdate, taskNo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        ['Bob Johnson', 'WKR-002', 'Planting', 'Planter', 'On Leave', 'C11', now, 'TSK-102']
       );
       console.log('Sample workers added.');
     } else {
       console.log('Sample workers already exist.');
     }
   })
-
   .catch((err) => {
-    console.error('Error with database initialization:', err.message)
+    console.error('Error with database initialization:', err.message);
   })
   .finally(() => {
     if (client) {
-      client.release()
+      client.release();
     }
   })
   .catch((err) => {
-    console.error('Error connecting to PostgreSQL database:', err.message)
-    process.exit(1)
-  })
+    console.error('Error connecting to PostgreSQL database:', err.message);
+    process.exit(1);
+  });
 
 // --- Registration API Endpoint (MODIFIED) ---
 /**
@@ -350,6 +393,161 @@ app.post('/api/login', async (req, res) => {
     }
   }
 })
+
+// --- GET all workers ---
+/**
+ * @swagger
+ * /api/workers:
+ *   get:
+ *     summary: Get a list of all workers
+ *     responses:
+ *       200:
+ *         description: A list of workers.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/WorkerResponse'
+ */
+app.get('/api/workers', async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query(`SELECT * FROM workers ORDER BY lastUpdate DESC`);
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error('Error fetching workers:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// --- GET a single worker by ID ---
+/**
+ * @swagger
+ * /api/workers/{id}:
+ *   get:
+ *     summary: Get a single worker by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: A single worker object.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/WorkerResponse'
+ *       404:
+ *         description: Worker not found.
+ */
+app.get('/api/workers/:id', async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query(`SELECT * FROM workers WHERE id = $1`, [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Worker not found.' });
+        }
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error('Error fetching worker:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// --- UPDATE a worker by ID ---
+/**
+ * @swagger
+ * /api/workers/{id}:
+ *   put:
+ *     summary: Update a worker by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/WorkerInput'
+ *     responses:
+ *       200:
+ *         description: Worker updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/WorkerResponse'
+ *       404:
+ *         description: Worker not found.
+ */
+app.put('/api/workers/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, code, workDivision, role, status, blockNo, taskNo } = req.body;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query(
+            `UPDATE workers SET name = $1, code = $2, workDivision = $3, role = $4, status = $5, blockNo = $6, taskNo = $7, lastUpdate = NOW() WHERE id = $8 RETURNING *`,
+            [name, code, workDivision, role, status, blockNo, taskNo, id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Worker not found.' });
+        }
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating worker:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    } finally {
+        if (client) client.release();
+    }
+});
+// --- DELETE a worker by ID ---
+/**
+ * @swagger
+ * /api/workers/{id}:
+ *   delete:
+ *     summary: Delete a worker by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Worker deleted successfully.
+ *       404:
+ *         description: Worker not found.
+ */
+app.delete('/api/workers/:id', async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query(`DELETE FROM workers WHERE id = $1`, [id]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Worker not found.' });
+        }
+        res.status(200).json({ message: 'Worker deleted successfully.' });
+    } catch (err) {
+        console.error('Error deleting worker:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    } finally {
+        if (client) client.release();
+    }
+});
 
 // --- Start the server ---
 app.listen(3000, '::', () => {
