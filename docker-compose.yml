@@ -36,7 +36,7 @@ services:
   # Vue.js Frontend Service
   frontend:
     build:
-      context: ./frontend
+      context: ./
       dockerfile: Dockerfile
       args:
         VUE_APP_API_URL: ${VUE_APP_API_URL} # Pass env var to build stage
