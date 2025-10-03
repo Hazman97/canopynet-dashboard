@@ -1,9 +1,10 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database Service
+  # PostgreSQL Database Service (UPDATED)
   db:
     image: postgres:15-alpine
+    platform: linux/arm64 # <-- ADDED: Specifies ARM64 architecture for Raspberry Pi compatibility.
     container_name: canopynet_db
     restart: always
     environment:
@@ -14,12 +15,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck: # <-- ADDED: Ensures the database is fully ready before other services start.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Node.js Backend Service
+  # Node.js Backend Service (UPDATED)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      platform: linux/arm64 # <-- ADDED: Specifies ARM64 architecture.
     container_name: canopynet_backend
     restart: always
     environment:
@@ -30,23 +37,28 @@ services:
       - DB_NAME=${POSTGRES_DB}
     ports:
       - "3000:3000"
-    depends_on:
-      - db
+    depends_on: # <-- UPDATED: Waits for the database to be healthy before starting.
+      db:
+        condition: service_healthy
+    healthcheck: # <-- ADDED: Health check for the backend itself.
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api-docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Vue.js Frontend Service (UPDATED)
-  # ... other services
-  # Vue.js Frontend Service (CORRECTED)
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      platform: linux/arm64 # <-- ADDED: Specifies ARM64 architecture.
     container_name: canopynet_frontend
     restart: always
     ports:
-      - "8080:83"
-    depends_on:
-      - backend
-# ... other services
+      - "8080:80" # <-- CORRECTED: Map host port 8080 to container port 80 (standard for Nginx).
+    depends_on: # <-- UPDATED: Waits for the backend to be healthy.
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
