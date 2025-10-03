@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432" # Optional: Map port to host for easy access with psql/DBeaver
+      - "5432:5432"
 
   # Node.js Backend Service
   backend:
@@ -33,19 +33,20 @@ services:
     depends_on:
       - db
 
-  # Vue.js Frontend Service
+  # Vue.js Frontend Service (UPDATED)
+  # ... other services
+  # Vue.js Frontend Service (CORRECTED)
   frontend:
     build:
-      context: ./
+      context: .
       dockerfile: Dockerfile
-      args:
-        VUE_APP_API_URL: ${VUE_APP_API_URL} # Pass env var to build stage
     container_name: canopynet_frontend
     restart: always
     ports:
-      - "8080:80"
+      - "8080:83"
     depends_on:
       - backend
+# ... other services
 
 volumes:
   postgres_data:
